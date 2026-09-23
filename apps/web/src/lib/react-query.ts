@@ -19,13 +19,15 @@ export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,
-        // transient DB/on network errors 2 retries, else 1
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        // app-switch/tab-focus every time refetch = sluggish closed
+        refetchOnWindowFocus: false,
+        // transient DB/network errors pe 2 retries, baaki pe 1
         retry: (count, error) => count < (isTransientError(error) ? 2 : 1),
         retryDelay: (attempt) => Math.min(800 * 2 ** attempt, 4000),
       },
-      mutations: {
-        //if save fail DB wake again try
+      mutations: { 
         retry: (count, error) => isTransientError(error) && count < 2,
         retryDelay: (attempt) => Math.min(800 * 2 ** attempt, 4000),
       },

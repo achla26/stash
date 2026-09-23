@@ -483,6 +483,7 @@ export function NoteEditor() {
 
   /* ---------- Dirty tracking ---------- */
   const debouncedTitle = useDebounce(title, 800);
+  const previewContent = useDebounce(content, 200);
   const debouncedContent = useDebounce(content, 800);
 
   const originalTitle = useMemo(() => note?.title ?? "", [note?.title]);
@@ -924,7 +925,7 @@ export function NoteEditor() {
                 {title || "Untitled"}
               </h1>
               <div className="mt-8">
-                <MarkdownPreview text={content} />
+                <MarkdownPreview text={previewContent} />
               </div>
             </div>
           </div>
