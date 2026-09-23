@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Command } from "lucide-react";
+import { Search, Command, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SearchDialog } from "@/components/search/search-dialog";
 
-export function TopBar() {
+export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void } = {}) {
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,14 @@ export function TopBar() {
   return (
     <>
     <header className="hidden h-16 shrink-0 items-center justify-between border-b border-border bg-background px-6 md:flex">
-      <div />
+      <button
+        onClick={onToggleSidebar}
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label="Toggle sidebar"
+        title="Hide/show sidebar"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
 
       <div className="flex items-center gap-3">
         <ThemeToggle />

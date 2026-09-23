@@ -1,11 +1,16 @@
 import axios from "axios";
 
+// Empty base = same-origin (Next proxy). "undefined/api/..." URL banane ka bug fix.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: API_BASE,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+let refreshInFlight: Promise<any> | null = null;
 
 // Request — token attach
 apiClient.interceptors.request.use(
@@ -40,12 +45,17 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refresh_token");
         if (refreshToken) {
-          // Direct axios call — not apiClient (avoid interceptor loop)
-          const res = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
-            { refreshToken },
-            { headers: { "Content-Type": "application/json" } }
-          );
+          // single-flight: parallel 401s share one refresh call
+          if (!refreshInFlight) {
+            refreshInFlight = axios.post(
+              `${API_BASE}/api/auth/refresh`,
+              { refreshToken },
+              { headers: { "Content-Type": "application/json" } }
+            ).finally(() => {
+              setTimeout(() => (refreshInFlight = null), 100);
+            });
+          }
+          const res = await refreshInFlight;
 
           // res.data is ApiSuccess<AuthResponse>
           const session = res.data?.data?.session;

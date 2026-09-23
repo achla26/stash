@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { MobileHeader } from "@/components/layout/mobile-header";
@@ -15,6 +15,19 @@ export default function DashboardLayout({
 }) {
   const { isLoading, isAuthenticated } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(false);
+
+  useEffect(() => {
+    setSidebarHidden(localStorage.getItem("stash_sidebar_hidden") === "1");
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarHidden((h) => {
+      const next = !h;
+      localStorage.setItem("stash_sidebar_hidden", next ? "1" : "0");
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -40,11 +53,12 @@ export default function DashboardLayout({
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        hidden={sidebarHidden}
       />
 
       {/* Main Content */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden pt-14 md:pt-0">
-        <TopBar />
+        <TopBar onToggleSidebar={toggleSidebar} />
         <div className="flex-1 overflow-auto p-4 pb-24 md:p-6 md:pb-6 app-scrollbar">
           {children}
         </div>

@@ -17,6 +17,16 @@ import {
   Folder,
   FileText,
   BookOpen,
+  Bold,
+  Italic,
+  Heading2,
+  List,
+  ListOrdered,
+  CheckSquare,
+  Code,
+  Quote,
+  Eye,
+  PencilLine,
 } from "lucide-react";
 
 import { useDeleteNote, useNote, useUpdateNote } from "@/hooks/use-notes";
@@ -48,8 +58,237 @@ function countWords(text: string): number {
 }
 
 /* ============================================================
+   Tiny markdown preview (dependency-free, safe React nodes)
+   ============================================================ */
+
+function renderInline(text: string, keyBase: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const regex =
+    /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\))/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = regex.exec(text))) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const tok = m[0];
+    const k = `${keyBase}-${i++}`;
+    if (tok.startsWith("**")) {
+      nodes.push(
+        <strong key={k} className="font-semibold text-foreground">
+          {tok.slice(2, -2)}
+        </strong>
+      );
+    } else if (tok.startsWith("`")) {
+      nodes.push(
+        <code
+          key={k}
+          className="rounded bg-accent px-1 py-0.5 font-mono text-[0.85em]"
+        >
+          {tok.slice(1, -1)}
+        </code>
+      );
+    } else if (tok.startsWith("*") || tok.startsWith("_")) {
+      nodes.push(<em key={k}>{tok.slice(1, -1)}</em>);
+    } else {
+      const mm = tok.match(/\[([^\]]+)\]\(([^)]+)\)/);
+      if (mm) {
+        nodes.push(
+          <a
+            key={k}
+            href={mm[2]}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-2"
+          >
+            {mm[1]}
+          </a>
+        );
+      }
+    }
+    last = m.index + tok.length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function isBlockStart(line: string): boolean {
+  return (
+    /^#{1,3}\s?/.test(line) ||
+    /^>\s?/.test(line) ||
+    /^[-*]\s/.test(line) ||
+    /^\d+\.\s/.test(line) ||
+    line.startsWith("```") ||
+    /^[-*]\s\[[ xX]\]\s/.test(line)
+  );
+}
+
+function MarkdownPreview({ text }: { text: string }) {
+  // iOS/paste lookalikes → ascii so markdown always converts
+  text = text.replace(/[*＊∗✱⁎]/g, "*").replace(/ /g, " ");
+  const lines = text.split("\n");
+  const out: React.ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+
+    if (line.startsWith("```")) {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && !(lines[i] ?? "").startsWith("```")) {
+        buf.push(lines[i] ?? "");
+        i++;
+      }
+      i++; // closing fence
+      out.push(
+        <pre
+          key={key++}
+          className="my-3 overflow-x-auto rounded-xl border border-border bg-accent/50 p-3 font-mono text-[13px] leading-relaxed"
+        >
+          {buf.join("\n")}
+        </pre>
+      );
+      continue;
+    }
+
+    if (/^###\s?/.test(line)) {
+      out.push(
+        <h3 key={key++} className="mt-5 mb-1.5 text-lg font-semibold">
+          {renderInline(line.replace(/^###\s?/, ""), `h3${key}`)}
+        </h3>
+      );
+      i++;
+      continue;
+    }
+    if (/^##\s?/.test(line)) {
+      out.push(
+        <h2 key={key++} className="mt-6 mb-2 text-xl font-bold">
+          {renderInline(line.replace(/^##\s?/, ""), `h2${key}`)}
+        </h2>
+      );
+      i++;
+      continue;
+    }
+    if (/^#\s?/.test(line)) {
+      out.push(
+        <h1 key={key++} className="mt-6 mb-2 text-2xl font-bold">
+          {renderInline(line.replace(/^#\s?/, ""), `h1${key}`)}
+        </h1>
+      );
+      i++;
+      continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      out.push(
+        <blockquote
+          key={key++}
+          className="my-3 border-l-2 border-primary/50 pl-3 text-muted-foreground"
+        >
+          {renderInline(line.replace(/^>\s?/, ""), `q${key}`)}
+        </blockquote>
+      );
+      i++;
+      continue;
+    }
+
+    const task = line.match(/^[-*]\s\[( |x|X)\]\s(.*)$/);
+    if (task) {
+      out.push(
+        <div key={key++} className="my-1 flex items-start gap-2">
+          <span
+            className={cn(
+              "mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+              task[1] !== " "
+                ? "border-primary bg-primary text-white"
+                : "border-border"
+            )}
+          >
+            {task[1] !== " " && <Check className="h-3 w-3" />}
+          </span>
+          <span className={task[1] !== " " ? "line-through opacity-60" : ""}>
+            {renderInline(task[2] ?? "", `t${key}`)}
+          </span>
+        </div>
+      );
+      i++;
+      continue;
+    }
+
+    if (/^[-*]\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\s/.test(lines[i] ?? "")) {
+        items.push((lines[i] ?? "").replace(/^[-*]\s/, ""));
+        i++;
+      }
+      out.push(
+        <ul key={key++} className="my-2 list-disc space-y-1 pl-5">
+          {items.map((it, j) => (
+            <li key={j}>{renderInline(it, `ul${key}-${j}`)}</li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i] ?? "")) {
+        items.push((lines[i] ?? "").replace(/^\d+\.\s/, ""));
+        i++;
+      }
+      out.push(
+        <ol key={key++} className="my-2 list-decimal space-y-1 pl-5">
+          {items.map((it, j) => (
+            <li key={j}>{renderInline(it, `ol${key}-${j}`)}</li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    if (/^[-*_]{3,}\s*$/.test(line)) {
+      out.push(<hr key={key++} className="my-6 border-border" />);
+      i++;
+      continue;
+    }
+
+    // consecutive plain lines = one paragraph, single newlines render as <br/>
+    const buf: string[] = [line];
+    while (i + 1 < lines.length) {
+      const nxt = lines[i + 1] ?? "";
+      if (nxt.trim() === "" || isBlockStart(nxt)) break;
+      buf.push(nxt);
+      i++;
+    }
+    out.push(
+      <p key={key++} className="my-2">
+        {buf.map((b, j) => (
+          <span key={j}>
+            {j > 0 && <br />}
+            {renderInline(b, `p${key}-${j}`)}
+          </span>
+        ))}
+      </p>
+    );
+    i++;
+  }
+
+  return (
+    <div className="text-[17px] leading-[1.75] text-foreground">
+      {out.length ? out : <p className="text-muted-foreground/50">Nothing to preview.</p>}
+    </div>
+  );
+}
+
+/* ============================================================
    Popover — anchored to a trigger element, uses fixed positioning
-   so it never clips on mobile or inside overflow-hidden parents.
    ============================================================ */
 
 function AnchoredPopover({
@@ -69,7 +308,6 @@ function AnchoredPopover({
     right: 0,
   });
 
-  // Compute position whenever open
   useEffect(() => {
     if (!open) return;
     const compute = () => {
@@ -90,7 +328,6 @@ function AnchoredPopover({
     };
   }, [open, anchorRef]);
 
-  // Close on outside click + Escape
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
@@ -145,7 +382,7 @@ function PopoverItem({
         danger
           ? "text-destructive hover:bg-destructive/10"
           : "text-foreground hover:bg-accent",
-        active && "bg-accent",
+        active && "bg-accent"
       )}
     >
       {Icon && <Icon className="h-4 w-4 shrink-0 opacity-70" />}
@@ -170,7 +407,7 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
   }
   if (status === "saved") {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground animate-fade-out">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Check className="h-3 w-3 text-success" />
         <span>Saved</span>
       </div>
@@ -205,6 +442,7 @@ export function NoteEditor() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [preview, setPreview] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
 
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -241,7 +479,7 @@ export function NoteEditor() {
 
   useEffect(() => {
     resizeBody();
-  }, [content, resizeBody]);
+  }, [content, resizeBody, preview]);
 
   /* ---------- Dirty tracking ---------- */
   const debouncedTitle = useDebounce(title, 800);
@@ -250,7 +488,7 @@ export function NoteEditor() {
   const originalTitle = useMemo(() => note?.title ?? "", [note?.title]);
   const originalContent = useMemo(
     () => getTextContent(note?.content),
-    [note?.content],
+    [note?.content]
   );
 
   useEffect(() => {
@@ -260,113 +498,164 @@ export function NoteEditor() {
     }
   }, [title, content, originalTitle, originalContent]);
 
+  /* ---------- Save ---------- */
+  const doSave = useCallback(
+    (t: string, c: string) => {
+      if (!noteId) return;
+      setSaveStatus("saving");
+      updateNoteMutation.mutate(
+        { id: noteId, title: t.trim() || "Untitled", content: c },
+        {
+          onSuccess: () => {
+            setSaveStatus("saved");
+            if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+            savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+          },
+          onError: () => setSaveStatus("unsaved"),
+        }
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [noteId]
+  );
+
   /* ---------- Autosave ---------- */
   useEffect(() => {
     if (isFirstLoad.current) return;
     if (!noteId) return;
-
     const hasChanges =
-      debouncedTitle !== originalTitle ||
-      debouncedContent !== originalContent;
+      debouncedTitle !== originalTitle || debouncedContent !== originalContent;
     if (!hasChanges) return;
-
-    setSaveStatus("saving");
-    updateNoteMutation.mutate(
-      {
-        id: noteId,
-        title: debouncedTitle.trim() || "Untitled",
-        content: debouncedContent,
-      },
-      {
-        onSuccess: () => {
-          setSaveStatus("saved");
-          if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-          savedTimerRef.current = setTimeout(() => {
-            setSaveStatus("idle");
-          }, 2000);
-        },
-        onError: () => setSaveStatus("unsaved"),
-      },
-    );
+    doSave(debouncedTitle, debouncedContent);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedTitle, debouncedContent]);
 
-  /* ---------- Markdown wrap helper ---------- */
+  /* ---------- Save when leaving / hiding (mobile app switch) ---------- */
+  useEffect(() => {
+    const flush = () => {
+      // never flush before the note has loaded, and never flush clean state —
+      // otherwise an app-switch on a slow load overwrites the note with ""
+      if (isFirstLoad.current) return;
+      if (title === originalTitle && content === originalContent) return;
+      doSave(title, content);
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [doSave, title, content, originalTitle, originalContent]);
+
+  /* ---------- Markdown helpers ---------- */
   const wrapSelection = (before: string, after: string) => {
     const el = bodyRef.current;
     if (!el) return;
     const start = el.selectionStart;
     const end = el.selectionEnd;
-    const selected = content.slice(start, end);
+    const selected = content.slice(start, end) || "text";
     const wrapped = `${before}${selected}${after}`;
     const next = content.slice(0, start) + wrapped + content.slice(end);
     setContent(next);
     requestAnimationFrame(() => {
       el.focus();
-      el.setSelectionRange(start + before.length, end + before.length);
+      el.setSelectionRange(start + before.length, start + before.length + selected.length);
     });
+  };
+
+  const applyLinePrefix = (prefix: string | ((i: number) => string), strip?: RegExp) => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const lineStart = content.lastIndexOf("\n", start - 1) + 1;
+    let lineEnd = content.indexOf("\n", end);
+    if (lineEnd === -1) lineEnd = content.length;
+    const block = content.slice(lineStart, lineEnd);
+    const lines = block.split("\n");
+    const allHave = strip ? lines.every((l) => strip.test(l)) : false;
+    const newBlock = lines
+      .map((l, idx) => {
+        if (allHave && strip) return l.replace(strip, "");
+        if (strip && strip.test(l)) return l; // mixed: don't double
+        return typeof prefix === "function" ? prefix(idx) + l : prefix + l;
+      })
+      .join("\n");
+    setContent(content.slice(0, lineStart) + newBlock + content.slice(lineEnd));
+    requestAnimationFrame(() => el.focus());
+  };
+
+  /* ---------- Smart textarea keys: lists continue, Tab indents ---------- */
+  const handleBodyKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.currentTarget;
+      const start = el.selectionStart;
+      setContent(content.slice(0, start) + "  " + content.slice(el.selectionEnd));
+      requestAnimationFrame(() => el.setSelectionRange(start + 2, start + 2));
+      return;
+    }
+    if (e.key === "Enter") {
+      const el = e.currentTarget;
+      const start = el.selectionStart;
+      const before = content.slice(0, start);
+      const lineStart = before.lastIndexOf("\n") + 1;
+      const line = before.slice(lineStart);
+      const m = line.match(/^(\s*)([-*] \[[ xX]\] |[-*] |(\d+)\. )(.*)$/);
+      if (!m) return;
+      e.preventDefault();
+      const [, indent = "", marker = "", num, rest = ""] = m;
+      if (!rest.trim()) {
+        // empty list item → exit list
+        setContent(content.slice(0, lineStart) + "\n" + content.slice(start));
+        const pos = lineStart + 1;
+        requestAnimationFrame(() => el.setSelectionRange(pos, pos));
+        return;
+      }
+      let next = marker;
+      if (num) next = `${parseInt(num, 10) + 1}. `;
+      else if (/\[[xX]\]/.test(marker)) next = "- [ ] ";
+      const insert = `\n${indent}${next}`;
+      setContent(content.slice(0, start) + insert + content.slice(el.selectionEnd));
+      const pos = start + insert.length;
+      requestAnimationFrame(() => el.setSelectionRange(pos, pos));
+    }
   };
 
   /* ---------- Keyboard shortcuts ---------- */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
-
       if (mod && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        setSaveStatus("saving");
-        updateNoteMutation.mutate(
-          {
-            id: noteId,
-            title: title.trim() || "Untitled",
-            content,
-          },
-          {
-            onSuccess: () => {
-              setSaveStatus("saved");
-              if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-              savedTimerRef.current = setTimeout(() => {
-                setSaveStatus("idle");
-              }, 2000);
-            },
-            onError: () => setSaveStatus("unsaved"),
-          },
-        );
+        doSave(title, content);
       }
-
       if (mod && e.key.toLowerCase() === "b") {
         e.preventDefault();
         wrapSelection("**", "**");
       }
-
       if (mod && e.key.toLowerCase() === "i") {
         e.preventDefault();
-        wrapSelection("_", "_");
+        wrapSelection("*", "*");
       }
     };
-
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, content, noteId]);
+  }, [title, content, noteId, doSave]);
 
   /* ---------- Placement ---------- */
   const placement: Placement = useMemo(() => {
     if (note?.notebookId) {
       const nb = notebooks.find((n) => n.id === note.notebookId);
-      return {
-        kind: "notebook",
-        id: note.notebookId,
-        name: nb?.name ?? "Notebook",
-      };
+      return { kind: "notebook", id: note.notebookId, name: nb?.name ?? "Notebook" };
     }
     if (note?.folderId) {
       const f = folders.find((x) => x.id === note.folderId);
-      return {
-        kind: "folder",
-        id: note.folderId,
-        name: f?.name ?? "Folder",
-      };
+      return { kind: "folder", id: note.folderId, name: f?.name ?? "Folder" };
     }
     return { kind: "loose" };
   }, [note?.folderId, note?.notebookId, folders, notebooks]);
@@ -410,6 +699,8 @@ export function NoteEditor() {
   }
 
   const wordCount = countWords(content);
+  const charCount = content.length;
+  const readMins = Math.max(1, Math.round(wordCount / 200));
   const FolderIcon =
     placement.kind === "notebook"
       ? BookOpen
@@ -417,14 +708,14 @@ export function NoteEditor() {
         ? Folder
         : FileText;
 
+  const toolBtn =
+    "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* ============================================================
-          Toolbar — in-page, top of content
-          ============================================================ */}
-      <div className="mx-auto max-w-2xl px-6 pt-6 sm:px-8">
+      {/* Toolbar */}
+      <div className={cn("mx-auto w-full px-6 pt-6 sm:px-8", preview ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
         <div className="flex items-center justify-between gap-3 opacity-60 transition-opacity hover:opacity-100 focus-within:opacity-100">
-          {/* Left: back */}
           <button
             type="button"
             onClick={() => router.push("/notes")}
@@ -434,30 +725,72 @@ export function NoteEditor() {
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          {/* Center: save status */}
           <div className="flex h-8 min-w-[100px] items-center justify-center">
             <SaveIndicator status={saveStatus} />
           </div>
 
-          {/* Right: overflow button — popover is rendered separately */}
-          <button
-            ref={overflowBtnRef}
-            type="button"
-            onClick={() => setOverflowOpen((v) => !v)}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              overflowOpen && "bg-accent text-foreground",
-            )}
-            aria-label="More options"
-            aria-haspopup="menu"
-            aria-expanded={overflowOpen}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPreview((v) => !v)}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                preview && "bg-accent text-foreground"
+              )}
+              aria-label={preview ? "Edit" : "Preview"}
+              title={preview ? "Edit" : "Preview"}
+            >
+              {preview ? <PencilLine className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            <button
+              ref={overflowBtnRef}
+              type="button"
+              onClick={() => setOverflowOpen((v) => !v)}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                overflowOpen && "bg-accent text-foreground"
+              )}
+              aria-label="More options"
+              aria-haspopup="menu"
+              aria-expanded={overflowOpen}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
+        {/* Formatting toolbar (edit mode only) */}
+        {!preview && (
+          <div className="mt-4 flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
+            <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { setPreview(false); wrapSelection("**", "**"); }}>
+              <Bold className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Italic (⌘I)" onClick={() => wrapSelection("*", "*")}>
+              <Italic className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Heading" onClick={() => applyLinePrefix("## ", /^##\s/)}>
+              <Heading2 className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Bullet list" onClick={() => applyLinePrefix("- ", /^[-*]\s(?!\[)/)}>
+              <List className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Numbered list" onClick={() => applyLinePrefix((i) => `${i + 1}. `, /^\d+\.\s/)}>
+              <ListOrdered className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Checklist" onClick={() => applyLinePrefix("- [ ] ", /^[-*]\s\[[ xX]\]\s/)}>
+              <CheckSquare className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Code" onClick={() => wrapSelection("`", "`")}>
+              <Code className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Quote" onClick={() => applyLinePrefix("> ", /^>\s/)}>
+              <Quote className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Overflow popover — fixed positioned, anchored to overflowBtnRef */}
+      {/* Overflow popover */}
       <AnchoredPopover
         anchorRef={overflowBtnRef}
         open={overflowOpen}
@@ -506,16 +839,8 @@ export function NoteEditor() {
                   key={f.id}
                   icon={Folder}
                   label={f.name}
-                  active={
-                    placement.kind === "folder" && placement.id === f.id
-                  }
-                  onClick={() =>
-                    handleMove({
-                      kind: "folder",
-                      id: f.id,
-                      name: f.name,
-                    })
-                  }
+                  active={placement.kind === "folder" && placement.id === f.id}
+                  onClick={() => handleMove({ kind: "folder", id: f.id, name: f.name })}
                 />
               ))}
             {notebooks.filter((n) => !n.isTrashed).length > 0 && (
@@ -530,16 +855,8 @@ export function NoteEditor() {
                   key={n.id}
                   icon={BookOpen}
                   label={n.name}
-                  active={
-                    placement.kind === "notebook" && placement.id === n.id
-                  }
-                  onClick={() =>
-                    handleMove({
-                      kind: "notebook",
-                      id: n.id,
-                      name: n.name,
-                    })
-                  }
+                  active={placement.kind === "notebook" && placement.id === n.id}
+                  onClick={() => handleMove({ kind: "notebook", id: n.id, name: n.name })}
                 />
               ))}
           </>
@@ -571,36 +888,76 @@ export function NoteEditor() {
         )}
       </AnchoredPopover>
 
-      {/* ============================================================
-          Writing surface
-          ============================================================ */}
-      <div className="mx-auto max-w-2xl px-6 pb-24 pt-6 sm:px-8">
-        {/* Title */}
-        <input
-          ref={titleRef}
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Untitled"
-          className="w-full resize-none border-none bg-transparent text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-5xl"
-          spellCheck={false}
-        />
-
-        {/* Body */}
-        <textarea
-          ref={bodyRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Start writing…"
-          className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
-          spellCheck={false}
-          rows={1}
-        />
+      {/* Writing surface / preview */}
+      <div
+        className={cn(
+          "mx-auto w-full px-6 pb-24 pt-6 sm:px-8",
+          preview ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl"
+        )}
+      >
+        {preview ? (
+          <div className="gap-12 md:grid md:grid-cols-2">
+            {/* live editor — desktop only */}
+            <div className="hidden md:block">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Untitled"
+                className="w-full resize-none border-none bg-transparent text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-5xl"
+                spellCheck={false}
+              />
+              <textarea
+                ref={bodyRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyDown={handleBodyKeyDown}
+                placeholder="Start writing…"
+                className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
+                spellCheck={false}
+                rows={1}
+              />
+            </div>
+            {/* preview column */}
+            <div className="min-w-0">
+              <h1 className="w-full text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                {title || "Untitled"}
+              </h1>
+              <div className="mt-8">
+                <MarkdownPreview text={content} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <input
+              ref={titleRef}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Untitled"
+              className="w-full resize-none border-none bg-transparent text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-5xl"
+              spellCheck={false}
+            />
+            <textarea
+              ref={bodyRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={handleBodyKeyDown}
+              placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
+              className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
+              spellCheck={false}
+              rows={1}
+            />
+          </>
+        )}
 
         {/* Bottom meta */}
-        {wordCount > 0 && (
+        {(wordCount > 0 || charCount > 0) && (
           <div className="mt-16 text-right text-[11px] text-muted-foreground/50">
             {wordCount} {wordCount === 1 ? "word" : "words"}
+            {charCount > 0 && <> · {charCount} chars</>}
+            {wordCount > 0 && <> · ~{readMins} min read</>}
           </div>
         )}
       </div>

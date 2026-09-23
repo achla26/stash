@@ -15,7 +15,7 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, hidden = false }: SidebarProps & { hidden?: boolean }) {
   const pathname = usePathname();
     const { logout } = useAuth();
   
@@ -44,6 +44,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           "border-r border-border bg-background",
           "transition-transform duration-300 ease-in-out",
           "md:static md:translate-x-0",
+          hidden && "md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
