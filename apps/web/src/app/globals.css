@@ -1,0 +1,370 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   LIFESYNC THEME - Light & Dark Mode Support
+   ============================================ */
+
+:root {
+  /* Main Backgrounds */
+  --background: #FFFFFF;
+  --background-secondary: #F9F9FB;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1E;
+
+  /* Borders & Dividers */
+  --border: #E9E9EF;
+  --border-glow: rgba(0, 0, 0, 0.05);
+
+  /* Primary Colors */
+  --primary: #007AFF;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #0051D5;
+  --primary-glow: rgba(0, 122, 255, 0.1);
+
+  /* Secondary Colors */
+  --secondary: #5856D6;
+  --secondary-foreground: #FFFFFF;
+
+  /* Text Colors */
+  --foreground: #1A1A1E;
+  --muted: #6C6C70;
+  --muted-foreground: #8E8E93;
+
+  /* Status Colors */
+  --success: #34C759;
+  --success-foreground: #FFFFFF;
+  --warning: #FF9F0A;
+  --warning-foreground: #FFFFFF;
+  --destructive: #FF3B30;
+  --destructive-foreground: #FFFFFF;
+
+  /* Accent & Highlights */
+  --accent: #F2F2F7;
+  --accent-foreground: #1A1A1E;
+  --ring: #007AFF;
+
+  /* Popover & Dialog */
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1E;
+
+  /* Input Fields */
+  --input: #F2F2F7;
+  --input-foreground: #1A1A1E;
+
+  /* Surface Colors */
+  --surface-muted: #F5F5F7;
+  --surface-raised: #FFFFFF;
+
+  /* Sidebar */
+  --sidebar: #F9F9FB;
+  --sidebar-foreground: #1A1A1E;
+  --sidebar-primary: #007AFF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F2F2F7;
+  --sidebar-accent-foreground: #007AFF;
+  --sidebar-border: #E9E9EF;
+  --sidebar-ring: #007AFF;
+
+  /* Content-type accents */
+  --accent-note: #3b82f6;
+  --accent-link: #22c55e;
+  --accent-notebook: #8b5cf6;
+  --accent-page: #f97316;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  --gradient-glow: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%);
+
+  /* Chart Colors */
+  --chart-1: #007AFF;
+  --chart-2: #5856D6;
+  --chart-3: #34C759;
+  --chart-4: #FF9F0A;
+  --chart-5: #FF3B30;
+
+  /* Radius */
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* Main Backgrounds */
+  --background: #1C1C1E;
+  --background-secondary: #0E0E10;
+  --card: #2C2C2E;
+  --card-foreground: #F2F2F7;
+
+  /* Borders & Dividers */
+  --border: #38383A;
+  --border-glow: rgba(255, 255, 255, 0.05);
+
+  /* Primary Colors */
+  --primary: #0A84FF;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #409CFF;
+  --primary-glow: rgba(10, 132, 255, 0.15);
+
+  /* Secondary Colors */
+  --secondary: #5E5CE6;
+  --secondary-foreground: #FFFFFF;
+
+  /* Text Colors */
+  --foreground: #F2F2F7;
+  --muted: #98989E;
+  --muted-foreground: #6C6C70;
+
+  /* Status Colors */
+  --success: #30D158;
+  --success-foreground: #FFFFFF;
+  --warning: #FF9F0A;
+  --warning-foreground: #FFFFFF;
+  --destructive: #FF453A;
+  --destructive-foreground: #FFFFFF;
+
+  /* Accent & Highlights */
+  --accent: #2C2C2E;
+  --accent-foreground: #F2F2F7;
+  --ring: #0A84FF;
+
+  /* Popover & Dialog */
+  --popover: #2C2C2E;
+  --popover-foreground: #F2F2F7;
+
+  /* Input Fields */
+  --input: #2C2C2E;
+  --input-foreground: #F2F2F7;
+
+  /* Surface Colors */
+  --surface-muted: #1A1A1C;
+  --surface-raised: #2C2C2E;
+
+  /* Sidebar */
+  --sidebar: #0E0E10;
+  --sidebar-foreground: #F2F2F7;
+  --sidebar-primary: #0A84FF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2C2C2E;
+  --sidebar-accent-foreground: #0A84FF;
+  --sidebar-border: #38383A;
+  --sidebar-ring: #0A84FF;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
+  --gradient-glow: linear-gradient(135deg, rgba(10, 132, 255, 0.08) 0%, rgba(94, 92, 230, 0.08) 100%);
+
+  /* Chart Colors */
+  --chart-1: #0A84FF;
+  --chart-2: #5E5CE6;
+  --chart-3: #30D158;
+  --chart-4: #FF9F0A;
+  --chart-5: #FF453A;
+}
+
+/* ============================================
+   THEME TOKEN REGISTRATION (Tailwind v4)
+   ============================================ */
+
+@theme inline {
+  /* Fonts */
+  --font-sans: "Inter", "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", Monaco, monospace;
+
+  /* Core Colors */
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-foreground: var(--foreground);
+
+  /* Card */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Popover */
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Primary */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-glow: var(--primary-glow);
+
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Muted */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Destructive */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* Form */
+  --color-border: var(--border);
+  --color-border-glow: var(--border-glow);
+  --color-input: var(--input);
+  --color-input-foreground: var(--input-foreground);
+  --color-ring: var(--ring);
+
+  /* Surface */
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--primary);
+    color: white;
+  }
+}
+
+/* ============================================
+   CUSTOM UTILITIES
+   ============================================ */
+
+@layer utilities {
+  /* Glass Morphism */
+  .glass {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+  }
+
+  :root .glass {
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark .glass {
+    background: rgba(44, 44, 46, 0.8);
+  }
+
+  /* Card Hover */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--border-glow);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Gradient Button */
+  .gradient-button {
+    background: var(--gradient-primary);
+    border: none;
+    @apply transition-all duration-200;
+  }
+
+  .gradient-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--primary-glow);
+  }
+
+  .gradient-button:active {
+    transform: translateY(0);
+  }
+
+  /* Note Card */
+  .note-card {
+    @apply rounded-lg border border-border bg-card transition-all duration-200;
+  }
+
+  .note-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px var(--primary-glow);
+  }
+
+  /* App Scrollbar */
+  .app-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .app-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+}

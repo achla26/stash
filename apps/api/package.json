@@ -1,0 +1,30 @@
+{
+  "name": "@repo/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@repo/database": "workspace:*",
+    "@repo/contracts": "workspace:*",
+    "dotenv": "^17.4.2",
+    "hono": "^4.7.11",
+    "drizzle-orm": "^0.43.1",
+    "postgres": "^3.4.5",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.2.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "tsx": "^4.19.4",
+    "typescript": "5.9.2",
+    "@types/bcryptjs": "^2.4.6",
+    "tsc-alias": "^1.8.10"
+  },
+  "main": "dist/app.js",
+  "types": "dist/app.d.ts"
+}
