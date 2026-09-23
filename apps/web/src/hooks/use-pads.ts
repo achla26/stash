@@ -24,10 +24,11 @@ export function usePad(slug: string) {
   });
 }
 
-export function useUserPads() {
+export function useUserPads(enabled = true) {
   return useQuery({
     queryKey: padKeys.userPads,
     queryFn: padService.getUserPads,
+    enabled,
   });
 }
 

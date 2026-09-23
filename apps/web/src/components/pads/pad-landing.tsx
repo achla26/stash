@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, ArrowRight, Shuffle, Loader2, Sparkles, Zap, Lock, Clock, Link2, Infinity as InfinityIcon, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useCreatePad } from "@/hooks/use-pads";
+import { useCreatePad, useUserPads } from "@/hooks/use-pads";
+import { useAuth } from "@/hooks/use-auth";
+import { timeAgo } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { generateRandomSlug, sanitizeSlug } from "@/utils";
 
@@ -25,6 +27,8 @@ export function PadLanding() {
   const router = useRouter();
   const [displaySlug, setDisplaySlug] = useState("");
   const createPadMutation = useCreatePad();
+  const { isAuthenticated } = useAuth();
+  const { data: myPads = [], isLoading: padsLoading } = useUserPads(isAuthenticated);
 
   // Sanitized version of what user typed
   const sanitized = sanitizeSlug(displaySlug);
@@ -68,7 +72,7 @@ export function PadLanding() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex h-14 items-center justify-between border-b border-border bg-sidebar/95 px-4 backdrop-blur">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-button">
             <InfinityIcon className="h-5 w-5 text-white" />
           </span>
           <span className="text-lg font-bold text-foreground">Stash</span>
@@ -81,7 +85,7 @@ export function PadLanding() {
           Dashboard
         </Link>
       </header>
-      <div className="flex flex-1 flex-col items-center justify-center p-6">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto p-6">
       {/* Background Gradient */}
       <div
         className="pointer-events-none fixed inset-0"
@@ -91,10 +95,10 @@ export function PadLanding() {
         }}
       />
 
-      <div className="relative z-10 w-full max-w-md space-y-8 text-center">
+      <div className="relative z-10 my-auto w-full max-w-md space-y-8 text-center">
         {/* Logo */}
         <div>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-[0_8px_24px_var(--primary-glow)]">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-button shadow-lg shadow-primary/20">
             <FileText className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Stash Pad</h1>
@@ -107,7 +111,7 @@ export function PadLanding() {
         <Button
           onClick={handleCreateRandom}
           disabled={createPadMutation.isPending}
-          className="w-full gap-2 bg-primary text-primary-foreground shadow-lg shadow-[0_8px_24px_var(--primary-glow)] hover:bg-primary-hover"
+          className="w-full gap-2 gradient-button text-white shadow-lg shadow-primary/20"
           size="lg"
         >
           {createPadMutation.isPending ? (
@@ -177,6 +181,47 @@ export function PadLanding() {
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Your Pads (logged-in users) */}
+        {isAuthenticated && (
+          <div className="text-left">
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Your Pads
+            </h2>
+            {padsLoading ? (
+              <p className="text-sm text-muted-foreground">Loading pads…</p>
+            ) : myPads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No pads yet — create one above.
+              </p>
+            ) : (
+              <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                {myPads.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => router.push(`/pad/${p.slug}`)}
+                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <FileText className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-sm font-semibold text-foreground">
+                        /{p.slug}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        Updated {timeAgo(p.updatedAt)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 rounded px-2 py-0.5 text-xs font-medium capitalize" style={{ backgroundColor: "var(--primary-glow)", color: "var(--primary)" }}>
+                      {p.visibility}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Features */}
         <FeatureList />
