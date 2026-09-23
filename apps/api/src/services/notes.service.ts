@@ -18,6 +18,8 @@ export class NotesService extends BaseService<Note, NoteRow> {
       title: row.title,
       content: row.content,
       folderId: row.folder_id,
+      notebookId: row.notebook_id,
+      sortOrder: row.sort_order ?? 0,
       isPinned: row.is_pinned ?? false,
       isTrashed: row.is_trashed ?? false,
       tags: row.tags ?? [],
@@ -36,6 +38,8 @@ export class NotesService extends BaseService<Note, NoteRow> {
       title: dto.title.trim(),
       content: dto.content ?? null,
       folder_id: dto.folderId ?? null,
+      notebook_id: dto.notebookId ?? null,
+      sort_order: dto.sortOrder ?? 0,
       tags: dto.tags ?? [],
     };
 
@@ -57,6 +61,8 @@ export class NotesService extends BaseService<Note, NoteRow> {
     if (dto.title !== undefined) dbData.title = dto.title;
     if (dto.content !== undefined) dbData.content = dto.content;
     if (dto.folderId !== undefined) dbData.folder_id = dto.folderId;
+    if (dto.notebookId !== undefined) dbData.notebook_id = dto.notebookId;
+    if (dto.sortOrder !== undefined) dbData.sort_order = dto.sortOrder;
     if (dto.isPinned !== undefined) dbData.is_pinned = dto.isPinned;
     if (dto.tags !== undefined) dbData.tags = dto.tags;
 

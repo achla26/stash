@@ -10,6 +10,7 @@ export interface FolderRow {
   color: string | null;
   type: "link" | "note";
   parent_id: string | null;
+  notebook_id: string | null;
   is_pinned: boolean;
   is_trashed: boolean;
   created_at: string;

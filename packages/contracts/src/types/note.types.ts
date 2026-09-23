@@ -4,6 +4,8 @@ export interface Note {
   title: string;
   content: string | null;
   folderId: string | null;
+  notebookId: string | null;
+  sortOrder: number;
   isPinned: boolean;
   isTrashed: boolean;
   tags: string[];

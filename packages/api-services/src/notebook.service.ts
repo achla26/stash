@@ -2,22 +2,14 @@ import type { HttpClient, ApiSuccessResponse } from "./http-client";
 import type {
   CreateNotebookInput,
   UpdateNotebookInput,
-  CreateSectionInput,
-  UpdateSectionInput,
-  CreatePageInput,
-  UpdatePageInput,
 } from "@repo/contracts/schemas";
 import type {
   NotebookWithCounts,
-  NotebookWithSections,
+  NotebookWithChildren,
   Notebook,
-  SectionWithPages,
-  Section,
-  Page,
 } from "@repo/contracts/types";
 
 // ─── helper ──────────────────────────────────────────────────────────────────
-// Unwraps { data: T } response so every method stays clean
 function unwrap<T>(res: unknown): T {
   return (res as ApiSuccessResponse<T>).data;
 }
@@ -27,11 +19,10 @@ function unwrapList<T>(res: unknown): T[] {
 }
 
 // ─── factory ─────────────────────────────────────────────────────────────────
+// v2: sections/pages khatam — notebook ke andar folders + notes
 export function createNotebookService(client: HttpClient) {
   return {
-
-
-    /** Returns all notebooks with section/page counts */
+    /** Returns all notebooks with folder/note counts */
     async getNotebooks(): Promise<NotebookWithCounts[]> {
       const res = await client.get<ApiSuccessResponse<NotebookWithCounts[]>>(
         "/api/notebooks"
@@ -39,16 +30,12 @@ export function createNotebookService(client: HttpClient) {
       return unwrapList<NotebookWithCounts>(res);
     },
 
-    /**
-     * Returns a single notebook WITH its sections and each section's pages.
-     * The detail screen iterates `notebook.sections[].pages` so we need the
-     * richer type here.
-     */
-    async getNotebook(id: string): Promise<NotebookWithSections> {
-      const res = await client.get<ApiSuccessResponse<NotebookWithSections>>(
+    /** Returns a single notebook WITH its folders + notes */
+    async getNotebook(id: string): Promise<NotebookWithChildren> {
+      const res = await client.get<ApiSuccessResponse<NotebookWithChildren>>(
         `/api/notebooks/${id}`
       );
-      return unwrap<NotebookWithSections>(res);
+      return unwrap<NotebookWithChildren>(res);
     },
 
     async createNotebook(payload: CreateNotebookInput): Promise<Notebook> {
@@ -74,100 +61,6 @@ export function createNotebookService(client: HttpClient) {
     async deleteNotebook(id: string): Promise<string> {
       await client.delete(`/api/notebooks/${id}`);
       return id;
-    },
-
-    // =========================================================================
-    // Sections
-    // =========================================================================
-
-    /** Returns sections with their nested pages array */
-    async getSections(notebookId: string): Promise<SectionWithPages[]> {
-      const res = await client.get<ApiSuccessResponse<SectionWithPages[]>>(
-        `/api/notebooks/${notebookId}/sections`
-      );
-      return unwrapList<SectionWithPages>(res);
-    },
-
-    async createSection(
-      notebookId: string,
-      payload: CreateSectionInput
-    ): Promise<Section> {
-      const res = await client.post<ApiSuccessResponse<Section>>(
-        `/api/notebooks/${notebookId}/sections`,
-        payload
-      );
-      return unwrap<Section>(res);
-    },
-
-    async updateSection(
-      notebookId: string,
-      sectionId: string,
-      payload: UpdateSectionInput
-    ): Promise<Section> {
-      const res = await client.patch<ApiSuccessResponse<Section>>(
-        `/api/notebooks/${notebookId}/sections/${sectionId}`,
-        payload
-      );
-      return unwrap<Section>(res);
-    },
-
-    /** Soft-deletes the section and returns its id for cache removal */
-    async deleteSection(
-      notebookId: string,
-      sectionId: string
-    ): Promise<string> {
-      await client.delete(
-        `/api/notebooks/${notebookId}/sections/${sectionId}`
-      );
-      return sectionId;
-    },
-
-    // =========================================================================
-    // Pages
-    // =========================================================================
-
-    async getPages(notebookId: string, sectionId: string): Promise<Page[]> {
-      const res = await client.get<ApiSuccessResponse<Page[]>>(
-        `/api/notebooks/${notebookId}/sections/${sectionId}/pages`
-      );
-      return unwrapList<Page>(res);
-    },
-
-    /**
-     * Standalone page lookup — uses /api/pages/:id, NOT the nested notebook
-     * path, to avoid knowing notebookId / sectionId at call-site.
-     */
-    async getPage(pageId: string): Promise<Page> {
-      const res = await client.get<ApiSuccessResponse<Page>>(
-        `/api/pages/${pageId}`          // ← fixed: was /api/notebooks/pages/:id
-      );
-      return unwrap<Page>(res);
-    },
-
-    async createPage(
-      notebookId: string,
-      sectionId: string,
-      payload: CreatePageInput
-    ): Promise<Page> {
-      const res = await client.post<ApiSuccessResponse<Page>>(
-        `/api/notebooks/${notebookId}/sections/${sectionId}/pages`,
-        payload
-      );
-      return unwrap<Page>(res);
-    },
-
-    async updatePage(pageId: string, payload: UpdatePageInput): Promise<Page> {
-      const res = await client.patch<ApiSuccessResponse<Page>>(
-        `/api/pages/${pageId}`,         // ← fixed: was /api/notebooks/pages/:id
-        payload
-      );
-      return unwrap<Page>(res);
-    },
-
-    /** Soft-deletes the page and returns its id for cache removal */
-    async deletePage(pageId: string): Promise<string> {
-      await client.delete(`/api/pages/${pageId}`); // ← fixed: was /api/notebooks/pages/:id
-      return pageId;
     },
   };
 }

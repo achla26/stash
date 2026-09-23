@@ -12,14 +12,12 @@ exportRouter.get("/", async (c) => {
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
   const { id: uid } = await AuthService.verifyAccessToken(token);
 
-  const [folders, links, notes, notebooks, sections, pages, pads] =
+  const [folders, links, notes, notebooks, pads] =
     await Promise.all([
       db.select().from(schema.folders).where(eq(schema.folders.userId, uid)),
       db.select().from(schema.links).where(eq(schema.links.userId, uid)),
       db.select().from(schema.notes).where(eq(schema.notes.userId, uid)),
       db.select().from(schema.notebooks).where(eq(schema.notebooks.userId, uid)),
-      db.select().from(schema.sections).where(eq(schema.sections.userId, uid)),
-      db.select().from(schema.pages).where(eq(schema.pages.userId, uid)),
       db.select().from(schema.pads).where(eq(schema.pads.userId, uid)),
     ]);
 
@@ -30,8 +28,6 @@ exportRouter.get("/", async (c) => {
     links,
     notes,
     notebooks,
-    sections,
-    pages,
     pads,
   });
 });

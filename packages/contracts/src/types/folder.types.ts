@@ -6,6 +6,7 @@ export interface Folder {
   color: string | null;
   type: "link" | "note" | "task";
   parentId: string | null;
+  notebookId: string | null;
   isPinned: boolean;
   isTrashed: boolean;
   createdAt: string;

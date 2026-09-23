@@ -32,10 +32,7 @@ export type {
 export type {
   Notebook,
   NotebookWithCounts,
-  Section,
-  SectionWithPages,
-  Page,
-  NotebookWithSections
+  NotebookWithChildren,
 } from "./notebook.types";
 
 export type {

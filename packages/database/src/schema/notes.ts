@@ -6,6 +6,7 @@ import {
   uuid,
   boolean,
   jsonb,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const notes = pgTable("notes", {
@@ -16,6 +17,9 @@ export const notes = pgTable("notes", {
   content: jsonb("content"),
   // Tiptap ka JSON yahan store hoga
   folderId: uuid("folder_id"),
+  notebookId: uuid("notebook_id"),
+  // notebook ke andar note = purana "page"
+  sortOrder: integer("sort_order").notNull().default(0),
   tags: text("tags")
     .array()
     .notNull()

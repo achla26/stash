@@ -6,127 +6,85 @@ import {
   ArrowLeft,
   Plus,
   FileText,
-  Layers,
-  Trash2,
+  Folder,
   Loader2,
-  Pencil
+  Trash2,
 } from "lucide-react";
 
-import {
-  useNotebook,
-  useSections,
-  usePages,
-  useCreateSection,
-  useCreatePage,
-  useDeleteSection,
-  useDeletePage,
-  useUpdateSection,
-} from "@/hooks/use-notebooks";
+import { useNotebook, useDeleteNotebook } from "@/hooks/use-notebooks";
+import { useCreateFolder } from "@/hooks/use-folder";
+import { useCreateNote } from "@/hooks/use-notes";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { timeAgo } from "@/utils";
 import { toast } from "sonner";
-import type { SectionWithPages, Page } from "@repo/contracts/types";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function NotebookDetail() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const notebookId = params.id;
-
-  const { data: notebook, isLoading: notebookLoading } =
-    useNotebook(notebookId);
-  const { data: sections = [], isLoading: sectionsLoading } =
-    useSections(notebookId);
-
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-
-  // Auto-select first section
-  const selectedSectionId =
-    activeSection ?? (sections[0]?.id ?? null);
-
-  const { data: pages = [], isLoading: pagesLoading } = usePages(
-    notebookId,
-    selectedSectionId ?? ""
-  );
   const queryClient = useQueryClient();
 
-  const createSectionMutation = useCreateSection();
-  const createPageMutation = useCreatePage();
-  const deleteSectionMutation = useDeleteSection();
-  const deletePageMutation = useDeletePage();
-  const updateSectionMutation = useUpdateSection();
+  const { data: notebook, isLoading } = useNotebook(notebookId);
+  const createFolder = useCreateFolder();
+  const createNote = useCreateNote();
+  const deleteNotebook = useDeleteNotebook();
 
-  const handleCreateSection = () => {
-    const name = window.prompt("Section name:", "New Section");
-    if (!name?.trim()) return;
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [folderName, setFolderName] = useState("");
 
-    createSectionMutation.mutate(
-      { notebookId, name: name.trim(), icon: "📑" },
-      {
-        onSuccess: (section) => {
-          setActiveSection(section.id);
-          toast.success("Section created");
-        },
-        onError: () => toast.error("Failed to create section"),
-      }
-    );
-  };
-  const handleRenameSection = (sectionId: string, currentName: string) => {
-    const newName = window.prompt("Rename section:", currentName);
-    if (!newName?.trim() || newName.trim() === currentName) return;
-
-    updateSectionMutation.mutate(
-      { notebookId, sectionId, name: newName.trim() },
-      {
-        onSuccess: () => toast.success("Section renamed"),
-        onError: () => toast.error("Failed to rename section"),
-      }
-    );
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["notebook", notebookId] });
+    queryClient.invalidateQueries({ queryKey: ["notebooks"] });
   };
 
-  const handleCreatePage = () => {
-    if (!selectedSectionId) {
-      toast.error("Create a section first");
-      return;
-    }
-
-    createPageMutation.mutate(
-      { notebookId, sectionId: selectedSectionId },
-      {
-        onSuccess: async (page) => {
-          // Wait for invalidation to complete
-          await queryClient.invalidateQueries({ queryKey: ["notebook"] });
-          router.push(`/notebooks/${notebookId}/pages/${page.id}`);
-        },
-        onError: () => toast.error("Failed to create page"),
-      }
-    );
-  };
-
-  const handleDeleteSection = (sectionId: string) => {
-    deleteSectionMutation.mutate(
-      { notebookId, sectionId },
+  const handleCreateFolder = () => {
+    if (!folderName.trim()) return;
+    createFolder.mutate(
+      { name: folderName.trim(), type: "note", notebookId, icon: "📁" },
       {
         onSuccess: () => {
-          if (activeSection === sectionId) setActiveSection(null);
-          toast.success("Section deleted");
+          setFolderDialogOpen(false);
+          setFolderName("");
+          invalidate();
+          toast.success("Folder created");
         },
-        onError: () => toast.error("Failed to delete section"),
+        onError: (e) => toast.error((e as Error).message),
       }
     );
   };
 
-  const handleDeletePage = (pageId: string) => {
-    deletePageMutation.mutate(pageId, {
-      onSuccess: () => toast.success("Page deleted"),
-      onError: () => toast.error("Failed to delete page"),
+  const handleCreateNote = () => {
+    createNote.mutate(
+      { title: "Untitled", notebookId },
+      {
+        onSuccess: (note) => {
+          invalidate();
+          router.push(`/notes/${note.id}`);
+        },
+        onError: (e) => toast.error((e as Error).message),
+      }
+    );
+  };
+
+  const handleDelete = () => {
+    if (!window.confirm("Delete this notebook?")) return;
+    deleteNotebook.mutate(notebookId, {
+      onSuccess: () => router.push("/notebooks"),
     });
   };
 
-  if (notebookLoading || sectionsLoading) {
+  if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -134,240 +92,158 @@ export function NotebookDetail() {
 
   if (!notebook) {
     return (
-      <div className="mx-auto max-w-4xl py-12 text-center">
-        <p className="text-destructive">Notebook not found</p>
+      <div className="py-24 text-center text-sm text-muted-foreground">
+        Notebook not found.
       </div>
     );
   }
 
+  const folders = notebook.folders ?? [];
+  const notes = notebook.notes ?? [];
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={() => router.push("/notebooks")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-lg"
-            style={{ backgroundColor: `${notebook.coverColor}20` }}
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/notebooks")}
           >
-            <span className="text-xl">{notebook.icon}</span>
-          </div>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <span
+            className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
+            style={{ backgroundColor: `${notebook.coverColor}22` }}
+          >
+            {notebook.icon}
+          </span>
           <div>
-            <h2 className="text-xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-foreground">
               {notebook.name}
-            </h2>
+            </h1>
             {notebook.description && (
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 {notebook.description}
               </p>
             )}
           </div>
         </div>
+        <Button variant="ghost" size="icon" onClick={handleDelete}>
+          <Trash2 className="h-4 w-4 text-muted-foreground" />
+        </Button>
       </div>
 
-      {/* Main Layout */}
-      <div className="flex gap-6">
-        {/* Left Sidebar — Sections */}
-        <div className="w-64 shrink-0 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">
-              Sections
-            </h3>
-            <button
-              onClick={handleCreateSection}
-              disabled={createSectionMutation.isPending}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              title="Add section"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-
-          {sections.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted-foreground">
-              No sections yet
-            </p>
+      {/* Actions */}
+      <div className="mb-8 flex gap-2">
+        <Button
+          onClick={handleCreateNote}
+          disabled={createNote.isPending}
+          className="gap-2"
+        >
+          {createNote.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <div className="space-y-1">
-              {sections.map((section) => (
-                <SectionItem
-                  key={section.id}
-                  section={section}
-                  isActive={selectedSectionId === section.id}
-                  onSelect={() => setActiveSection(section.id)}
-                  onDelete={() => handleDeleteSection(section.id)}
-                  onRename={() => handleRenameSection(section.id, section.name)}
-                />
-              ))}
-            </div>
+            <Plus className="h-4 w-4" />
           )}
-        </div>
-
-        {/* Right Content — Pages */}
-        <div className="flex-1 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">
-              Pages
-            </h3>
-            <button
-              onClick={handleCreatePage}
-              disabled={
-                !selectedSectionId || createPageMutation.isPending
-              }
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white gradient-button disabled:opacity-50"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New Page
-            </button>
-          </div>
-
-          {!selectedSectionId ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Select or create a section to see pages
-            </p>
-          ) : pagesLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : pages.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No pages in this section yet
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {pages.map((page) => (
-                <PageItem
-                  key={page.id}
-                  page={page}
-                  notebookId={notebookId}
-                  onDelete={() => handleDeletePage(page.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          New Note
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setFolderDialogOpen(true)}
+          className="gap-2"
+        >
+          <Folder className="h-4 w-4" />
+          New Folder
+        </Button>
       </div>
-    </div>
-  );
-}
 
-/* ===== Sub Components ===== */
-
-function SectionItem({
-  section,
-  isActive,
-  onSelect,
-  onDelete,
-  onRename,
-}: {
-  section: SectionWithPages;
-  isActive: boolean;
-  onSelect: () => void;
-  onDelete: () => void;
-  onRename: () => void;
-}) {
-  return (
-    <div
-      onClick={onSelect}
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        onRename();
-      }}
-      className={cn(
-        "group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-all",
-        isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+      {/* Folders (= old sections) */}
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        Folders · {folders.length}
+      </h2>
+      {folders.length === 0 ? (
+        <p className="mb-8 text-sm text-muted-foreground">
+          No folders yet — folders inside a notebook work like sections.
+        </p>
+      ) : (
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {folders.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => router.push(`/folders/${f.id}`)}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md"
+            >
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-lg"
+                style={{ backgroundColor: `${f.color ?? "#6366f1"}22`, color: f.color ?? "#6366f1" }}
+              >
+                <Folder className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {f.name}
+              </span>
+            </button>
+          ))}
+        </div>
       )}
-    >
-      <div className="flex items-center gap-2">
-        <span>{section.icon}</span>
-        <span className="font-medium">{section.name}</span>
-        <span className="text-xs opacity-60">
-          {section.pagesCount}
-        </span>
-      </div>
 
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRename();
-          }}
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
-          title="Rename section"
-        >
-          <Pencil className="h-3 w-3" />
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
-          title="Delete section"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      </div>
-    </div>
-  );
-}
-function PageItem({
-  page,
-  notebookId,
-  onDelete,
-}: {
-  page: Page;
-  notebookId: string;
-  onDelete: () => void;
-}) {
-  const router = useRouter();
-
-  return (
-    <div
-      onClick={() =>
-        router.push(`/notebooks/${notebookId}/pages/${page.id}`)
-      }
-      className="group flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm"
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground" />
-          <h4 className="font-medium text-foreground">
-            {page.title || "Untitled"}
-          </h4>
-          {page.isPinned && (
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-              Pinned
-            </span>
-          )}
+      {/* Notes (= old pages) */}
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        Notes · {notes.length}
+      </h2>
+      {notes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No notes in this notebook yet.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {notes.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => router.push(`/notes/${n.id}`)}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <FileText className="h-4 w-4" />
+              </span>
+              <span className="flex-1">
+                <span className="block text-sm font-semibold text-foreground">
+                  {n.title}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Updated {timeAgo(n.updatedAt)}
+                </span>
+              </span>
+            </button>
+          ))}
         </div>
-        {page.content && (
-          <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-            {page.content.slice(0, 100)}
-          </p>
-        )}
-        <span className="mt-2 block text-xs text-muted-foreground">
-          {timeAgo(page.updatedAt)}
-        </span>
-      </div>
+      )}
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {/* New Folder dialog */}
+      <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>New Folder</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Folder name…"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFolderDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateFolder} disabled={createFolder.isPending}>
+              {createFolder.isPending ? "Creating…" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

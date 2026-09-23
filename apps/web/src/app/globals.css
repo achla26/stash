@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================
-   LIFESYNC THEME - Light & Dark Mode Support
+   LIFESYNC THEME - iOS-Inspired
    ============================================ */
 
 :root {
@@ -21,8 +21,8 @@
   /* Primary Colors */
   --primary: #007AFF;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #0051D5;
-  --primary-glow: rgba(0, 122, 255, 0.1);
+  --primary-hover: #0062CC;
+  --primary-glow: rgba(0, 122, 255, 0.18);
 
   /* Secondary Colors */
   --secondary: #5856D6;
@@ -68,15 +68,15 @@
   --sidebar-border: #E9E9EF;
   --sidebar-ring: #007AFF;
 
-  /* Content-type accents */
-  --accent-note: #3b82f6;
-  --accent-link: #22c55e;
-  --accent-notebook: #8b5cf6;
-  --accent-page: #f97316;
+  /* Content-type accents — iOS system colors */
+  --accent-note: #FF9500;      /* orange */
+  --accent-link: #34C759;      /* green */
+  --accent-notebook: #5856D6;  /* indigo */
+  --accent-page: #5AC8FA;      /* light blue */
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-  --gradient-glow: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%);
+  /* Gradients — flat (no gradient) */
+  --gradient-primary: #007AFF;
+  --gradient-glow: #007AFF;
 
   /* Chart Colors */
   --chart-1: #007AFF;
@@ -103,8 +103,8 @@
   /* Primary Colors */
   --primary: #0A84FF;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #409CFF;
-  --primary-glow: rgba(10, 132, 255, 0.15);
+  --primary-hover: #3D9BFF;
+  --primary-glow: rgba(10, 132, 255, 0.28);
 
   /* Secondary Colors */
   --secondary: #5E5CE6;
@@ -150,9 +150,15 @@
   --sidebar-border: #38383A;
   --sidebar-ring: #0A84FF;
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
-  --gradient-glow: linear-gradient(135deg, rgba(10, 132, 255, 0.08) 0%, rgba(94, 92, 230, 0.08) 100%);
+  /* Content-type accents — brighter for dark */
+  --accent-note: #FF9F0A;
+  --accent-link: #30D158;
+  --accent-notebook: #5E5CE6;
+  --accent-page: #64D2FF;
+
+  /* Gradients — flat (no gradient) */
+  --gradient-primary: #0A84FF;
+  --gradient-glow: #0A84FF;
 
   /* Chart Colors */
   --chart-1: #0A84FF;
@@ -233,6 +239,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Content-type accents */
+  --color-accent-note: var(--accent-note);
+  --color-accent-link: var(--accent-link);
+  --color-accent-notebook: var(--accent-notebook);
+  --color-accent-page: var(--accent-page);
+
   /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -259,6 +271,8 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   /* Scrollbar */
@@ -289,64 +303,66 @@
    ============================================ */
 
 @layer utilities {
-  /* Glass Morphism */
+  /* Glass Morphism — Apple-accurate */
   .glass {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
     border: 1px solid var(--border);
   }
 
   :root .glass {
-    background: rgba(255, 255, 255, 0.8);
+    background: color-mix(in srgb, var(--card) 72%, transparent);
   }
 
   .dark .glass {
-    background: rgba(44, 44, 46, 0.8);
+    background: color-mix(in srgb, var(--card) 72%, transparent);
   }
 
-  /* Card Hover */
+  /* Card Hover — subtle Apple-like lift */
   .card-hover {
-    @apply transition-all duration-200;
+    @apply transition-all duration-200 ease-out;
   }
 
   .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px var(--border-glow);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--border-glow);
   }
 
-  /* Gradient Text */
+  /* Gradient Text — name kept, flat iOS blue */
   .gradient-text {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary);
   }
 
-  /* Gradient Button */
+  /* Gradient Button — name kept, flat iOS blue with hover */
   .gradient-button {
-    background: var(--gradient-primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
     border: none;
-    @apply transition-all duration-200;
+    @apply transition-all duration-150 ease-out;
   }
 
   .gradient-button:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px var(--primary-glow);
+    background: var(--primary-hover);
   }
 
   .gradient-button:active {
-    transform: translateY(0);
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .gradient-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   /* Note Card */
   .note-card {
-    @apply rounded-lg border border-border bg-card transition-all duration-200;
+    @apply rounded-xl border border-border bg-card transition-all duration-200 ease-out;
   }
 
   .note-card:hover {
     border-color: var(--primary);
-    box-shadow: 0 4px 12px var(--primary-glow);
+    box-shadow: 0 4px 16px var(--primary-glow);
   }
 
   /* App Scrollbar */

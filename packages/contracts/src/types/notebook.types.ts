@@ -1,3 +1,6 @@
+import type { Folder } from "./folder.types";
+import type { Note } from "./note.types";
+
 export interface Notebook {
   id: string;
   userId: string;
@@ -11,48 +14,14 @@ export interface Notebook {
   createdAt: string;
   updatedAt: string;
 }
+
+// v2: sections/pages khatam — notebook ke andar folders + notes
 export interface NotebookWithCounts extends Notebook {
-  sectionsCount: number;
-  pagesCount: number;
+  foldersCount: number;
+  notesCount: number;
 }
 
-export interface NotebookWithSections extends Notebook {
-  sections: SectionWithPages[];
+export interface NotebookWithChildren extends Notebook {
+  folders: Folder[];
+  notes: Note[];
 }
-
-
-export interface Section {
-  id: string;
-  notebookId: string;
-  userId: string;
-  name: string;
-  icon?: string | null;
-  sortOrder?: number;
-  isTrashed: boolean;
-  createdAt: string;
-  updatedAt: string;
-  pages?: Page[];           
-}
-
-
-export interface Page {
-  id: string;
-  notebookId: string;
-  sectionId: string;
-  userId: string;
-  title: string;
-  content?: string;
-  sortOrder?: number;
-  isPinned?: boolean;
-  isTrashed: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-
-
-export interface SectionWithPages extends Section {
-  pages: Page[];
-  pagesCount: number;
-}
-

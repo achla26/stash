@@ -12,6 +12,8 @@ import {
 import { useRouter } from "next/navigation";
 
 import { useCreateNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
+import { useFolders } from "@/hooks/use-folder";
+import { useNotebooks } from "@/hooks/use-notebooks";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "../shared/search-bar";
 import { FilterChip } from "../shared/filter-chips";
@@ -38,8 +40,21 @@ export function NotesContent() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: notes = [], isLoading, isError, error } = useNotes();
+  const { data: folders = [] } = useFolders();
+  const { data: notebooks = [] } = useNotebooks();
   const createNoteMutation = useCreateNote();
   const deleteNoteMutation = useDeleteNote();
+
+  // v2: note folder me ho ya notebook me — placement ka asli naam
+  const placementLabel = (note: Note): string | null => {
+    if (note.folderId) {
+      return folders.find((f) => f.id === note.folderId)?.name ?? "Folder";
+    }
+    if (note.notebookId) {
+      return notebooks.find((n) => n.id === note.notebookId)?.name ?? "Notebook";
+    }
+    return null;
+  };
 
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
@@ -47,7 +62,7 @@ export function NotesContent() {
 
       const matchesFolder =
         activeFolder === "All Notes" ||
-        (note.folderId === null
+        (!note.folderId && !note.notebookId
           ? activeFolder === "Uncategorized"
           : false);
 
@@ -138,6 +153,7 @@ export function NotesContent() {
             <NoteCard
               key={note.id}
               note={note}
+              placement={placementLabel(note)}
               onOpen={() => router.push(`/notes/${note.id}`)}
               onDelete={() => handleDeleteNote(note.id)}
               isDeleting={deleteNoteMutation.isPending}
@@ -153,14 +169,15 @@ export function NotesContent() {
 
 interface NoteCardProps {
   note: Note;
+  placement: string | null;
   onOpen: () => void;
   onDelete: () => void;
   isDeleting: boolean;
 }
 
-function NoteCard({ note, onOpen, onDelete, isDeleting }: NoteCardProps) {
+function NoteCard({ note, placement, onOpen, onDelete, isDeleting }: NoteCardProps) {
   const preview = getPreview(note.content);
-  const isUncategorized = !note.folderId;
+  const isUncategorized = !placement;
 
   return (
     <div
@@ -183,7 +200,7 @@ function NoteCard({ note, onOpen, onDelete, isDeleting }: NoteCardProps) {
               )}
             >
               <Folder className="h-3 w-3" />
-              {isUncategorized ? "Uncategorized" : "Folder"}
+              {isUncategorized ? "Uncategorized" : placement}
             </span>
           </div>
 

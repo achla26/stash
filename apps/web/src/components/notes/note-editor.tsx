@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Trash2, Check, Loader2 } from "lucide-react";
 
 import { useDeleteNote, useNote, useUpdateNote } from "@/hooks/use-notes";
+import { useFolders } from "@/hooks/use-folder";
+import { useNotebooks } from "@/hooks/use-notebooks";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +26,8 @@ export function NoteEditor() {
   const { data: note, isLoading, isError, error } = useNote(noteId);
   const updateNoteMutation = useUpdateNote();
   const deleteNoteMutation = useDeleteNote();
+  const { data: folders = [] } = useFolders();
+  const { data: notebooks = [] } = useNotebooks();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -95,6 +99,16 @@ export function NoteEditor() {
     });
   };
 
+  // v2 placement: note loose / folder / notebook me move karo
+  const handleMove = (value: string) => {
+    if (!noteId) return;
+    let folderId: string | null = null;
+    let notebookId: string | null = null;
+    if (value.startsWith("f:")) folderId = value.slice(2);
+    if (value.startsWith("nb:")) notebookId = value.slice(2);
+    updateNoteMutation.mutate({ id: noteId, folderId, notebookId });
+  };
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl py-12">
@@ -148,6 +162,34 @@ export function NoteEditor() {
         </div>
 
         <div className="flex items-center gap-2">
+          <select
+            aria-label="Note location"
+            value={
+              note.notebookId
+                ? `nb:${note.notebookId}`
+                : note.folderId
+                  ? `f:${note.folderId}`
+                  : "loose"
+            }
+            onChange={(e) => handleMove(e.target.value)}
+            className="h-9 max-w-[180px] rounded-lg border border-border bg-card px-2 text-sm text-muted-foreground outline-none"
+          >
+            <option value="loose">Loose note</option>
+            {folders
+              .filter((f) => !f.isTrashed)
+              .map((f) => (
+                <option key={f.id} value={`f:${f.id}`}>
+                  Folder: {f.name}
+                </option>
+              ))}
+            {notebooks
+              .filter((n) => !n.isTrashed)
+              .map((n) => (
+                <option key={n.id} value={`nb:${n.id}`}>
+                  Notebook: {n.name}
+                </option>
+              ))}
+          </select>
           <Button
             variant="outline"
             onClick={handleDelete}

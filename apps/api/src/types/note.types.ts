@@ -8,6 +8,8 @@ export interface NoteRow {
   title: string;
   content: string | null;
   folder_id: string | null;
+  notebook_id: string | null;
+  sort_order: number;
   tags:string[];
   is_pinned: boolean;
   is_trashed: boolean;

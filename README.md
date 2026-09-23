@@ -102,9 +102,6 @@ Without global `turbo`:
 npx turbo dev --filter=web
 pnpm exec turbo dev --filter=web
 pnpm exec turbo dev --filter=web
-
-pnpm --filter stash-web dev
-pnpm --filter @repo/api dev
 ```
 
 ### Remote Caching

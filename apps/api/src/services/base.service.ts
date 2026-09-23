@@ -34,8 +34,6 @@ const tables: Record<string, any> = {
   notes: schema.notes,
   folders: schema.folders,
   notebooks: schema.notebooks,
-  sections: schema.sections,
-  pages: schema.pages,
   pads: schema.pads,
 };
 

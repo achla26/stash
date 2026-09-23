@@ -90,11 +90,11 @@ export function NotebookCard({
       <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <Layers className="h-3 w-3" />
-          {notebook.sectionsCount} sections
+          {notebook.foldersCount} folders
         </div>
         <div className="flex items-center gap-1">
           <FileText className="h-3 w-3" />
-          {notebook.pagesCount} pages
+          {notebook.notesCount} notes
         </div>
       </div>
 

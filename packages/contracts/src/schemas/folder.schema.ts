@@ -6,6 +6,7 @@ export const createFolderSchema = z.object({
   icon: z.string().optional().default("📁"),
   type: z.enum(["link", "note", "task"]),
   parentId: z.string().uuid().optional().nullable(),
+  notebookId: z.string().uuid().optional().nullable(),
 });
 
 export const updateFolderSchema = createFolderSchema.partial();

@@ -21,6 +21,7 @@ export class FoldersService extends BaseService<Folder, FolderRow> {
       color: row.color,
       type: row.type,
       parentId: row.parent_id,
+      notebookId: row.notebook_id,
       isPinned: row.is_pinned ?? false,
       isTrashed: row.is_trashed ?? false,
       createdAt: row.created_at,
@@ -39,6 +40,7 @@ export class FoldersService extends BaseService<Folder, FolderRow> {
       color: dto.color ?? null,
       type: dto.type,
       parent_id: dto.parentId ?? null,
+      notebook_id: dto.notebookId ?? null,
     };
 
     return super.create(userId, dbData);
@@ -58,6 +60,7 @@ export class FoldersService extends BaseService<Folder, FolderRow> {
     if (dto.color !== undefined) dbData.color = dto.color;
     if (dto.type !== undefined) dbData.type = dto.type;
     if (dto.parentId !== undefined) dbData.parent_id = dto.parentId;
+    if (dto.notebookId !== undefined) dbData.notebook_id = dto.notebookId;
 
     return super.update(id, userId, dbData);
   }

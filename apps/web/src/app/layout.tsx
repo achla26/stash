@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -57,20 +56,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
 
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`(function() {
-            try {
-              var theme = localStorage.getItem('theme') || 'system';
-              var resolved = theme;
-              if (theme === 'system') {
-                resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-              }
-              document.documentElement.classList.add(resolved);
-            } catch (e) {
-              document.documentElement.classList.add('dark');
-            }
-          })();`}
-        </Script>
         <SWRegister />
         <ThemeProvider>
           <QueryProvider>

@@ -9,7 +9,6 @@ import links from "./routes/links";
 import folders from "./routes/folders"; 
 import notebooks from "./routes/notebooks"; 
 import pads, { protectedPadRoutes } from "./routes/pads";
-import pages from "./routes/pages";
 import dashboard from "./routes/dashboard";
 import exportRouter from "./routes/export";
 
@@ -57,7 +56,6 @@ api.route("/notes", notes);
 api.route("/links", links);
 api.route("/folders", folders);
 api.route("/notebooks", notebooks);
-api.route("/pages", pages);
 api.route("/dashboard", dashboard);
 api.route("/export", exportRouter);
 

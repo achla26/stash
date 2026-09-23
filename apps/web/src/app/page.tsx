@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RootPage() {
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    window.location.replace(token ? "/dashboard" : "/login");
-  }, []);
+  const router = useRouter();
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <p className="text-sm text-muted-foreground">Loading Stash...</p>
-    </main>
-  );
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+    router.replace(token ? "/dashboard" : "/login");
+  }, [router]);
+
+  return null;
 }

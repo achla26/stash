@@ -40,16 +40,8 @@ export {
 export {
   createNotebookSchema,
   updateNotebookSchema,
-  createSectionSchema,
-  updateSectionSchema,
-  createPageSchema,
-  updatePageSchema,
   type CreateNotebookInput,
   type UpdateNotebookInput,
-  type CreateSectionInput,
-  type UpdateSectionInput,
-  type CreatePageInput,
-  type UpdatePageInput,
 } from "./notebook.schema";
 
 export {

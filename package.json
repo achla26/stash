@@ -1,5 +1,5 @@
 {
-  "name": "stash",
+  "name": "lifesync",
   "private": true,
   "scripts": {
     "build": "turbo run build",

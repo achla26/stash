@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -40,7 +40,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
 
-  useEffect(() => {
+  // useLayoutEffect = paint se pehle class lagti hai, no flash, no script
+  useLayoutEffect(() => {
     const stored = getStoredTheme();
     setThemeState(stored);
     const resolved = applyTheme(stored);

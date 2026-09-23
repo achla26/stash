@@ -1,10 +1,10 @@
 {
-  "name": "stash-web",
+  "name": "lifesync-web",
   "version": "0.1.0",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @repo/api build && next dev --port 3000",
+    "dev": "next dev --port 3000",
     "build": "pnpm --filter @repo/api build && next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
