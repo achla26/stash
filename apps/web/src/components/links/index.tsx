@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link2 } from "lucide-react";
 
 import {
+  useCreateLink,
   useDeleteLink,
   useLinks,
   useTogglePinLink,
   useMoveLink,
 } from "@/hooks/use-links";
+import { toast } from "sonner";
 import { CreateLinkDialog } from "@/components/links/create-link-dialog";
 import { EditLinkDialog } from "@/components/links/edit-link-dialog";
 import { CollectionBar } from "@/components/links/collection-bar";
@@ -36,7 +38,27 @@ export function LinksContent() {
     refetch,
   } = useLinks();
 
+  const createLinkMutation = useCreateLink();
   const deleteLinkMutation = useDeleteLink();
+
+  // Share Target: login ke baad pending shared link save karo
+  useEffect(() => {
+    const pending = localStorage.getItem("stash_pending_share");
+    if (!pending) return;
+    localStorage.removeItem("stash_pending_share");
+    try {
+      const { url, title } = JSON.parse(pending) as { url?: string; title?: string };
+      if (url) {
+        createLinkMutation.mutate(
+          { url, title: title || undefined, description: undefined },
+          { onSuccess: () => toast.success("Shared link saved!") }
+        );
+      }
+    } catch {
+      // ignore malformed pending share
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const togglePinMutation = useTogglePinLink();
   const moveMutation = useMoveLink();
 

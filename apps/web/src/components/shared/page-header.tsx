@@ -21,12 +21,14 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-        className
+        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        className,
       )}
     >
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+      <div className="min-w-0">
+        <h2 className="truncate text-2xl font-bold tracking-tight text-foreground">
+          {title}
+        </h2>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}
@@ -34,12 +36,13 @@ export function PageHeader({
 
       {actionLabel && onAction && (
         <button
+          type="button"
           onClick={onAction}
           disabled={isActionPending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:self-auto"
         >
           <Plus className="h-4 w-4" />
-          {isActionPending ? "Creating..." : actionLabel}
+          {isActionPending ? "Creating…" : actionLabel}
         </button>
       )}
     </div>

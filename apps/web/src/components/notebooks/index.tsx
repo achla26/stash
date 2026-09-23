@@ -2,18 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 import {
   useNotebooks,
   useDeleteNotebook,
   useUpdateNotebook,
-  useTogglePinNotebook,
 } from "@/hooks/use-notebooks";
 import { CreateNotebookDialog } from "./create-notebook-dialog";
-import { EditNotebookDialog } from "./edit-notebook-dialog";
-import type { NotebookWithCounts } from "@repo/contracts/types";
 import { NotebookCard } from "./notebook-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { SearchBar } from "@/components/shared/search-bar";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
@@ -23,13 +21,16 @@ export function NotebooksContent() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<NotebookWithCounts | null>(null);
 
-  const { data: notebooks = [], isLoading, isError, error, refetch } =
-    useNotebooks();
+  const {
+    data: notebooks = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useNotebooks();
   const deleteMutation = useDeleteNotebook();
   const updateMutation = useUpdateNotebook();
-  const pinMutation = useTogglePinNotebook();
 
   const filteredNotebooks = useMemo(() => {
     return notebooks.filter((nb) => {
@@ -72,7 +73,7 @@ export function NotebooksContent() {
   };
 
   const handlePin = (id: string) => {
-    pinMutation.mutate(id);
+    updateMutation.mutate({ id });
   };
 
   if (isLoading) {
@@ -97,21 +98,12 @@ export function NotebooksContent() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Notebooks</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {notebooks.length} notebooks
-          </p>
-        </div>
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white bg-primary"
-        >
-          <Plus className="h-4 w-4" />
-          New Notebook
-        </button>
-      </div>
+      <PageHeader
+        title="Notebooks"
+        description={`${notebooks.length} notebooks`}
+        actionLabel="New Notebook"
+        onAction={() => setIsCreateOpen(true)}
+      />
 
       {/* Search */}
       <SearchBar
@@ -138,9 +130,9 @@ export function NotebooksContent() {
               onOpen={() => router.push(`/notebooks/${notebook.id}`)}
               onDelete={() => handleDelete(notebook.id, notebook.name)}
               onPin={() => handlePin(notebook.id)}
-              onEdit={() => setEditing(notebook)}
+              onEdit={() => router.push(`/notebooks/${notebook.id}`)}
               isDeleting={deleteMutation.isPending}
-              isPinning={pinMutation.isPending}
+              isPinning={updateMutation.isPending}
             />
           ))}
         </div>
@@ -150,13 +142,6 @@ export function NotebooksContent() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       />
-
-      {editing && (
-        <EditNotebookDialog
-          notebook={editing}
-          onClose={() => setEditing(null)}
-        />
-      )}
     </div>
   );
 }

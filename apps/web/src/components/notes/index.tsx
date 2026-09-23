@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  Plus,
   Folder,
   Calendar,
   Trash2,
@@ -18,6 +17,7 @@ import { useCreateNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
 import { useFolders } from "@/hooks/use-folder";
 import { useNotebooks } from "@/hooks/use-notebooks";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "../shared/page-header";
 import { SearchBar } from "../shared/search-bar";
 import { FilterChip } from "../shared/filter-chips";
 import { EmptyState } from "../shared/empty-state";
@@ -122,19 +122,12 @@ export function NotesContent() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-          Notes
-        </h2>
-        <button
-          onClick={handleCreateNote}
-          disabled={createNoteMutation.isPending}
-          className="bg-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" />
-          {createNoteMutation.isPending ? "Creating..." : "New Note"}
-        </button>
-      </div>
+      <PageHeader
+        title="Notes"
+        actionLabel="New Note"
+        onAction={handleCreateNote}
+        isActionPending={createNoteMutation.isPending}
+      />
 
       {/* Search */}
       <SearchBar
@@ -195,8 +188,7 @@ export function NotesContent() {
               onCancelDelete={() => setPendingDeleteId(null)}
               onConfirmDelete={() => handleDeleteNote(note.id)}
               isDeleting={
-                deleteNoteMutation.isPending &&
-                pendingDeleteId === note.id
+                deleteNoteMutation.isPending && pendingDeleteId === note.id
               }
             />
           ))}
@@ -249,7 +241,9 @@ function NoteCard({
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `color-mix(in srgb, ${accent} 15%, transparent)` }}
+          style={{
+            backgroundColor: `color-mix(in srgb, ${accent} 15%, transparent)`,
+          }}
         >
           <FileText className="h-5 w-5" style={{ color: accent }} />
         </div>
@@ -262,7 +256,7 @@ function NoteCard({
                 type="button"
                 onClick={onCancelDelete}
                 aria-label="Cancel delete"
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -271,7 +265,7 @@ function NoteCard({
                 onClick={onConfirmDelete}
                 disabled={isDeleting}
                 aria-label="Confirm delete"
-                className="rounded-md bg-destructive/10 p-1.5 text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+                className="rounded-md bg-destructive/10 p-1.5 text-destructive transition-colors hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               >
                 <Check className="h-4 w-4" />
               </button>
@@ -281,7 +275,7 @@ function NoteCard({
               type="button"
               onClick={onRequestDelete}
               aria-label="Delete note"
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -297,9 +291,7 @@ function NoteCard({
         <h3 className="line-clamp-1 font-semibold text-foreground transition-colors group-hover:text-primary">
           {note.title || "Untitled"}
         </h3>
-        <p className="line-clamp-2 text-sm text-muted-foreground">
-          {preview}
-        </p>
+        <p className="line-clamp-2 text-sm text-muted-foreground">{preview}</p>
       </Link>
 
       {/* Footer */}
