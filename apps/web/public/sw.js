@@ -1,7 +1,10 @@
 /* Stash service worker — offline shell + offline reading */
-const SHELL_CACHE = "stash-shell-v1";
-const PAGE_CACHE = "stash-pages-v1";
-const API_CACHE = "stash-api-v1";
+
+// Bump this on every release to bust old caches
+const VERSION = "v2";
+const SHELL_CACHE = `stash-shell-${VERSION}`;
+const PAGE_CACHE = `stash-pages-${VERSION}`;
+const API_CACHE = `stash-api-${VERSION}`;
 
 const SHELL = [
   "/",
@@ -12,6 +15,13 @@ const SHELL = [
   "/icons/icon-512.png",
   "/apple-icon.png",
 ];
+
+// Listen for SKIP_WAITING message from the page — activate immediately
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -55,24 +65,33 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
+  // Never let the SW serve a stale Next.js build — always hit network for
+  // build output and HTML navigations.
+  const isNextAsset =
+    url.pathname.startsWith("/_next/") ||
+    url.pathname.startsWith("/static/");
+
   // App navigations: network-first, fallback to cached page (offline reading)
-  if (req.mode === "navigate") {
+  if (req.mode === "navigate" || isNextAsset) {
     event.respondWith(
       (async () => {
         try {
           const res = await fetch(req);
-          if (res.ok) {
+          if (res.ok && req.mode === "navigate") {
             const cache = await caches.open(PAGE_CACHE);
             cache.put(req, res.clone());
             trimCache(PAGE_CACHE, 40);
           }
           return res;
         } catch {
-          const cached =
-            (await caches.match(req)) ||
-            (await caches.match("/dashboard")) ||
-            (await caches.match("/login"));
-          if (cached) return cached;
+          // Offline fallback only for navigations
+          if (req.mode === "navigate") {
+            const cached =
+              (await caches.match(req)) ||
+              (await caches.match("/dashboard")) ||
+              (await caches.match("/login"));
+            if (cached) return cached;
+          }
           return new Response("Offline", { status: 503 });
         }
       })()
@@ -80,7 +99,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // API reads: stale-while-revalidate (offline reading of opened data)
+  // API reads: network-first, cache as offline fallback
   if (url.pathname.startsWith("/api/")) {
     if (
       url.pathname.startsWith("/api/auth") ||
@@ -88,8 +107,6 @@ self.addEventListener("fetch", (event) => {
     ) {
       return; // never cache auth/export
     }
-    // Network-first so data is never stale while online;
-    // cache only as offline fallback.
     event.respondWith(
       (async () => {
         const cache = await caches.open(API_CACHE);
@@ -115,7 +132,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first
+  // Static assets (icons, images, fonts): cache-first
   event.respondWith(
     (async () => {
       const cached = await caches.match(req);
