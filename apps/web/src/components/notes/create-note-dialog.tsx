@@ -112,6 +112,8 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
     },
   });
 
+  const titleField = register("title");
+
   const selectedFolderId = watch("folderId");
   const selectedFolder = folders.find((f) => f.id === selectedFolderId);
 
@@ -211,11 +213,11 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
         >
           {/* Title */}
           <input
+            {...titleField}
             ref={(el) => {
               titleRef.current = el;
-              register("title").ref(el);
+              titleField.ref(el);
             }}
-            {...register("title")}
             placeholder="Untitled"
             className="w-full border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/40 sm:text-3xl"
             spellCheck={false}

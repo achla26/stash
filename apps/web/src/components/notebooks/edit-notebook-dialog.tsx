@@ -173,11 +173,11 @@ export function EditNotebookDialog({
             {/* Name + description */}
             <div className="min-w-0 flex-1">
               <input
+                {...register("name")}
                 ref={(el) => {
                   nameRef.current = el;
                   register("name").ref(el);
                 }}
-                {...register("name")}
                 placeholder="Untitled notebook"
                 className="w-full border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/40"
                 spellCheck={false}

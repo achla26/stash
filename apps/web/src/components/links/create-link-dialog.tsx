@@ -65,7 +65,7 @@ function FolderPopoverItem({
   onClick,
 }: {
   label: string;
-  emoji?: string;
+  emoji?: string | null;
   isActive: boolean;
   onClick: () => void;
 }) {
