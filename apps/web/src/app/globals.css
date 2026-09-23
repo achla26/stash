@@ -69,10 +69,14 @@
   --sidebar-ring: #007AFF;
 
   /* Content-type accents — iOS system colors */
-  --accent-note: #FF9500;      /* orange */
-  --accent-link: #34C759;      /* green */
-  --accent-notebook: #5856D6;  /* indigo */
-  --accent-page: #5AC8FA;      /* light blue */
+  --accent-note: #FF9500;
+  /* orange */
+  --accent-link: #34C759;
+  /* green */
+  --accent-notebook: #5856D6;
+  /* indigo */
+  --accent-page: #5AC8FA;
+  /* light blue */
 
   /* Gradients — flat (no gradient) */
   --gradient-primary: #007AFF;
@@ -280,13 +284,16 @@
     width: 8px;
     height: 8px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 4px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: var(--muted-foreground);
   }
@@ -303,6 +310,7 @@
    ============================================ */
 
 @layer utilities {
+
   /* Glass Morphism — Apple-accurate */
   .glass {
     backdrop-filter: saturate(180%) blur(20px);
@@ -382,5 +390,24 @@
   .app-scrollbar::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 3px;
+  }
+
+  .card-lift {
+    @apply transition-all duration-200;
+  }
+
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--primary-glow);
+  }
+
+  .card-lift:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ring);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--border-glow);
   }
 }

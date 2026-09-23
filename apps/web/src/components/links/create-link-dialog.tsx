@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, FileText, Folder, Tag } from "lucide-react";
+import { Link2, FileText, Folder, Tag, Check, ChevronDown } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { createLinkSchema, type CreateLinkInput } from "@repo/contracts/schemas";
@@ -13,11 +13,81 @@ import FormField from "../ui/form-field";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { useEffect, useRef, useState } from "react";
 import { linkService } from "@/lib/services";
+import { cn } from "@/lib/utils";
 
 interface CreateLinkDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+/* ---------- Folder pill helpers ---------- */
+
+function FolderPopover({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div
+      ref={ref}
+      className="absolute left-0 top-[calc(100%+6px)] z-50 min-w-[220px] overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-lg"
+    >
+      {children}
+    </div>
+  );
+}
+
+function FolderPopoverItem({
+  label,
+  emoji,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  emoji?: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-accent",
+        isActive && "bg-accent"
+      )}
+    >
+      <span className="flex h-5 w-5 items-center justify-center text-base">
+        {emoji ?? <Folder className="h-3.5 w-3.5 opacity-70" />}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {isActive && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+    </button>
+  );
+}
+
+/* ---------- Main dialog ---------- */
 
 export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
   const createLinkMutation = useCreateLink();
@@ -44,6 +114,7 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
 
   // Auto title/icon: URL paste karo, 800ms ruko → meta auto-fill
   const [fetchingMeta, setFetchingMeta] = useState(false);
+  const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const lastFetched = useRef<string>("");
   const urlValue = watch("url");
 
@@ -83,8 +154,10 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
       }
     );
   }
+
   function handleClose() {
     reset();
+    setFolderMenuOpen(false);
     onClose();
   }
 
@@ -98,7 +171,7 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex-1 rounded-lg border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancel
           </button>
@@ -106,7 +179,7 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
             type="submit"
             form="create-link-form"
             disabled={createLinkMutation.isPending}
-            className="flex-1 rounded-xl px-4 py-3 text-sm font-medium text-white gradient-button disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
             {createLinkMutation.isPending ? "Saving..." : "Save Link"}
           </button>
@@ -132,7 +205,9 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
         <FormField
           label="Title"
           icon={FileText}
-          placeholder={fetchingMeta ? "Fetching title & icon…" : "Enter a custom title..."}
+          placeholder={
+            fetchingMeta ? "Fetching title & icon…" : "Enter a custom title..."
+          }
           value={watch("title") ?? ""}
           onChange={(e) => setValue("title", e.target.value)}
           optional
@@ -150,7 +225,7 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
             placeholder="Add notes about this link..."
             rows={3}
             {...register("description")}
-            className="w-full resize-none rounded-xl border border-border bg-transparent px-4 py-3 text-sm text-foreground outline-none transition-all focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
+            className="w-full resize-none rounded-lg border border-border bg-transparent px-4 py-3 text-sm text-foreground outline-none transition-all focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
           />
         </div>
 
@@ -163,23 +238,75 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
           <Controller
             name="folderId"
             control={control}
-            render={({ field }) => (
-              <select
-                value={field.value ?? "none"}
-                onChange={(e) =>
-                  field.onChange(e.target.value === "none" ? null : e.target.value)
-                }
-                disabled={createLinkMutation.isPending}
-                className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground shadow-sm outline-none transition-colors focus:ring-2 focus:ring-ring disabled:opacity-60"
-              >
-                <option value="none">No folder</option>
-                {folders.map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.icon} {folder.name}
-                  </option>
-                ))}
-              </select>
-            )}
+            render={({ field }) => {
+              const selectedFolder = folders.find((f) => f.id === field.value);
+              return (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setFolderMenuOpen((v) => !v)}
+                    disabled={createLinkMutation.isPending}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground shadow-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+                      folderMenuOpen && "bg-accent"
+                    )}
+                    aria-haspopup="menu"
+                    aria-expanded={folderMenuOpen}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      {selectedFolder ? (
+                        <>
+                          <span className="text-base">{selectedFolder.icon}</span>
+                          <span className="truncate">{selectedFolder.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Folder className="h-3.5 w-3.5 opacity-70" />
+                          <span className="text-muted-foreground">No folder</span>
+                        </>
+                      )}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                        folderMenuOpen && "rotate-180"
+                      )}
+                    />
+                  </button>
+
+                  <FolderPopover
+                    open={folderMenuOpen}
+                    onClose={() => setFolderMenuOpen(false)}
+                  >
+                    <FolderPopoverItem
+                      label="No folder"
+                      isActive={!field.value}
+                      onClick={() => {
+                        field.onChange(null);
+                        setFolderMenuOpen(false);
+                      }}
+                    />
+                    {folders.length > 0 && (
+                      <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Folders
+                      </div>
+                    )}
+                    {folders.map((folder) => (
+                      <FolderPopoverItem
+                        key={folder.id}
+                        label={folder.name}
+                        emoji={folder.icon}
+                        isActive={field.value === folder.id}
+                        onClick={() => {
+                          field.onChange(folder.id);
+                          setFolderMenuOpen(false);
+                        }}
+                      />
+                    ))}
+                  </FolderPopover>
+                </div>
+              );
+            }}
           />
         </div>
 

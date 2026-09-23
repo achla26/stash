@@ -11,6 +11,7 @@ import {
   Trash2,
   Globe,
   Check,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -54,9 +55,8 @@ export function LinkCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-primary hover:shadow-md",
-        (isDeleting || isPinning) && "pointer-events-none opacity-50"
+        "card-lift group relative flex flex-col rounded-xl border border-border bg-card",
+        (isDeleting || isPinning) && "pointer-events-none opacity-50",
       )}
     >
       {link.isPinned && <PinBadge />}
@@ -71,20 +71,25 @@ export function LinkCard({
       />
 
       <div className="flex flex-1 flex-col p-4">
+        {/* Site info */}
         <SiteInfo favicon={link.favicon} url={link.url} />
 
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+        {/* Title */}
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
           {link.title || getDomain(link.url)}
         </h3>
 
+        {/* Description */}
         {link.description && (
           <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-muted-foreground">
             {link.description}
           </p>
         )}
 
+        {/* Tags */}
         {link.tags.length > 0 && <TagList tags={link.tags} />}
 
+        {/* Collection */}
         {onMoveToFolder && (
           <div className="mt-3" onClick={(e) => e.stopPropagation()}>
             <CollectionSelect
@@ -95,6 +100,7 @@ export function LinkCard({
           </div>
         )}
 
+        {/* Footer */}
         <div className="mt-auto pt-3">
           <div className="flex items-center justify-between border-t border-border pt-3">
             <span className="text-xs text-muted-foreground">
@@ -111,22 +117,24 @@ export function LinkCard({
             />
           </div>
 
-          {link.shortCode && (
-            <ShortUrlTab shortCode={link.shortCode} />
-          )}
+          {link.shortCode && <ShortUrlTab shortCode={link.shortCode} />}
         </div>
       </div>
     </div>
   );
 }
 
+/* ===== Pin badge ===== */
+
 function PinBadge() {
   return (
-    <div className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+    <div className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_12px_var(--primary-glow)]">
       <Pin className="h-3 w-3" />
     </div>
   );
 }
+
+/* ===== Preview image ===== */
 
 function PreviewImage({
   image,
@@ -145,39 +153,50 @@ function PreviewImage({
 }) {
   if (image && !imgError) {
     return (
-      <div className="relative h-36 overflow-hidden bg-accent">
+      <div className="relative h-40 overflow-hidden bg-accent">
         <img
           src={image}
           alt={title ?? "Link preview"}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={onImgError}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        {/* Soft gradient to keep contrast */}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card/60 to-transparent" />
       </div>
     );
   }
 
+  // Fallback — big letter tile, no plain gray box
+  const domain = getDomain(url);
+  const letter = domain.charAt(0).toUpperCase();
+
   return (
-    <div className="flex h-20 items-center justify-center bg-accent">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card">
+    <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-accent to-accent/60">
+      <div
+        className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card shadow-sm"
+        aria-hidden
+      >
         {favicon ? (
           <img
             src={favicon}
             alt=""
-            className="h-5 w-5 rounded-sm"
+            className="h-8 w-8 rounded-sm"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}
           />
         ) : (
-          <span className="text-lg font-bold text-primary">
-            {getDomain(url).charAt(0).toUpperCase()}
-          </span>
+          <span className="text-2xl font-bold text-primary">{letter}</span>
         )}
       </div>
+      {!favicon && !letter && (
+        <Link2 className="absolute h-5 w-5 text-muted-foreground" />
+      )}
     </div>
   );
 }
+
+/* ===== Site info ===== */
 
 function SiteInfo({
   favicon,
@@ -192,13 +211,13 @@ function SiteInfo({
         <img
           src={favicon}
           alt=""
-          className="h-4 w-4 rounded-sm"
+          className="h-3.5 w-3.5 rounded-sm"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
         />
       ) : (
-        <Globe className="h-4 w-4 text-muted-foreground" />
+        <Globe className="h-3.5 w-3.5 text-muted-foreground" />
       )}
       <span className="truncate text-xs text-muted-foreground">
         {getDomain(url)}
@@ -207,20 +226,29 @@ function SiteInfo({
   );
 }
 
+/* ===== Tags ===== */
+
 function TagList({ tags }: { tags: string[] }) {
   return (
     <div className="mt-3 flex flex-wrap gap-1.5">
-      {tags.map((tag) => (
+      {tags.slice(0, 3).map((tag) => (
         <span
           key={tag}
-          className="inline-flex items-center rounded-full border border-border bg-accent px-2 py-0.5 text-xs font-medium text-muted-foreground"
+          className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
         >
           {tag}
         </span>
       ))}
+      {tags.length > 3 && (
+        <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          +{tags.length - 3}
+        </span>
+      )}
     </div>
   );
 }
+
+/* ===== Action buttons ===== */
 
 function ActionButtons({
   link,
@@ -238,7 +266,7 @@ function ActionButtons({
   isRefreshing: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+    <div className="flex flex-wrap items-center justify-end gap-0.5 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
       {link.shortCode && (
         <ActionButton
           icon={Copy}
@@ -258,7 +286,8 @@ function ActionButtons({
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
         title="Open link"
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label="Open link"
+        className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ArrowUpRight className="h-3.5 w-3.5" />
       </a>
@@ -328,20 +357,24 @@ function ActionButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
       className={cn(
-        "flex h-7 w-7 items-center justify-center rounded-lg transition-colors disabled:opacity-50",
+        "flex h-7 w-7 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
         variant === "destructive"
           ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       <Icon className={cn("h-3.5 w-3.5", spinning && "animate-spin")} />
     </button>
   );
 }
+
+/* ===== Short URL tab ===== */
 
 function ShortUrlTab({ shortCode }: { shortCode: string }) {
   const [copied, setCopied] = useState(false);
@@ -359,18 +392,20 @@ function ShortUrlTab({ shortCode }: { shortCode: string }) {
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className={cn(
-        "mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-1.5 transition-colors",
+        "mt-3 flex w-full items-center justify-between rounded-lg px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         copied
-          ? "border-success/30 bg-success/5"
-          : "border-border bg-accent hover:border-primary/40 hover:bg-primary/5"
+          ? "bg-success/10"
+          : "bg-accent hover:bg-accent/80",
       )}
+      aria-label="Copy short link"
     >
       <span
         className={cn(
-          "font-mono text-xs",
-          copied ? "text-success" : "text-muted-foreground"
+          "font-mono text-[11px]",
+          copied ? "text-success" : "text-muted-foreground",
         )}
       >
         /s/{shortCode}

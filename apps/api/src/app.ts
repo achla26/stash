@@ -11,6 +11,7 @@ import notebooks from "./routes/notebooks";
 import pads, { protectedPadRoutes } from "./routes/pads";
 import dashboard from "./routes/dashboard";
 import exportRouter from "./routes/export";
+import { PadController } from "./controllers/pad.controller";
 
 const app = new Hono();
 const api = new Hono();
@@ -48,6 +49,11 @@ const padsMe = new Hono();
 padsMe.use("*", authMiddleware);
 padsMe.route("/", protectedPadRoutes);
 app.route("/api/pads/me", padsMe);
+
+const padsProtected = new Hono();
+padsProtected.use("*", authMiddleware);
+padsProtected.delete("/:slug", PadController.delete);
+app.route("/api/pads", padsProtected);
 
 app.route("/api/pads", pads);
 // Protected routes

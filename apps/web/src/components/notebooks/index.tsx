@@ -8,8 +8,11 @@ import {
   useNotebooks,
   useDeleteNotebook,
   useUpdateNotebook,
+  useTogglePinNotebook,
 } from "@/hooks/use-notebooks";
 import { CreateNotebookDialog } from "./create-notebook-dialog";
+import { EditNotebookDialog } from "./edit-notebook-dialog";
+import type { NotebookWithCounts } from "@repo/contracts/types";
 import { NotebookCard } from "./notebook-card";
 import { SearchBar } from "@/components/shared/search-bar";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -20,11 +23,13 @@ export function NotebooksContent() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<NotebookWithCounts | null>(null);
 
   const { data: notebooks = [], isLoading, isError, error, refetch } =
     useNotebooks();
   const deleteMutation = useDeleteNotebook();
   const updateMutation = useUpdateNotebook();
+  const pinMutation = useTogglePinNotebook();
 
   const filteredNotebooks = useMemo(() => {
     return notebooks.filter((nb) => {
@@ -67,7 +72,7 @@ export function NotebooksContent() {
   };
 
   const handlePin = (id: string) => {
-    updateMutation.mutate({ id });
+    pinMutation.mutate(id);
   };
 
   if (isLoading) {
@@ -101,7 +106,7 @@ export function NotebooksContent() {
         </div>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white gradient-button"
+          className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white bg-primary"
         >
           <Plus className="h-4 w-4" />
           New Notebook
@@ -133,8 +138,9 @@ export function NotebooksContent() {
               onOpen={() => router.push(`/notebooks/${notebook.id}`)}
               onDelete={() => handleDelete(notebook.id, notebook.name)}
               onPin={() => handlePin(notebook.id)}
+              onEdit={() => setEditing(notebook)}
               isDeleting={deleteMutation.isPending}
-              isPinning={updateMutation.isPending}
+              isPinning={pinMutation.isPending}
             />
           ))}
         </div>
@@ -144,6 +150,13 @@ export function NotebooksContent() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       />
+
+      {editing && (
+        <EditNotebookDialog
+          notebook={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }

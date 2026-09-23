@@ -74,7 +74,7 @@ export default function LoginForm() {
 
       <Button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium text-white gradient-button"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         disabled={loginMutation.isPending}
       >
         {loginMutation.isPending ? "Signing in..." : "Sign in"}

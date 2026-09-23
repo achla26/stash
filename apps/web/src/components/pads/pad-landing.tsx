@@ -68,7 +68,7 @@ export function PadLanding() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex h-14 items-center justify-between border-b border-border bg-sidebar/95 px-4 backdrop-blur">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-button">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <InfinityIcon className="h-5 w-5 text-white" />
           </span>
           <span className="text-lg font-bold text-foreground">Stash</span>
@@ -94,7 +94,7 @@ export function PadLanding() {
       <div className="relative z-10 w-full max-w-md space-y-8 text-center">
         {/* Logo */}
         <div>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-button shadow-lg shadow-primary/20">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-[0_8px_24px_var(--primary-glow)]">
             <FileText className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Stash Pad</h1>
@@ -107,7 +107,7 @@ export function PadLanding() {
         <Button
           onClick={handleCreateRandom}
           disabled={createPadMutation.isPending}
-          className="w-full gap-2 gradient-button text-white shadow-lg shadow-primary/20"
+          className="w-full gap-2 bg-primary text-primary-foreground shadow-lg shadow-[0_8px_24px_var(--primary-glow)] hover:bg-primary-hover"
           size="lg"
         >
           {createPadMutation.isPending ? (

@@ -266,12 +266,9 @@ export function PadEditor() {
     });
   };
 
-  const handleDeletePad = async () => {
-    const confirmed = window.confirm(
-      "⚠️ Delete this pad permanently? This action cannot be undone."
-    );
-    if (!confirmed) return;
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
 
+  const handleDeletePad = () => {
     deletePadMutation.mutate(slug, {
       onSuccess: () => {
         toast.success("Pad deleted successfully");
@@ -517,7 +514,7 @@ function PadPasswordScreen({
         <Button
           onClick={onVerify}
           disabled={isPending || !password}
-          className="w-full gradient-button text-white"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary-hover"
         >
           {isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -553,7 +550,7 @@ function PadTopBar({
   return (
     <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3">
       <div className="flex items-center gap-3">
-        <a href="/" className="flex h-7 w-7 items-center justify-center rounded-md gradient-button" aria-label="Home">
+        <a href="/" className="flex h-7 w-7 items-center justify-center rounded-md bg-primary" aria-label="Home">
           <InfinityIcon className="h-4 w-4 text-white" />
         </a>
         <Button variant="ghost" size="sm" onClick={onBack}>

@@ -21,7 +21,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
 
       {/* Logo */}
       <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-button">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
           <Infinity className="h-4 w-4 text-white" />
         </div>
         <span className="text-lg font-bold text-foreground">Stash</span>

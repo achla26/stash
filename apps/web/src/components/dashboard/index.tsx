@@ -14,7 +14,6 @@ import {
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useAuth } from "@/hooks/use-auth";
 import { timeAgo } from "@/utils";
-import { cn } from "@/lib/utils";
 import type { RecentItem } from "@repo/contracts/types";
 
 const ITEM_ICONS: Record<string, React.ElementType> = {
@@ -41,7 +40,7 @@ export function DashboardContent() {
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -49,7 +48,6 @@ export function DashboardContent() {
   const stats = data?.stats;
   const recentItems = data?.recentItems ?? [];
 
-  // Greeting
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -58,7 +56,7 @@ export function DashboardContent() {
     <div className="mx-auto max-w-6xl space-y-8">
       {/* Welcome */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">
           {greeting}, {user?.name ?? "there"}.
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -84,13 +82,13 @@ export function DashboardContent() {
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 onClick={() => router.push("/links")}
-                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Save your first link
               </button>
               <button
                 onClick={() => router.push("/notes")}
-                className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary"
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Write your first note
               </button>
@@ -200,12 +198,14 @@ function StatCard({
   return (
     <button
       onClick={onClick}
-      className="group rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:shadow-sm"
+      className="card-lift group rounded-xl border border-border bg-card p-4 text-left"
     >
       <div className="flex items-center justify-between">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `color-mix(in srgb, ${color} 10%, transparent)` }}
+          style={{
+            backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
+          }}
         >
           <Icon className="h-5 w-5" style={{ color }} />
         </div>
@@ -229,7 +229,7 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 rounded-lg border border-dashed border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-accent hover:text-foreground"
+      className="flex items-center gap-3 rounded-lg border border-dashed border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Plus className="h-4 w-4" />
       {label}
@@ -262,11 +262,13 @@ function RecentItemCard({ item }: { item: RecentItem }) {
   return (
     <button
       onClick={handleClick}
-      className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:shadow-sm"
+      className="card-lift flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left"
     >
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: `color-mix(in srgb, ${color} 10%, transparent)` }}
+        style={{
+          backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
+        }}
       >
         <Icon className="h-5 w-5" style={{ color }} />
       </div>
@@ -283,7 +285,10 @@ function RecentItemCard({ item }: { item: RecentItem }) {
       <div className="shrink-0 text-right">
         <span
           className="inline-block rounded px-2 py-0.5 text-xs font-medium capitalize"
-          style={{ backgroundColor: `${color}15`, color }}
+          style={{
+            backgroundColor: `color-mix(in srgb, ${color} 13%, transparent)`,
+            color,
+          }}
         >
           {item.type}
         </span>

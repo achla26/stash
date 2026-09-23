@@ -19,13 +19,13 @@ export default function AuthFormWrapper({ title, subtitle, isLogin = true, child
         className="fixed inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.15) 0%, transparent 50%)",
+            "radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 50%)",
         }}
       />
 
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 mb-8 relative z-10">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center gradient-button">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
           <Infinity className="w-6 h-6 text-white" />
         </div>
         <span className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>

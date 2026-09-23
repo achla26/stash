@@ -8,6 +8,7 @@ import {
   Trash2,
   Pin,
   PinOff,
+  Pencil,
   Check,
   X,
 } from "lucide-react";
@@ -21,6 +22,7 @@ interface NotebookCardProps {
   onOpen: () => void;
   onDelete: () => void;
   onPin: () => void;
+  onEdit: () => void;
   isDeleting?: boolean;
   isPinning?: boolean;
 }
@@ -30,6 +32,7 @@ export function NotebookCard({
   onOpen,
   onDelete,
   onPin,
+  onEdit,
   isDeleting = false,
   isPinning = false,
 }: NotebookCardProps) {
@@ -38,23 +41,16 @@ export function NotebookCard({
   const coverColor = notebook.coverColor || "var(--primary)";
   const busy = isDeleting || isPinning;
 
-  const handleConfirmDelete = () => {
-    setConfirmingDelete(false);
-    onDelete();
-  };
-
   return (
     <div
       className={cn(
-        "group relative rounded-xl border border-border bg-card p-5 transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_6px_20px_var(--primary-glow)]",
-        "focus-within:border-primary focus-within:shadow-[0_6px_20px_var(--primary-glow)]",
+        "card-lift group relative rounded-xl border border-border bg-card p-5",
         busy && "pointer-events-none opacity-50",
       )}
     >
       {/* Pin badge */}
       {notebook.isPinned && (
-        <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+        <div className="pointer-events-none absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_12px_var(--primary-glow)]">
           <Pin className="h-3 w-3" />
         </div>
       )}
@@ -64,13 +60,13 @@ export function NotebookCard({
         <div
           className="flex h-10 w-10 items-center justify-center rounded-lg"
           style={{
-            backgroundColor: `color-mix(in srgb, ${coverColor} 13%, transparent)`,
+            backgroundColor: `color-mix(in srgb, ${coverColor} 15%, transparent)`,
           }}
         >
           <span className="text-xl">{notebook.icon}</span>
         </div>
 
-        {/* Actions — visible on mobile, hover/focus on desktop */}
+        {/* Actions */}
         <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           {confirmingDelete ? (
             <>
@@ -91,7 +87,8 @@ export function NotebookCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleConfirmDelete();
+                  setConfirmingDelete(false);
+                  onDelete();
                 }}
                 disabled={isDeleting}
                 className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
@@ -124,6 +121,18 @@ export function NotebookCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  onEdit();
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Edit"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setConfirmingDelete(true);
                 }}
                 className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -136,19 +145,12 @@ export function NotebookCard({
         </div>
       </div>
 
-      {/* Body — real Link for nav */}
+      {/* Body — link for nav */}
       <Link
         href={`/notebooks/${notebook.id}`}
-        onClick={(e) => {
-          // allow parent onOpen to also fire, or just use the Link
-          if (onOpen) {
-            // if you want to keep router.push, uncomment:
-            // e.preventDefault(); onOpen();
-          }
-        }}
         className="block focus-visible:outline-none"
       >
-        <h3 className="font-semibold text-foreground transition-colors group-hover:text-primary">
+        <h3 className="line-clamp-1 font-semibold text-foreground transition-colors group-hover:text-primary">
           {notebook.name}
         </h3>
 

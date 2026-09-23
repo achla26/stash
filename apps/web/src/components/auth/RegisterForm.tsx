@@ -95,7 +95,7 @@ export default function RegisterForm() {
       <Button
         type="submit"
         disabled={signupMutation.isPending}
-        className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium text-white gradient-button disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium text-white bg-primary disabled:opacity-50"
       >
         {signupMutation.isPending ? "Creating Account..." : "Create Account"}
       </Button>

@@ -129,7 +129,7 @@ export function NotesContent() {
         <button
           onClick={handleCreateNote}
           disabled={createNoteMutation.isPending}
-          className="gradient-button inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm disabled:opacity-50"
+          className="bg-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
           {createNoteMutation.isPending ? "Creating..." : "New Note"}

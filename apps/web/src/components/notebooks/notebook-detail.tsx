@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,13 +10,17 @@ import {
   Folder,
   Loader2,
   Trash2,
+  Pencil,
   MoreHorizontal,
   X,
   Check,
 } from "lucide-react";
+import * as React from "react";
 
 import { useNotebook, useDeleteNotebook } from "@/hooks/use-notebooks";
 import { useCreateFolder } from "@/hooks/use-folder";
+import { FolderMenu } from "@/components/folders/folder-menu";
+import { EditNotebookDialog } from "./edit-notebook-dialog";
 import { useCreateNote } from "@/hooks/use-notes";
 import { timeAgo } from "@/utils";
 import { toast } from "sonner";
@@ -34,8 +38,8 @@ function Popover({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -61,8 +65,6 @@ function Popover({
   );
 }
 
-/* ---------- Main ---------- */
-
 export function NotebookDetail() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -75,6 +77,7 @@ export function NotebookDetail() {
   const deleteNotebook = useDeleteNotebook();
 
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -198,14 +201,27 @@ export function NotebookDetail() {
             }}
           >
             {!confirmingDelete ? (
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4 shrink-0 opacity-80" />
-                <span className="flex-1">Delete notebook</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setEditOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-accent"
+                >
+                  <Pencil className="h-4 w-4 shrink-0 opacity-70" />
+                  <span className="flex-1">Edit notebook</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4 shrink-0 opacity-80" />
+                  <span className="flex-1">Delete notebook</span>
+                </button>
+              </>
             ) : (
               <div className="p-1.5">
                 <p className="mb-2 px-1 text-xs text-muted-foreground">
@@ -273,24 +289,30 @@ export function NotebookDetail() {
           {folders.map((f) => {
             const folderColor = f.color || "var(--primary)";
             return (
-              <Link
+              <div
                 key={f.id}
-                href={`/folders/${f.id}`}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_6px_20px_var(--primary-glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                data-folder-card
+                className="card-lift group relative flex items-center gap-2 rounded-xl border border-border bg-card p-4"
               >
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                  style={{
-                    backgroundColor: `color-mix(in srgb, ${folderColor} 13%, transparent)`,
-                    color: folderColor,
-                  }}
+                <Link
+                  href={`/folders/${f.id}`}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none"
                 >
-                  <Folder className="h-4 w-4" />
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-                  {f.name}
-                </span>
-              </Link>
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${folderColor} 13%, transparent)`,
+                      color: folderColor,
+                    }}
+                  >
+                    <Folder className="h-4 w-4" />
+                  </span>
+                  <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                    {f.name}
+                  </span>
+                </Link>
+                <FolderMenu folderId={f.id} folderName={f.name} />
+              </div>
             );
           })}
         </div>
@@ -310,7 +332,7 @@ export function NotebookDetail() {
             <Link
               key={n.id}
               href={`/notes/${n.id}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_6px_20px_var(--primary-glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="card-lift flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left focus-visible:outline-none"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <FileText className="h-4 w-4" />
@@ -410,6 +432,14 @@ export function NotebookDetail() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ---------- Edit dialog ---------- */}
+      {editOpen && (
+        <EditNotebookDialog
+          notebook={notebook}
+          onClose={() => setEditOpen(false)}
+        />
       )}
     </div>
   );

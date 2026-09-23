@@ -54,6 +54,16 @@ export function useUpdateNotebook() {
   });
 }
 
+export function useTogglePinNotebook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notebookService.togglePinNotebook(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notebookKeys.all });
+    },
+  });
+}
+
 export function useDeleteNotebook() {
   const queryClient = useQueryClient();
   return useMutation({

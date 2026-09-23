@@ -57,6 +57,14 @@ export function createNotebookService(client: HttpClient) {
       return unwrap<Notebook>(res);
     },
 
+    async togglePinNotebook(id: string): Promise<Notebook> {
+      const res = await client.patch<ApiSuccessResponse<Notebook>>(
+        `/api/notebooks/${id}/pin`,
+        {}
+      );
+      return unwrap<Notebook>(res);
+    },
+
     /** Soft-deletes the notebook and returns its id for cache removal */
     async deleteNotebook(id: string): Promise<string> {
       await client.delete(`/api/notebooks/${id}`);
