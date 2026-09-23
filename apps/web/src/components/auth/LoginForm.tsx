@@ -3,7 +3,6 @@
 import { ArrowRight, Mail } from "lucide-react";
 import FormField from "../ui/form-field";
 import PasswordField from "../ui/password-field";
-import { Button } from "../ui/button";
 import { loginSchema, type LoginInput } from "@repo/contracts/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLogin } from "@/hooks/use-login";
@@ -65,21 +64,21 @@ export default function LoginForm() {
       />
 
       {loginMutation.isError && (
-        <p className="text-sm text-destructive">
+        <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {loginMutation.error instanceof Error
             ? loginMutation.error.message
             : "Login failed"}
         </p>
       )}
 
-      <Button
+      <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         disabled={loginMutation.isPending}
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
-        {loginMutation.isPending ? "Signing in..." : "Sign in"}
+        {loginMutation.isPending ? "Signing in…" : "Sign in"}
         <ArrowRight className="h-4 w-4" />
-      </Button>
+      </button>
     </form>
   );
 }

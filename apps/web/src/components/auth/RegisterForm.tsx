@@ -3,7 +3,6 @@
 import { Mail, User } from "lucide-react";
 import FormField from "../ui/form-field";
 import PasswordField from "../ui/password-field";
-import { Button } from "../ui/button";
 import { signupSchema, type SignupInput } from "@repo/contracts/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignup } from "@/hooks/use-signup";
@@ -85,20 +84,20 @@ export default function RegisterForm() {
       />
 
       {signupMutation.isError && (
-        <p className="text-sm text-destructive">
+        <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {signupMutation.error instanceof Error
             ? signupMutation.error.message
             : "Signup failed"}
         </p>
       )}
 
-      <Button
+      <button
         type="submit"
         disabled={signupMutation.isPending}
-        className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium text-white bg-primary disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
-        {signupMutation.isPending ? "Creating Account..." : "Create Account"}
-      </Button>
+        {signupMutation.isPending ? "Creating account…" : "Create Account"}
+      </button>
     </form>
   );
 }

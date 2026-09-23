@@ -1,20 +1,17 @@
 export default function AuthFooter() {
   return (
-    <p
-      className="mt-8 text-xs text-center max-w-sm relative z-10"
-      style={{ color: "var(--muted-foreground)" }}
-    >
+    <p className="relative z-10 mt-8 max-w-sm text-center text-xs text-muted-foreground">
       By continuing, you agree to our{" "}
       <button
-        className="hover:underline"
-        style={{ color: "var(--primary)" }}
+        type="button"
+        className="text-primary transition-opacity hover:underline hover:opacity-80"
       >
         Terms of Service
       </button>{" "}
       and{" "}
       <button
-        className="hover:underline"
-        style={{ color: "var(--primary)" }}
+        type="button"
+        className="text-primary transition-opacity hover:underline hover:opacity-80"
       >
         Privacy Policy
       </button>

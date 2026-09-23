@@ -8,15 +8,17 @@ interface AuthFormWrapperProps {
   children: React.ReactNode;
 }
 
-export default function AuthFormWrapper({ title, subtitle, isLogin = true, children }: AuthFormWrapperProps) {
+export default function AuthFormWrapper({
+  title,
+  subtitle,
+  isLogin = true,
+  children,
+}: AuthFormWrapperProps) {
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ backgroundColor: "var(--background)" }}
-    >
-      {/* Background Gradient */}
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      {/* Background glow */}
       <div
-        className="fixed inset-0 pointer-events-none"
+        className="pointer-events-none fixed inset-0"
         style={{
           background:
             "radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 50%)",
@@ -24,43 +26,35 @@ export default function AuthFormWrapper({ title, subtitle, isLogin = true, child
       />
 
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 mb-8 relative z-10">
+      <Link
+        href="/"
+        className="relative z-10 mb-8 flex items-center gap-2"
+      >
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-          <Infinity className="w-6 h-6 text-white" />
+          <Infinity className="h-6 w-6 text-primary-foreground" />
         </div>
-        <span className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>
-          Stash
-        </span>
+        <span className="text-2xl font-bold text-foreground">Stash</span>
       </Link>
 
       {/* Auth Card */}
-      <div
-        className="w-full max-w-md p-8 rounded-2xl border glass relative z-10"
-        style={{ borderColor: 'var(--border)' }}
-      >
+      <div className="glass relative z-10 w-full max-w-md rounded-2xl border border-border p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-            {title}
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-2xl font-bold text-foreground">{title}</h1>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
 
-          </h1>
-          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            {subtitle}
-          </p>
-        </div> 
-        
-        {/* Children rendered here */}
+        {/* Children */}
         {children}
 
-        <p className="text-center mt-6 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-          {isLogin ? `Don't have an account? ` : 'Already Have an Account '}
-          <Link href={isLogin ? `signup ` : 'login'}>
-            <button
-              className="font-medium hover:underline"
-              style={{ color: 'var(--primary)' }}
-            >
-              {isLogin ? `Sign Up ` : 'Sign In'}
-            </button>
+        {/* Footer link */}
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <Link
+            href={isLogin ? "/signup" : "/login"}
+            className="font-medium text-primary transition-opacity hover:underline hover:opacity-80"
+          >
+            {isLogin ? "Sign Up" : "Sign In"}
           </Link>
         </p>
       </div>

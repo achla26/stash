@@ -410,4 +410,19 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 20px var(--border-glow);
   }
+
+    /* Save status fade — used by note-editor */
+  @keyframes fade-out {
+    0%,
+    60% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .animate-fade-out {
+    animation: fade-out 2.5s ease-out forwards;
+  }
 }

@@ -17,8 +17,6 @@ import {
   Folder,
   FileText,
   BookOpen,
-  CircleAlert,
-  X,
 } from "lucide-react";
 
 import { useDeleteNote, useNote, useUpdateNote } from "@/hooks/use-notes";
@@ -36,39 +34,70 @@ function getTextContent(content: string | null | undefined): string {
   return content;
 }
 
-type SaveStatus = "saved" | "unsaved" | "saving";
+type SaveStatus = "idle" | "saved" | "unsaved" | "saving";
 
 type Placement =
   | { kind: "loose" }
   | { kind: "folder"; id: string; name: string }
   | { kind: "notebook"; id: string; name: string };
 
+function countWords(text: string): number {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
 /* ============================================================
-   Small building blocks
+   Popover — anchored to a trigger element, uses fixed positioning
+   so it never clips on mobile or inside overflow-hidden parents.
    ============================================================ */
 
-/**
- * Popover — lightweight, no dep. Closes on outside click or Esc.
- */
-function Popover({
+function AnchoredPopover({
+  anchorRef,
   open,
   onClose,
   children,
-  align = "end",
-  className,
 }: {
+  anchorRef: React.RefObject<HTMLElement | null>;
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  align?: "start" | "end";
-  className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number }>({
+    top: 0,
+    right: 0,
+  });
 
+  // Compute position whenever open
+  useEffect(() => {
+    if (!open) return;
+    const compute = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + 8,
+        right: Math.max(8, window.innerWidth - rect.right),
+      });
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
+  }, [open, anchorRef]);
+
+  // Close on outside click + Escape
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = e.target as Node;
+      if (popRef.current?.contains(target)) return;
+      if (anchorRef.current?.contains(target)) return;
+      onClose();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -79,18 +108,15 @@ function Popover({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open, onClose, anchorRef]);
 
   if (!open) return null;
 
   return (
     <div
-      ref={ref}
-      className={cn(
-        "absolute top-[calc(100%+8px)] z-50 min-w-[240px] overflow-hidden rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-lg",
-        align === "end" ? "right-0" : "left-0",
-        className,
-      )}
+      ref={popRef}
+      style={{ top: pos.top, right: pos.right }}
+      className="fixed z-50 min-w-[240px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-lg"
     >
       {children}
     </div>
@@ -103,14 +129,12 @@ function PopoverItem({
   onClick,
   danger,
   active,
-  sublabel,
 }: {
   icon?: React.ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
   danger?: boolean;
   active?: boolean;
-  sublabel?: string;
 }) {
   return (
     <button
@@ -126,40 +150,41 @@ function PopoverItem({
     >
       {Icon && <Icon className="h-4 w-4 shrink-0 opacity-70" />}
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      {sublabel && (
-        <span className="text-xs text-muted-foreground">{sublabel}</span>
-      )}
       {active && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
     </button>
   );
 }
 
-/**
- * Save status — fixed width so toolbar never jumps.
- */
-function SaveStatusIndicator({ status }: { status: SaveStatus }) {
-  return (
-    <div className="flex h-6 w-[110px] items-center gap-1.5 text-xs">
-      {status === "saving" && (
-        <>
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-          <span className="text-muted-foreground">Saving…</span>
-        </>
-      )}
-      {status === "saved" && (
-        <>
-          <Check className="h-3.5 w-3.5 text-success" />
-          <span className="text-muted-foreground">Saved</span>
-        </>
-      )}
-      {status === "unsaved" && (
-        <>
-          <CircleAlert className="h-3.5 w-3.5 text-warning" />
-          <span className="text-warning">Unsaved</span>
-        </>
-      )}
-    </div>
-  );
+/* ============================================================
+   Save status
+   ============================================================ */
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  if (status === "saving") {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <span>Saving…</span>
+      </div>
+    );
+  }
+  if (status === "saved") {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground animate-fade-out">
+        <Check className="h-3 w-3 text-success" />
+        <span>Saved</span>
+      </div>
+    );
+  }
+  if (status === "unsaved") {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-warning">
+        <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+        <span>Unsaved</span>
+      </div>
+    );
+  }
+  return null;
 }
 
 /* ============================================================
@@ -179,22 +204,30 @@ export function NoteEditor() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
-  // popover / menu state
-  const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
 
   const isFirstLoad = useRef(true);
+  const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const overflowBtnRef = useRef<HTMLButtonElement>(null);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ---------- Load note once ---------- */
   useEffect(() => {
     if (note && isFirstLoad.current) {
-      setTitle(note.title ?? "");
-      setContent(getTextContent(note.content));
+      const loadedTitle = note.title ?? "";
+      const loadedContent = getTextContent(note.content);
+      setTitle(loadedTitle);
+      setContent(loadedContent);
       isFirstLoad.current = false;
+
+      if (!loadedTitle && !loadedContent) {
+        setTimeout(() => titleRef.current?.focus(), 100);
+      }
     }
   }, [note]);
 
@@ -245,12 +278,77 @@ export function NoteEditor() {
         content: debouncedContent,
       },
       {
-        onSuccess: () => setSaveStatus("saved"),
+        onSuccess: () => {
+          setSaveStatus("saved");
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+          savedTimerRef.current = setTimeout(() => {
+            setSaveStatus("idle");
+          }, 2000);
+        },
         onError: () => setSaveStatus("unsaved"),
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedTitle, debouncedContent]);
+
+  /* ---------- Markdown wrap helper ---------- */
+  const wrapSelection = (before: string, after: string) => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = content.slice(start, end);
+    const wrapped = `${before}${selected}${after}`;
+    const next = content.slice(0, start) + wrapped + content.slice(end);
+    setContent(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + before.length, end + before.length);
+    });
+  };
+
+  /* ---------- Keyboard shortcuts ---------- */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+
+      if (mod && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setSaveStatus("saving");
+        updateNoteMutation.mutate(
+          {
+            id: noteId,
+            title: title.trim() || "Untitled",
+            content,
+          },
+          {
+            onSuccess: () => {
+              setSaveStatus("saved");
+              if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+              savedTimerRef.current = setTimeout(() => {
+                setSaveStatus("idle");
+              }, 2000);
+            },
+            onError: () => setSaveStatus("unsaved"),
+          },
+        );
+      }
+
+      if (mod && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        wrapSelection("**", "**");
+      }
+
+      if (mod && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        wrapSelection("_", "_");
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, content, noteId]);
 
   /* ---------- Placement ---------- */
   const placement: Placement = useMemo(() => {
@@ -280,7 +378,8 @@ export function NoteEditor() {
       folderId: next.kind === "folder" ? next.id : null,
       notebookId: next.kind === "notebook" ? next.id : null,
     });
-    setFolderMenuOpen(false);
+    setShowFolderPicker(false);
+    setOverflowOpen(false);
   };
 
   /* ---------- Delete ---------- */
@@ -294,15 +393,15 @@ export function NoteEditor() {
   /* ---------- Early states ---------- */
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <p className="text-sm text-muted-foreground">Loading note…</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (isError || !note) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-destructive">
           {(error as Error)?.message ?? "Note not found"}
         </p>
@@ -310,13 +409,7 @@ export function NoteEditor() {
     );
   }
 
-  const folderLabel =
-    placement.kind === "folder"
-      ? placement.name
-      : placement.kind === "notebook"
-        ? placement.name
-        : "Loose note";
-
+  const wordCount = countWords(content);
   const FolderIcon =
     placement.kind === "notebook"
       ? BookOpen
@@ -325,178 +418,173 @@ export function NoteEditor() {
         : FileText;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-1px)] max-w-3xl flex-col px-4 pb-16 pt-4 sm:px-6">
-      {/* ============ Toolbar ============ */}
-      <div className="sticky top-0 z-30 -mx-4 mb-8 flex items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6">
-        {/* Left: back + status */}
-        <div className="flex min-w-0 items-center gap-3">
+    <div className="min-h-screen bg-background">
+      {/* ============================================================
+          Toolbar — in-page, top of content
+          ============================================================ */}
+      <div className="mx-auto max-w-2xl px-6 pt-6 sm:px-8">
+        <div className="flex items-center justify-between gap-3 opacity-60 transition-opacity hover:opacity-100 focus-within:opacity-100">
+          {/* Left: back */}
           <button
             type="button"
             onClick={() => router.push("/notes")}
-            className="-ml-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Back to notes"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Notes</span>
           </button>
-          <SaveStatusIndicator status={saveStatus} />
-        </div>
 
-        {/* Right: folder pill + overflow */}
-        <div className="flex items-center gap-1.5">
-          {/* Folder pill */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setFolderMenuOpen((v) => !v)}
-              className={cn(
-                "inline-flex max-w-[220px] items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                folderMenuOpen && "bg-accent text-foreground",
-              )}
-              aria-haspopup="menu"
-              aria-expanded={folderMenuOpen}
-            >
-              <FolderIcon className="h-3.5 w-3.5 shrink-0 opacity-80" />
-              <span className="truncate">{folderLabel}</span>
-            </button>
-
-            <Popover
-              open={folderMenuOpen}
-              onClose={() => setFolderMenuOpen(false)}
-            >
-              <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Move to
-              </div>
-              <PopoverItem
-                icon={FileText}
-                label="Loose note"
-                active={placement.kind === "loose"}
-                onClick={() => handleMove({ kind: "loose" })}
-              />
-              {folders.filter((f) => !f.isTrashed).length > 0 && (
-                <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Folders
-                </div>
-              )}
-              {folders
-                .filter((f) => !f.isTrashed)
-                .map((f) => (
-                  <PopoverItem
-                    key={f.id}
-                    icon={Folder}
-                    label={f.name}
-                    active={
-                      placement.kind === "folder" && placement.id === f.id
-                    }
-                    onClick={() =>
-                      handleMove({ kind: "folder", id: f.id, name: f.name })
-                    }
-                  />
-                ))}
-              {notebooks.filter((n) => !n.isTrashed).length > 0 && (
-                <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Notebooks
-                </div>
-              )}
-              {notebooks
-                .filter((n) => !n.isTrashed)
-                .map((n) => (
-                  <PopoverItem
-                    key={n.id}
-                    icon={BookOpen}
-                    label={n.name}
-                    active={
-                      placement.kind === "notebook" && placement.id === n.id
-                    }
-                    onClick={() =>
-                      handleMove({
-                        kind: "notebook",
-                        id: n.id,
-                        name: n.name,
-                      })
-                    }
-                  />
-                ))}
-            </Popover>
+          {/* Center: save status */}
+          <div className="flex h-8 min-w-[100px] items-center justify-center">
+            <SaveIndicator status={saveStatus} />
           </div>
 
-          {/* Overflow menu */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOverflowOpen((v) => !v)}
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                overflowOpen && "bg-accent text-foreground",
-              )}
-              aria-label="More options"
-              aria-haspopup="menu"
-              aria-expanded={overflowOpen}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-
-            <Popover
-              open={overflowOpen}
-              onClose={() => {
-                setOverflowOpen(false);
-                setConfirmingDelete(false);
-              }}
-              className="min-w-[220px]"
-            >
-              {!confirmingDelete ? (
-                <PopoverItem
-                  icon={Trash2}
-                  label={
-                    deleteNoteMutation.isPending
-                      ? "Deleting…"
-                      : "Delete note"
-                  }
-                  danger
-                  onClick={() => setConfirmingDelete(true)}
-                />
-              ) : (
-                <div className="p-1.5">
-                  <p className="mb-2 px-1 text-xs text-muted-foreground">
-                    Delete this note? This can't be undone.
-                  </p>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingDelete(false)}
-                      className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={deleteNoteMutation.isPending}
-                      className="flex-1 rounded-lg bg-destructive px-2 py-1.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
-                    >
-                      {deleteNoteMutation.isPending ? "Deleting…" : "Delete"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </Popover>
-          </div>
+          {/* Right: overflow button — popover is rendered separately */}
+          <button
+            ref={overflowBtnRef}
+            type="button"
+            onClick={() => setOverflowOpen((v) => !v)}
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              overflowOpen && "bg-accent text-foreground",
+            )}
+            aria-label="More options"
+            aria-haspopup="menu"
+            aria-expanded={overflowOpen}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
-      {/* ============ Writing surface ============ */}
-      <div className="flex-1">
+      {/* Overflow popover — fixed positioned, anchored to overflowBtnRef */}
+      <AnchoredPopover
+        anchorRef={overflowBtnRef}
+        open={overflowOpen}
+        onClose={() => {
+          setOverflowOpen(false);
+          setConfirmingDelete(false);
+          setShowFolderPicker(false);
+        }}
+      >
+        {!confirmingDelete && !showFolderPicker && (
+          <>
+            <PopoverItem
+              icon={FolderIcon}
+              label="Move to…"
+              onClick={() => setShowFolderPicker(true)}
+            />
+            <PopoverItem
+              icon={Trash2}
+              label="Delete note"
+              danger
+              onClick={() => setConfirmingDelete(true)}
+            />
+          </>
+        )}
+
+        {showFolderPicker && (
+          <>
+            <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Move to
+            </div>
+            <PopoverItem
+              icon={FileText}
+              label="Loose note"
+              active={placement.kind === "loose"}
+              onClick={() => handleMove({ kind: "loose" })}
+            />
+            {folders.filter((f) => !f.isTrashed).length > 0 && (
+              <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Folders
+              </div>
+            )}
+            {folders
+              .filter((f) => !f.isTrashed)
+              .map((f) => (
+                <PopoverItem
+                  key={f.id}
+                  icon={Folder}
+                  label={f.name}
+                  active={
+                    placement.kind === "folder" && placement.id === f.id
+                  }
+                  onClick={() =>
+                    handleMove({
+                      kind: "folder",
+                      id: f.id,
+                      name: f.name,
+                    })
+                  }
+                />
+              ))}
+            {notebooks.filter((n) => !n.isTrashed).length > 0 && (
+              <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Notebooks
+              </div>
+            )}
+            {notebooks
+              .filter((n) => !n.isTrashed)
+              .map((n) => (
+                <PopoverItem
+                  key={n.id}
+                  icon={BookOpen}
+                  label={n.name}
+                  active={
+                    placement.kind === "notebook" && placement.id === n.id
+                  }
+                  onClick={() =>
+                    handleMove({
+                      kind: "notebook",
+                      id: n.id,
+                      name: n.name,
+                    })
+                  }
+                />
+              ))}
+          </>
+        )}
+
+        {confirmingDelete && (
+          <div className="p-2">
+            <p className="mb-2 px-1 text-xs text-muted-foreground">
+              Delete this note? This can&apos;t be undone.
+            </p>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteNoteMutation.isPending}
+                className="flex-1 rounded-lg bg-destructive px-2 py-1.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {deleteNoteMutation.isPending ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        )}
+      </AnchoredPopover>
+
+      {/* ============================================================
+          Writing surface
+          ============================================================ */}
+      <div className="mx-auto max-w-2xl px-6 pb-24 pt-6 sm:px-8">
         {/* Title */}
         <input
+          ref={titleRef}
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Untitled"
-          className="w-full resize-none border-none bg-transparent text-3xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/40 sm:text-4xl"
+          className="w-full resize-none border-none bg-transparent text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-5xl"
           spellCheck={false}
         />
-
-        {/* Hairline divider — fades when typing */}
-        <div className="my-5 h-px w-full bg-border/70" />
 
         {/* Body */}
         <textarea
@@ -504,29 +592,17 @@ export function NoteEditor() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Start writing…"
-          className="w-full resize-none overflow-hidden border-none bg-transparent text-base leading-7 text-foreground outline-none placeholder:text-muted-foreground/40"
+          className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
           spellCheck={false}
           rows={1}
         />
-      </div>
 
-      {/* ============ Footer meta ============ */}
-      <div className="mt-12 flex items-center justify-center text-[11px] text-muted-foreground/70">
-        <span>
-          Created {new Date(note.createdAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
-        <span className="mx-2">·</span>
-        <span>
-          Edited{" "}
-          {new Date(note.updatedAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
+        {/* Bottom meta */}
+        {wordCount > 0 && (
+          <div className="mt-16 text-right text-[11px] text-muted-foreground/50">
+            {wordCount} {wordCount === 1 ? "word" : "words"}
+          </div>
+        )}
       </div>
     </div>
   );
