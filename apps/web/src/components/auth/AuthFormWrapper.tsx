@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Infinity } from "lucide-react";
-import SocialLoginButtons from "./SocialLoginButtons";
 
 interface AuthFormWrapperProps {
   title: string;
@@ -48,8 +47,7 @@ export default function AuthFormWrapper({ title, subtitle, isLogin = true, child
           <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
             {subtitle}
           </p>
-        </div>
-        {/* <SocialLoginButtons /> */}
+        </div> 
         
         {/* Children rendered here */}
         {children}
