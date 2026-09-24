@@ -12,6 +12,13 @@ export class NotesController {
     const notes = await notesService.getAll(userId);
     return ApiResponse.success(c, notes);
   }
+  
+  static async getByPublicSlug(c: Context) {
+    const slug = c.req.param("slug") as string;
+    const note = await notesService.getByPublicSlug(slug);
+    // owner ka id public me expose nahi karna
+    return ApiResponse.success(c, { ...note, userId: "" });
+  }
 
   static async getById(c: Context) {
     const userId = c.get("user").id as string;

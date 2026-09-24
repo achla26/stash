@@ -1,5 +1,10 @@
+import { randomBytes } from "crypto";
+import { and, eq } from "drizzle-orm";
 import { ApiError } from "../lib/api-error";
 import { BaseService } from "./base.service";
+import { db, schema, rowify } from "../lib/db";
+
+const notesTable = schema.notes;
 import type { CreateNoteInput, UpdateNoteInput } from "@repo/contracts/schemas";
 import type { Note } from "@repo/contracts/types";
 import type { NoteRow } from "../types/note.types";
@@ -22,6 +27,8 @@ export class NotesService extends BaseService<Note, NoteRow> {
       sortOrder: row.sort_order ?? 0,
       isPinned: row.is_pinned ?? false,
       isTrashed: row.is_trashed ?? false,
+      isPublic: row.is_public ?? false,
+      publicSlug: row.public_slug ?? null,
       tags: row.tags ?? [],
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -66,6 +73,56 @@ export class NotesService extends BaseService<Note, NoteRow> {
     if (dto.isPinned !== undefined) dbData.is_pinned = dto.isPinned;
     if (dto.tags !== undefined) dbData.tags = dto.tags;
 
+    // Public sharing toggle — slug generate/remove
+    if (dto.isPublic !== undefined) {
+      const existing = await this.getById(id, userId);
+      if (dto.isPublic) {
+        if (!existing.publicSlug) {
+          dbData.is_public = true;
+          dbData.public_slug = await this.generateUniqueSlug();
+        }
+      } else {
+        dbData.is_public = false;
+        dbData.public_slug = null;
+      }
+    }
+
     return super.update(id, userId, dbData);
+  }
+
+  // 10-char base62 slug, unique retry
+  private async generateUniqueSlug(): Promise<string> {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const bytes = randomBytes(10);
+      let slug = "";
+      for (const b of bytes) slug += chars[b % chars.length];
+      const rows = await db
+        .select({ id: notesTable.id })
+        .from(notesTable)
+        .where(eq(notesTable.publicSlug, slug))
+        .limit(1);
+      if (rows.length === 0) return slug;
+    }
+    throw ApiError.internal("Could not generate a share slug, try again");
+  }
+
+  // Public blog-style fetch — no user scope
+  async getByPublicSlug(slug: string) {
+    const rows = await db
+      .select()
+      .from(notesTable)
+      .where(
+        and(
+          eq(notesTable.publicSlug, slug),
+          eq(notesTable.isPublic, true),
+          eq(notesTable.isTrashed, false)
+        )
+      )
+      .limit(1);
+    const row = rows[0];
+    if (!row) throw ApiError.notFound("Note not found or not shared");
+    return this.toContract(rowify(notesTable, row));
   }
 }

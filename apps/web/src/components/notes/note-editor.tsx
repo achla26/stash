@@ -27,6 +27,12 @@ import {
   Quote,
   Eye,
   PencilLine,
+  Highlighter,
+  Palette,
+  ImagePlus,
+  Globe,
+  Link2,
+  Copy,
 } from "lucide-react";
 
 import { useDeleteNote, useNote, useUpdateNote } from "@/hooks/use-notes";
@@ -34,6 +40,7 @@ import { useFolders } from "@/hooks/use-folder";
 import { useNotebooks } from "@/hooks/use-notebooks";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
+import { MarkdownPreview } from "./markdown-preview";
 
 /* ============================================================
    Helpers
@@ -44,7 +51,7 @@ function getTextContent(content: string | null | undefined): string {
   return content;
 }
 
-type SaveStatus = "idle" | "saved" | "unsaved" | "saving";
+type SaveStatus = "idle" | "saved" | "unsaved" | "saving" | "error";
 
 type Placement =
   | { kind: "loose" }
@@ -55,236 +62,6 @@ function countWords(text: string): number {
   const t = text.trim();
   if (!t) return 0;
   return t.split(/\s+/).length;
-}
-
-/* ============================================================
-   Tiny markdown preview (dependency-free, safe React nodes)
-   ============================================================ */
-
-function renderInline(text: string, keyBase: string): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  const regex =
-    /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\))/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  let i = 0;
-  while ((m = regex.exec(text))) {
-    if (m.index > last) nodes.push(text.slice(last, m.index));
-    const tok = m[0];
-    const k = `${keyBase}-${i++}`;
-    if (tok.startsWith("**")) {
-      nodes.push(
-        <strong key={k} className="font-semibold text-foreground">
-          {tok.slice(2, -2)}
-        </strong>
-      );
-    } else if (tok.startsWith("`")) {
-      nodes.push(
-        <code
-          key={k}
-          className="rounded bg-accent px-1 py-0.5 font-mono text-[0.85em]"
-        >
-          {tok.slice(1, -1)}
-        </code>
-      );
-    } else if (tok.startsWith("*") || tok.startsWith("_")) {
-      nodes.push(<em key={k}>{tok.slice(1, -1)}</em>);
-    } else {
-      const mm = tok.match(/\[([^\]]+)\]\(([^)]+)\)/);
-      if (mm) {
-        nodes.push(
-          <a
-            key={k}
-            href={mm[2]}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary underline underline-offset-2"
-          >
-            {mm[1]}
-          </a>
-        );
-      }
-    }
-    last = m.index + tok.length;
-  }
-  if (last < text.length) nodes.push(text.slice(last));
-  return nodes;
-}
-
-function isBlockStart(line: string): boolean {
-  return (
-    /^#{1,3}\s?/.test(line) ||
-    /^>\s?/.test(line) ||
-    /^[-*]\s/.test(line) ||
-    /^\d+\.\s/.test(line) ||
-    line.startsWith("```") ||
-    /^[-*]\s\[[ xX]\]\s/.test(line)
-  );
-}
-
-function MarkdownPreview({ text }: { text: string }) {
-  // iOS/paste lookalikes → ascii so markdown always converts
-  text = text.replace(/[*＊∗✱⁎]/g, "*").replace(/ /g, " ");
-  const lines = text.split("\n");
-  const out: React.ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-
-  while (i < lines.length) {
-    const line = lines[i] ?? "";
-
-    if (line.startsWith("```")) {
-      const buf: string[] = [];
-      i++;
-      while (i < lines.length && !(lines[i] ?? "").startsWith("```")) {
-        buf.push(lines[i] ?? "");
-        i++;
-      }
-      i++; // closing fence
-      out.push(
-        <pre
-          key={key++}
-          className="my-3 overflow-x-auto rounded-xl border border-border bg-accent/50 p-3 font-mono text-[13px] leading-relaxed"
-        >
-          {buf.join("\n")}
-        </pre>
-      );
-      continue;
-    }
-
-    if (/^###\s?/.test(line)) {
-      out.push(
-        <h3 key={key++} className="mt-5 mb-1.5 text-lg font-semibold">
-          {renderInline(line.replace(/^###\s?/, ""), `h3${key}`)}
-        </h3>
-      );
-      i++;
-      continue;
-    }
-    if (/^##\s?/.test(line)) {
-      out.push(
-        <h2 key={key++} className="mt-6 mb-2 text-xl font-bold">
-          {renderInline(line.replace(/^##\s?/, ""), `h2${key}`)}
-        </h2>
-      );
-      i++;
-      continue;
-    }
-    if (/^#\s?/.test(line)) {
-      out.push(
-        <h1 key={key++} className="mt-6 mb-2 text-2xl font-bold">
-          {renderInline(line.replace(/^#\s?/, ""), `h1${key}`)}
-        </h1>
-      );
-      i++;
-      continue;
-    }
-
-    if (/^>\s?/.test(line)) {
-      out.push(
-        <blockquote
-          key={key++}
-          className="my-3 border-l-2 border-primary/50 pl-3 text-muted-foreground"
-        >
-          {renderInline(line.replace(/^>\s?/, ""), `q${key}`)}
-        </blockquote>
-      );
-      i++;
-      continue;
-    }
-
-    const task = line.match(/^[-*]\s\[( |x|X)\]\s(.*)$/);
-    if (task) {
-      out.push(
-        <div key={key++} className="my-1 flex items-start gap-2">
-          <span
-            className={cn(
-              "mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-              task[1] !== " "
-                ? "border-primary bg-primary text-white"
-                : "border-border"
-            )}
-          >
-            {task[1] !== " " && <Check className="h-3 w-3" />}
-          </span>
-          <span className={task[1] !== " " ? "line-through opacity-60" : ""}>
-            {renderInline(task[2] ?? "", `t${key}`)}
-          </span>
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    if (/^[-*]\s/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^[-*]\s/.test(lines[i] ?? "")) {
-        items.push((lines[i] ?? "").replace(/^[-*]\s/, ""));
-        i++;
-      }
-      out.push(
-        <ul key={key++} className="my-2 list-disc space-y-1 pl-5">
-          {items.map((it, j) => (
-            <li key={j}>{renderInline(it, `ul${key}-${j}`)}</li>
-          ))}
-        </ul>
-      );
-      continue;
-    }
-
-    if (/^\d+\.\s/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i] ?? "")) {
-        items.push((lines[i] ?? "").replace(/^\d+\.\s/, ""));
-        i++;
-      }
-      out.push(
-        <ol key={key++} className="my-2 list-decimal space-y-1 pl-5">
-          {items.map((it, j) => (
-            <li key={j}>{renderInline(it, `ol${key}-${j}`)}</li>
-          ))}
-        </ol>
-      );
-      continue;
-    }
-
-    if (line.trim() === "") {
-      i++;
-      continue;
-    }
-
-    if (/^[-*_]{3,}\s*$/.test(line)) {
-      out.push(<hr key={key++} className="my-6 border-border" />);
-      i++;
-      continue;
-    }
-
-    // consecutive plain lines = one paragraph, single newlines render as <br/>
-    const buf: string[] = [line];
-    while (i + 1 < lines.length) {
-      const nxt = lines[i + 1] ?? "";
-      if (nxt.trim() === "" || isBlockStart(nxt)) break;
-      buf.push(nxt);
-      i++;
-    }
-    out.push(
-      <p key={key++} className="my-2">
-        {buf.map((b, j) => (
-          <span key={j}>
-            {j > 0 && <br />}
-            {renderInline(b, `p${key}-${j}`)}
-          </span>
-        ))}
-      </p>
-    );
-    i++;
-  }
-
-  return (
-    <div className="text-[17px] leading-[1.75] text-foreground">
-      {out.length ? out : <p className="text-muted-foreground/50">Nothing to preview.</p>}
-    </div>
-  );
 }
 
 /* ============================================================
@@ -396,7 +173,20 @@ function PopoverItem({
    Save status
    ============================================================ */
 
-function SaveIndicator({ status }: { status: SaveStatus }) {
+function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry?: () => void }) {
+  if (status === "error") {
+    return (
+      <button
+        type="button"
+        onClick={onRetry}
+        className="flex items-center gap-1.5 text-xs font-medium text-destructive"
+        title="Save failed — tap to retry"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+        <span>Save failed — retry</span>
+      </button>
+    );
+  }
   if (status === "saving") {
     return (
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -448,27 +238,96 @@ export function NoteEditor() {
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [colorPanel, setColorPanel] = useState<"none" | "text" | "highlight">("none");
+  const [sharePanel, setSharePanel] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isFirstLoad = useRef(true);
+  // Data-loss fix:
+  // - loadedRef     → server note has been loaded into the editor at least once
+  // - lastSyncedRef → last title/content known to be on the server
+  // - latestRef     → always-current state, readable from event handlers
+  const loadedRef = useRef(false);
+  const lastSyncedRef = useRef({ title: "", content: "" });
+  const latestRef = useRef({ title: "", content: "" });
+  const prevNoteIdRef = useRef<string | undefined>(undefined);
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const overflowBtnRef = useRef<HTMLButtonElement>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* ---------- Load note once ---------- */
-  useEffect(() => {
-    if (note && isFirstLoad.current) {
-      const loadedTitle = note.title ?? "";
-      const loadedContent = getTextContent(note.content);
-      setTitle(loadedTitle);
-      setContent(loadedContent);
-      isFirstLoad.current = false;
+  latestRef.current = { title, content };
 
-      if (!loadedTitle && !loadedContent) {
-        setTimeout(() => titleRef.current?.focus(), 100);
-      }
+  const isDirtyNow = () =>
+    latestRef.current.title !== lastSyncedRef.current.title ||
+    latestRef.current.content !== lastSyncedRef.current.content;
+
+  /* ---------- keepalive save — survives tab close / app switch / suspension ---------- */
+  const keepaliveSave = useCallback((id: string, t: string, c: string) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    fetch(`/api/notes/${id}`, {
+      method: "PATCH",
+      keepalive: true,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ title: t.trim() || "Untitled", content: c }),
+    })
+      .then((r) => {
+        if (r.ok) {
+          lastSyncedRef.current = { title: t, content: c };
+          setSaveStatus("saved");
+        } else {
+          setSaveStatus("error");
+        }
+      })
+      .catch(() => setSaveStatus("error"));
+  }, []);
+
+  /* ---------- Switching notes → hard reset (flush pending changes first) ---------- */
+  useEffect(() => {
+    if (prevNoteIdRef.current === noteId) return;
+    const prevId = prevNoteIdRef.current;
+    if (prevId && isDirtyNow()) {
+      keepaliveSave(prevId, latestRef.current.title, latestRef.current.content);
     }
-  }, [note]);
+    prevNoteIdRef.current = noteId;
+    loadedRef.current = false;
+    lastSyncedRef.current = { title: "", content: "" };
+    setTitle("");
+    setContent("");
+    setSaveStatus("idle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noteId]);
+
+  /* ---------- Load note — NEVER overwrites unsaved user typing ---------- */
+  useEffect(() => {
+    if (!note || loadedRef.current) return;
+    if ((note as { id?: string }).id && (note as { id?: string }).id !== noteId) return;
+    loadedRef.current = true;
+
+    const userAlreadyTyped =
+      title !== lastSyncedRef.current.title || content !== lastSyncedRef.current.content;
+    if (userAlreadyTyped) {
+      // User typed before the note finished loading — keep their text,
+      // autosave will push it to the server.
+      return;
+    }
+
+    const loadedTitle = note.title ?? "";
+    const loadedContent = getTextContent(note.content);
+    lastSyncedRef.current = { title: loadedTitle, content: loadedContent };
+    setTitle(loadedTitle);
+    setContent(loadedContent);
+
+    if (!loadedTitle && !loadedContent) {
+      setTimeout(() => titleRef.current?.focus(), 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note, noteId, title, content]);
 
   /* ---------- Auto-grow textarea ---------- */
   const resizeBody = useCallback(() => {
@@ -482,23 +341,7 @@ export function NoteEditor() {
     resizeBody();
   }, [content, resizeBody, preview]);
 
-  /* ---------- Dirty tracking ---------- */
-  const debouncedTitle = useDebounce(title, 800);
   const previewContent = useDebounce(content, 200);
-  const debouncedContent = useDebounce(content, 800);
-
-  const originalTitle = useMemo(() => note?.title ?? "", [note?.title]);
-  const originalContent = useMemo(
-    () => getTextContent(note?.content),
-    [note?.content]
-  );
-
-  useEffect(() => {
-    if (isFirstLoad.current) return;
-    if (title !== originalTitle || content !== originalContent) {
-      setSaveStatus("unsaved");
-    }
-  }, [title, content, originalTitle, originalContent]);
 
   /* ---------- Save ---------- */
   const doSave = useCallback(
@@ -509,11 +352,12 @@ export function NoteEditor() {
         { id: noteId, title: t.trim() || "Untitled", content: c },
         {
           onSuccess: () => {
+            lastSyncedRef.current = { title: t, content: c };
             setSaveStatus("saved");
             if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
             savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
           },
-          onError: () => setSaveStatus("unsaved"),
+          onError: () => setSaveStatus("error"),
         }
       );
     },
@@ -521,36 +365,43 @@ export function NoteEditor() {
     [noteId]
   );
 
-  /* ---------- Autosave ---------- */
+  /* ---------- Autosave — 1.2s after typing stops, works even before load finishes ---------- */
   useEffect(() => {
-    if (isFirstLoad.current) return;
-    if (!noteId) return;
-    const hasChanges =
-      debouncedTitle !== originalTitle || debouncedContent !== originalContent;
-    if (!hasChanges) return;
-    doSave(debouncedTitle, debouncedContent);
+    const dirty =
+      title !== lastSyncedRef.current.title || content !== lastSyncedRef.current.content;
+    if (!dirty || !noteId) return;
+    setSaveStatus((s) => (s === "error" || s === "saving" ? s : "unsaved"));
+    const timer = setTimeout(() => doSave(title, content), 1200);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedTitle, debouncedContent]);
+  }, [title, content, noteId, doSave]);
 
-  /* ---------- Save when leaving / hiding (mobile app switch) ---------- */
+  /* ---------- Save when leaving / hiding (tab close, mobile app switch) ---------- */
   useEffect(() => {
     const flush = () => {
-      // never flush before the note has loaded, and never flush clean state —
-      // otherwise an app-switch on a slow load overwrites the note with ""
-      if (isFirstLoad.current) return;
-      if (title === originalTitle && content === originalContent) return;
-      doSave(title, content);
+      if (!noteId) return;
+      if (!isDirtyNow()) return;
+      keepaliveSave(noteId, latestRef.current.title, latestRef.current.content);
     };
     const onVis = () => {
       if (document.visibilityState === "hidden") flush();
     };
-    window.addEventListener("beforeunload", flush);
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.removeEventListener("beforeunload", flush);
-      document.removeEventListener("visibilitychange", onVis);
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirtyNow()) return;
+      flush();
+      e.preventDefault();
+      e.returnValue = "";
     };
-  }, [doSave, title, content, originalTitle, originalContent]);
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      flush(); // SPA unmount (e.g. back to notes list) — never lose typed text
+    };
+  }, [noteId, keepaliveSave]);
 
   /* ---------- Markdown helpers ---------- */
   const wrapSelection = (before: string, after: string) => {
@@ -589,6 +440,103 @@ export function NoteEditor() {
     setContent(content.slice(0, lineStart) + newBlock + content.slice(lineEnd));
     requestAnimationFrame(() => el.focus());
   };
+
+  /* ---------- Image upload (paste / button) ---------- */
+  const insertAtCursor = (snippet: string) => {
+    const el = bodyRef.current;
+    const pos = el ? el.selectionStart : content.length;
+    const next = content.slice(0, pos) + snippet + content.slice(pos);
+    setContent(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      const p = pos + snippet.length;
+      el?.setSelectionRange(p, p);
+    });
+  };
+
+  const compressImage = (file: File): Promise<Blob> =>
+    new Promise((resolve) => {
+      if (file.type === "image/gif" || file.size < 300 * 1024) {
+        resolve(file);
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const img = new window.Image();
+      img.onload = () => {
+        const max = 1600;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(
+          (b) => resolve(b ?? file),
+          "image/jpeg",
+          0.85
+        );
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      img.src = url;
+    });
+
+  const uploadImage = async (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveStatus("unsaved");
+      return;
+    }
+    setUploading(true);
+    try {
+      const blob = await compressImage(file);
+      const fd = new FormData();
+      fd.append("file", blob, blob.type === "image/png" ? "image.png" : "image.jpg");
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd,
+      });
+      if (!res.ok) throw new Error("upload failed");
+      const json = await res.json();
+      insertAtCursor(`![](${json.data.url})\n\n`);
+    } catch {
+      // silently ignore — user can retry
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const it of items) {
+      if (it.type.startsWith("image/")) {
+        e.preventDefault();
+        const f = it.getAsFile();
+        if (f) void uploadImage(f);
+        return;
+      }
+    }
+  };
+
+  /* ---------- Color helpers ---------- */
+  const wrapColor = (kind: "text" | "highlight", color: string) => {
+    setPreview(false);
+    if (kind === "highlight") {
+      wrapSelection(`<mark style="background-color:${color}">`, "</mark>");
+    } else {
+      wrapSelection(`<span style="color:${color}">`, "</span>");
+    }
+    setColorPanel("none");
+  };
+
+  const HIGHLIGHT_COLORS = ["#FEF08A", "#BBF7D0", "#BFDBFE", "#FBCFE8"];
+  const TEXT_COLORS = ["#FF3B30", "#FF9500", "#34C759", "#007AFF", "#AF52DE"];
 
   /* ---------- Smart textarea keys: lists continue, Tab indents ---------- */
   const handleBodyKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -728,7 +676,7 @@ export function NoteEditor() {
           </button>
 
           <div className="flex h-8 min-w-[100px] items-center justify-center">
-            <SaveIndicator status={saveStatus} />
+            <SaveIndicator status={saveStatus} onRetry={() => doSave(title, content)} />
           </div>
 
           <div className="flex items-center gap-1">
@@ -788,8 +736,77 @@ export function NoteEditor() {
             <button type="button" className={toolBtn} title="Quote" onClick={() => applyLinePrefix("> ", /^>\s/)}>
               <Quote className="h-3.5 w-3.5" />
             </button>
+            <button
+              type="button"
+              className={cn(toolBtn, colorPanel === "highlight" && "bg-accent text-foreground")}
+              title="Highlight"
+              onClick={() => setColorPanel((v) => (v === "highlight" ? "none" : "highlight"))}
+            >
+              <Highlighter className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className={cn(toolBtn, colorPanel === "text" && "bg-accent text-foreground")}
+              title="Text color"
+              onClick={() => setColorPanel((v) => (v === "text" ? "none" : "text"))}
+            >
+              <Palette className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className={toolBtn}
+              title="Add image"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ImagePlus className="h-3.5 w-3.5" />
+              )}
+            </button>
           </div>
         )}
+
+        {/* Color swatches */}
+        {colorPanel !== "none" && (
+          <div className="mt-2 flex items-center gap-2 pb-1">
+            {(colorPanel === "highlight" ? HIGHLIGHT_COLORS : TEXT_COLORS).map((c) => (
+              <button
+                key={c}
+                type="button"
+                aria-label={colorPanel === "highlight" ? `Highlight ${c}` : `Text color ${c}`}
+                onClick={() => wrapColor(colorPanel, c)}
+                className="h-6 w-6 rounded-full border border-border transition-transform hover:scale-110"
+                style={
+                  colorPanel === "highlight"
+                    ? { backgroundColor: c }
+                    : { backgroundColor: c }
+                }
+              />
+            ))}
+            <button
+              type="button"
+              onClick={() => setColorPanel("none")}
+              className="ml-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Done
+            </button>
+          </div>
+        )}
+
+        {/* Hidden image file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void uploadImage(f);
+            e.target.value = "";
+          }}
+        />
       </div>
 
       {/* Overflow popover */}
@@ -800,14 +817,21 @@ export function NoteEditor() {
           setOverflowOpen(false);
           setConfirmingDelete(false);
           setShowFolderPicker(false);
+          setSharePanel(false);
+          setCopied(false);
         }}
       >
-        {!confirmingDelete && !showFolderPicker && (
+        {!confirmingDelete && !showFolderPicker && !sharePanel && (
           <>
             <PopoverItem
               icon={FolderIcon}
               label="Move to…"
               onClick={() => setShowFolderPicker(true)}
+            />
+            <PopoverItem
+              icon={Globe}
+              label={note.isPublic ? "Sharing: ON" : "Share publicly"}
+              onClick={() => setSharePanel(true)}
             />
             <PopoverItem
               icon={Trash2}
@@ -864,6 +888,70 @@ export function NoteEditor() {
           </>
         )}
 
+        {sharePanel && (
+          <div className="w-72 p-2.5">
+            <p className="mb-2 text-xs font-medium text-foreground">
+              {note.isPublic ? "Public link" : "Share this note"}
+            </p>
+            {note.isPublic ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    readOnly
+                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/n/${note.publicSlug}`}
+                    onFocus={(e) => e.target.select()}
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-accent/50 px-2 py-1.5 text-[11px] text-muted-foreground outline-none"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Copy link"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(
+                        `${window.location.origin}/n/${note.publicSlug}`
+                      );
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    }}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                  Anyone with this link can read — login ki zaroorat nahi.
+                </p>
+                <button
+                  type="button"
+                  disabled={updateNoteMutation.isPending}
+                  onClick={() => updateNoteMutation.mutate({ id: noteId!, isPublic: false })}
+                  className="mt-2 w-full rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                >
+                  Stop sharing
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
+                  Note sabke liye readable ho jayega (blog jaisa public link). Edit sirf tum kar sakti ho.
+                </p>
+                <button
+                  type="button"
+                  disabled={updateNoteMutation.isPending}
+                  onClick={() =>
+                    updateNoteMutation.mutate(
+                      { id: noteId!, isPublic: true },
+                      { onSuccess: () => setCopied(false) }
+                    )
+                  }
+                  className="w-full rounded-lg bg-primary px-2 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {updateNoteMutation.isPending ? "Working…" : "Make public"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {confirmingDelete && (
           <div className="p-2">
             <p className="mb-2 px-1 text-xs text-muted-foreground">
@@ -914,6 +1002,7 @@ export function NoteEditor() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 onKeyDown={handleBodyKeyDown}
+                onPaste={handlePaste}
                 placeholder="Start writing…"
                 className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
                 spellCheck={false}
@@ -946,6 +1035,7 @@ export function NoteEditor() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onKeyDown={handleBodyKeyDown}
+                onPaste={handlePaste}
               placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
               className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
               spellCheck={false}

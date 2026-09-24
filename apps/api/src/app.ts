@@ -9,6 +9,9 @@ import links from "./routes/links";
 import folders from "./routes/folders"; 
 import notebooks from "./routes/notebooks"; 
 import pads, { protectedPadRoutes } from "./routes/pads";
+import { PadController } from "./controllers/pad.controller";
+import { NotesController } from "./controllers/notes.controller";
+import { UploadsController } from "./controllers/uploads.controller";
 import dashboard from "./routes/dashboard";
 import exportRouter from "./routes/export";
 
@@ -65,11 +68,19 @@ app.route("/api/auth", auth);
 const padsMe = new Hono();
 padsMe.use("*", authMiddleware);
 padsMe.route("/", protectedPadRoutes);
+ 
+app.on("DELETE", "/api/pads/me/:slug", (c) => PadController.delete(c));
+
 app.route("/api/pads/me", padsMe);
 
 app.route("/api/pads", pads);
+
+api.get("/notes/public/:slug", NotesController.getByPublicSlug);
+api.get("/uploads/:id", UploadsController.get);
+
 // Protected routes
 api.use("*", authMiddleware);
+api.post("/uploads", UploadsController.create);
 api.route("/notes", notes);
 api.route("/links", links);
 api.route("/folders", folders);

@@ -8,6 +8,8 @@ export interface Note {
   sortOrder: number;
   isPinned: boolean;
   isTrashed: boolean;
+  isPublic: boolean;
+  publicSlug: string | null;
   tags: string[];
   createdAt: string;
   updatedAt: string;

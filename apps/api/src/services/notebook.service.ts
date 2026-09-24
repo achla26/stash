@@ -119,6 +119,8 @@ export class NotebooksService extends BaseService<Notebook, NotebookRow> {
         sortOrder: row.sort_order ?? 0,
         isPinned: row.is_pinned ?? false,
         isTrashed: row.is_trashed ?? false,
+        isPublic: row.is_public ?? false,
+        publicSlug: row.public_slug ?? null,
         tags: row.tags ?? [],
         createdAt: row.created_at,
         updatedAt: row.updated_at,

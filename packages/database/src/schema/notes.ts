@@ -26,6 +26,8 @@ export const notes = pgTable("notes", {
     .default(sql`ARRAY[]::text[]`),
   isPinned: boolean("is_pinned").default(false).notNull(),
   isTrashed: boolean("is_trashed").default(false).notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
+  publicSlug: text("public_slug").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

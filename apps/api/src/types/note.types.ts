@@ -13,6 +13,8 @@ export interface NoteRow {
   tags:string[];
   is_pinned: boolean;
   is_trashed: boolean;
+  is_public: boolean;
+  public_slug: string | null;
   created_at: string;
   updated_at: string;
 }

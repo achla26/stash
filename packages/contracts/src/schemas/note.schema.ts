@@ -16,6 +16,7 @@ export const updateNoteSchema = z.object({
   notebookId: z.string().uuid().optional().nullable(),
   sortOrder: z.number().int().optional(),
   isPinned: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
   tags: z.array(z.string().trim().min(1)).optional(),
 });
 
