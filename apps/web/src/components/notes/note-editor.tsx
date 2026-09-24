@@ -526,7 +526,6 @@ export function NoteEditor() {
 
   /* ---------- Color helpers ---------- */
   const wrapColor = (kind: "text" | "highlight", color: string) => {
-    setPreview(false);
     if (kind === "highlight") {
       wrapSelection(`<mark style="background-color:${color}">`, "</mark>");
     } else {
@@ -712,7 +711,7 @@ export function NoteEditor() {
         {/* Formatting toolbar (edit mode only) */}
         {(!preview || isDesktop) && (
           <div className="mt-4 flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
-            <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { setPreview(false); wrapSelection("**", "**"); }}>
+            <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />
             </button>
             <button type="button" className={toolBtn} title="Italic (⌘I)" onClick={() => wrapSelection("*", "*")}>
