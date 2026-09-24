@@ -41,7 +41,7 @@ export function createPadService(client: HttpClient) {
     },
 
     async deletePad(slug: string): Promise<void> {
-      await client.delete(`/api/pads/me/${slug}`);
+      await client.delete(`/api/pads/${slug}`); // owner check on server
     },
 
     async getUserPads(): Promise<Pad[]> {
