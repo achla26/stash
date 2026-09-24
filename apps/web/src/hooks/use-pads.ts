@@ -62,6 +62,7 @@ export function useUpdatePad() {
       queryClient.invalidateQueries({
         queryKey: padKeys.detail(variables.slug),
       });
+      queryClient.invalidateQueries({ queryKey: padKeys.userPads });
     },
   });
 }

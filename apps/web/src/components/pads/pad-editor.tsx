@@ -75,7 +75,7 @@ export function PadEditor() {
 
   const currentUserId = getCurrentUserId();
   const padData = unlockedPad ?? padResponse?.data ?? null;
-  const isOwner = !!(currentUserId && padData?.userId === currentUserId);
+  const isOwner = !!(currentUserId && padData?.userId === currentUserId) || padResponse?.isOwner === true;
 
   useEffect(() => {
     if (isOwner) {
@@ -130,7 +130,10 @@ export function PadEditor() {
       createPadMutation.mutate(
         { allowEdit: false, slug },
         {
-          onSuccess: async () => {
+          onSuccess: async (pad) => {
+            if (pad?.ownerToken && slug) {
+              localStorage.setItem(`pad_owner_${slug}`, pad.ownerToken);
+            }
             isFirstLoad.current = true;
             isNewPad.current = false;
             await refetch();

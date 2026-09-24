@@ -11,6 +11,7 @@ export interface PadRow {
   is_public: boolean;
   visibility: "public" | "password" | "private";
   password: string | null;
+  owner_token: string | null;
   expires_at: string | null;
   allow_edit: boolean;
   created_at: string;

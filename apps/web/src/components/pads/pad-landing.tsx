@@ -27,7 +27,7 @@ export function PadLanding() {
   const router = useRouter();
   const [displaySlug, setDisplaySlug] = useState("");
   const createPadMutation = useCreatePad();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth({ redirect: false });
   const { data: myPads = [], isLoading: padsLoading } = useUserPads(isAuthenticated);
 
   // Sanitized version of what user typed
@@ -57,6 +57,9 @@ export function PadLanding() {
       { allowEdit: false },
       {
         onSuccess: (pad) => {
+          if (pad.ownerToken) {
+            localStorage.setItem(`pad_owner_${pad.slug}`, pad.ownerToken);
+          }
           router.push(`/pad/${pad.slug}`);
         },
       }

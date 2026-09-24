@@ -12,6 +12,7 @@ export interface Pad {
   allowEdit: boolean;
   createdAt: string;
   updatedAt: string;
+  ownerToken?: string | null;
 }
 
 export interface PadAccessResponse {
@@ -19,6 +20,7 @@ export interface PadAccessResponse {
   isPasswordProtected: boolean;
   data: Pad | null;
   canEdit?: boolean;
+  isOwner?: boolean;
   isAnonymous?: boolean;
   error?: string;
   statusCode?: number;

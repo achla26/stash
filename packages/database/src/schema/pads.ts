@@ -37,6 +37,7 @@ export const pads = pgTable("pads", {
 
     // Password (null = no password)
     password: text("password"),
+    ownerToken: text("owner_token"),
 
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     allowEdit: boolean("allow_edit").default(true).notNull(), 

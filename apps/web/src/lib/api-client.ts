@@ -20,6 +20,12 @@ apiClient.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+      // anonymous pad creator — owner token attach
+      const m = (config.url ?? "").match(/\/api\/pads\/([a-z0-9-]+)/);
+      if (m && !(config.url ?? "").includes("/api/pads/me")) {
+        const ot = localStorage.getItem(`pad_owner_${m[1]}`);
+        if (ot) config.headers["x-pad-owner"] = ot;
+      }
     }
     return config;
   },

@@ -443,6 +443,7 @@ export function NoteEditor() {
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [preview, setPreview] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const [isDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
 
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -761,7 +762,7 @@ export function NoteEditor() {
         </div>
 
         {/* Formatting toolbar (edit mode only) */}
-        {!preview && (
+        {(!preview || isDesktop) && (
           <div className="mt-4 flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
             <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { setPreview(false); wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />

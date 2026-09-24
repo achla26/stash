@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@repo/contracts/types";
 
-export function useAuth() {
+export function useAuth(options?: { redirect?: boolean }) {
+  const shouldRedirect = options?.redirect ?? true;
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -13,7 +14,7 @@ export function useAuth() {
     const token = localStorage.getItem("access_token");
 
     if (!token) {
-      router.push("/login");
+      if (shouldRedirect) router.push("/login");
     } else {
       setIsAuthenticated(true);
     }

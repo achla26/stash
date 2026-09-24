@@ -25,7 +25,8 @@ export class PadController {
     const slug = c.req.param("slug") ?? "";
     const userId = await PadController.getOptionalUser(c);
 
-    const result = await PadService.accessPad(slug, userId);
+    const ownerToken = c.req.header("x-pad-owner") ?? null;
+    const result = await PadService.accessPad(slug, userId, ownerToken);
 
     if (result.error && result.statusCode) {
       const code = result.statusCode === 410 ? "PAD_EXPIRED" : "FORBIDDEN";
@@ -75,7 +76,8 @@ export class PadController {
     }
 
     const userId = await PadController.getOptionalUser(c);
-    const pad = await PadService.update(slug, parsed.data, userId);
+    const ownerToken = c.req.header("x-pad-owner") ?? null;
+    const pad = await PadService.update(slug, parsed.data, userId, ownerToken);
     return ApiResponse.success(c, pad, "Pad updated successfully");
   }
 

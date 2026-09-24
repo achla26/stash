@@ -11,7 +11,6 @@ import notebooks from "./routes/notebooks";
 import pads, { protectedPadRoutes } from "./routes/pads";
 import dashboard from "./routes/dashboard";
 import exportRouter from "./routes/export";
-import { PadController } from "./controllers/pad.controller";
 
 const app = new Hono();
 const api = new Hono();
@@ -21,7 +20,25 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: ["http://localhost:3000"],
+    origin: (origin, c) => {
+      if (!origin) return origin; // non-browser / same-origin
+      const host = c.req.header("host") ?? "";
+      if (origin === `http://${host}` || origin === `https://${host}`) {
+        return origin;
+      }
+      const allowed = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        ...(process.env.CORS_ORIGIN ?? "")
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
+      ];
+      if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
+        return origin;
+      }
+      return null;
+    },
     credentials: true,
   })
 );
@@ -49,11 +66,6 @@ const padsMe = new Hono();
 padsMe.use("*", authMiddleware);
 padsMe.route("/", protectedPadRoutes);
 app.route("/api/pads/me", padsMe);
-
-const padsProtected = new Hono();
-padsProtected.use("*", authMiddleware);
-padsProtected.delete("/:slug", PadController.delete);
-app.route("/api/pads", padsProtected);
 
 app.route("/api/pads", pads);
 // Protected routes

@@ -51,7 +51,8 @@ export class PadService {
 
   static async accessPad(
     slug: string,
-    userId: string | null
+    userId: string | null,
+    ownerToken?: string | null
   ): Promise<PadAccessResponse> {
     const row = await this.getRowBySlug(slug);
 
@@ -69,22 +70,33 @@ export class PadService {
       };
     }
 
-    const isOwner = !!(userId && row.user_id === userId);
+    const tokenOwner =
+      !!ownerToken && !!row.owner_token && row.owner_token === ownerToken;
+    const isOwner = !!(userId && row.user_id === userId) || tokenOwner;
     const isAnonymousPad = !row.user_id;
 
-    // Anonymous pad
+    // Anonymous pad — creator (owner token) ko full access
     if (isAnonymousPad) {
+      if (tokenOwner) {
+        return {
+          exists: true,
+          isPasswordProtected: false,
+          data: this.toContract(row),
+          canEdit: true,
+          isOwner: true,
+        };
+      }
       return {
         exists: true,
-        isPasswordProtected: row.visibility === "password",
-        data: row.visibility === "password" ? null : this.toContract(row),
+        isPasswordProtected: this.padVis(row) === "password",
+        data: this.padVis(row) === "password" ? null : this.toContract(row),
         canEdit: false,
         isAnonymous: true,
       };
     }
 
     // Private pad
-    if (row.visibility === "private") {
+    if (this.padVis(row) === "private") {
       if (!isOwner) {
         return {
           exists: true,
@@ -103,7 +115,7 @@ export class PadService {
     }
 
     // Password protected pad
-    if (row.visibility === "password") {
+    if (this.padVis(row) === "password") {
       if (isOwner) {
         return {
           exists: true,
@@ -131,6 +143,18 @@ export class PadService {
     };
   }
 
+  // visibility NULL (old rows) → legacy is_public fallback
+  private static padVis(row: {
+    visibility: string | null;
+    is_public: boolean;
+  }): "public" | "private" | "password" {
+    if (row.visibility === "public" || row.visibility === "password") {
+      return row.visibility;
+    }
+    if (row.visibility === "private") return "private";
+    return row.is_public ? "public" : "private";
+  }
+
   /* ===== Verify Password (POST /api/pads/:slug/verify) ===== */
 
   static async verifyPassword(
@@ -155,7 +179,7 @@ export class PadService {
       throw ApiError.unauthorized("Wrong password");
     }
 
-    const canEdit = row.visibility === "password" && row.allow_edit === true;
+    const canEdit = this.padVis(row) === "password" && row.allow_edit === true;
 
     return {
       pad: this.toContract(row),
@@ -174,6 +198,7 @@ export class PadService {
     let visibility = dto.visibility;
     let allowEdit = false;
     let password = dto.password ?? null;
+    let ownerToken: string | null = null;
 
     if (userId) {
       // Authenticated user
@@ -188,7 +213,8 @@ export class PadService {
         );
       }
     } else {
-      // Anonymous user
+      // Anonymous user — creator ko owner_token milta hai
+      ownerToken = crypto.randomBytes(24).toString("hex");
       if (visibility === "private") {
         visibility = "public";
       }
@@ -222,12 +248,15 @@ export class PadService {
         userId,
         visibility: visibility as never,
         password,
+        ownerToken,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         allowEdit,
       } as never)
       .returning();
 
-    return this.toContract(rowify(schema.pads, rows[0]) as unknown as PadRow);
+    const pad = this.toContract(rowify(schema.pads, rows[0]) as unknown as PadRow);
+    if (ownerToken) pad.ownerToken = ownerToken;
+    return pad;
   }
 
   /* ===== Update Pad ===== */
@@ -235,7 +264,8 @@ export class PadService {
   static async update(
     slug: string,
     dto: UpdatePadInput,
-    userId: string | null
+    userId: string | null,
+    ownerToken?: string | null
   ): Promise<Pad> {
     const row = await this.getRowBySlug(slug);
     if (!row) throw ApiError.notFound("Pad not found");
@@ -244,11 +274,19 @@ export class PadService {
       throw new ApiError(410, "Pad has expired", "PAD_EXPIRED");
     }
 
-    if (!row.user_id) {
+    const tokenOwner =
+      !!ownerToken && !!row.owner_token && row.owner_token === ownerToken;
+
+    if (!row.user_id && !tokenOwner) {
       throw ApiError.forbidden("Anonymous pads cannot be edited");
     }
 
-    const isOwner = !!userId && row.user_id === userId;
+    // Anonymous owner private nahi kar sakta
+    if (tokenOwner && !userId && dto.visibility === "private") {
+      throw ApiError.forbidden("Login required to make a pad private");
+    }
+
+    const isOwner = (!!userId && row.user_id === userId) || tokenOwner;
 
     if (!isOwner) {
       let canCollaborate = false;
