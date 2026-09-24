@@ -366,14 +366,22 @@ export class PadService {
 
   /* ===== Delete Pad ===== */
 
-  static async delete(slug: string, userId: string): Promise<void> {
+  static async delete(
+    slug: string,
+    userId: string | null,
+    ownerToken?: string | null
+  ): Promise<void> {
     const row = await this.getRowBySlug(slug);
 
     if (!row) {
       throw ApiError.notFound("Pad not found");
     }
 
-    if (!row.user_id || row.user_id !== userId) {
+    const tokenOwner =
+      !!ownerToken && !!row.owner_token && row.owner_token === ownerToken;
+    const isOwner = (!!userId && row.user_id === userId) || tokenOwner;
+
+    if (!isOwner) {
       throw ApiError.forbidden("Only the owner can delete this pad");
     }
 

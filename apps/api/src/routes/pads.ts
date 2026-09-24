@@ -10,6 +10,8 @@ router.post("/", PadController.create);
 router.get("/:slug", PadController.getBySlug);
 router.post("/:slug/verify", PadController.verifyPassword);
 router.patch("/:slug", PadController.update);
+// delete — controller/service  owner check (login or owner-token)
+router.delete("/:slug", PadController.delete);
 
 // ============================================
 // PROTECTED ROUTES (Authentication required)

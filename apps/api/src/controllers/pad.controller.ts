@@ -84,12 +84,13 @@ export class PadController {
   static async delete(c: Context) {
     const slug = c.req.param("slug") as string;
     const userId = await PadController.getOptionalUser(c);
+    const ownerToken = c.req.header("x-pad-owner") ?? null;
 
-    if (!userId) {
+    if (!userId && !ownerToken) {
       throw ApiError.unauthorized("Authentication required to delete pads");
     }
 
-    await PadService.delete(slug, userId);
+    await PadService.delete(slug, userId, ownerToken);
     return ApiResponse.success(c, null, "Pad deleted successfully");
   }
 
