@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { fetchWordDetails } from "@/lib/dictionary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,35 +48,6 @@ function hueOf(s: string) {
   return h;
 }
 
-/* free dictionary API — no key, $0; 5s timeout taaki slow net pe user atka na rahe */
-async function fetchMeaning(w: string) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 5000);
-  try {
-    const r = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(w.toLowerCase())}`,
-      { signal: ctrl.signal }
-    );
-    if (!r.ok) return null;
-    const j = await r.json();
-    const e = Array.isArray(j) ? j[0] : null;
-    if (!e) return null;
-    const m = e.meanings?.[0];
-    const defWithExample = m?.definitions?.find((d: any) => d.example);
-    return {
-      meaning: m?.definitions?.[0]?.definition ?? "",
-      partOfSpeech: m?.partOfSpeech ?? "",
-      pronunciation:
-        e.phonetic ?? e.phonetics?.find((p: any) => p.text)?.text ?? "",
-      example: defWithExample?.example ?? "",
-      synonyms: (m?.synonyms ?? []).slice(0, 3),
-    };
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 export function WordsDashboard() {
   const [newWord, setNewWord] = useState("");
@@ -195,10 +167,10 @@ export function WordsDashboard() {
     const dup = words.find((x) => x.word.toLowerCase() === w.toLowerCase());
     if (dup) {
       setAdding(false);
-      setAddErr(`“${dup.word}” already saved hai — Edit se update karo.`);
+      setAddErr(`“${dup.word}” is already saved — update it from Edit.`);
       return;
     }
-    const m = await fetchMeaning(w);
+    const m = await fetchWordDetails(w);
     createM.mutate(
       {
         word: w,
@@ -213,7 +185,7 @@ export function WordsDashboard() {
           setLastSaved(saved);
           setNewWord("");
           setAdding(false);
-          if (!m) toast.info("Meaning nahi mili — Edit se add karo");
+          if (!m) toast.info("No meaning found — add one from Edit");
         },
         onError: (er: any) => {
           setAdding(false);
@@ -285,7 +257,7 @@ export function WordsDashboard() {
           <BookOpen className="h-5 w-5 text-primary" /> ADD A WORD
         </h1>
         <p className="mb-4 mt-1 text-[13px] text-muted-foreground">
-          Word likho — meaning auto-fetch hoke save ho jayegi. Details baad me Edit se.
+          Type a word — the meaning is fetched and saved automatically. Edit details later.
         </p>
         <div className="flex flex-col gap-2.5 sm:flex-row">
           <Input
@@ -310,7 +282,7 @@ export function WordsDashboard() {
             <div className="min-w-0">
               <span className="text-sm font-bold text-emerald-500">{lastSaved.word}</span>
               <div className="truncate text-xs text-muted-foreground">
-                {lastSaved.meaning || "meaning nahi mili — Edit se add karo"}
+                {lastSaved.meaning || "No meaning yet — add one from Edit"}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
@@ -385,7 +357,7 @@ export function WordsDashboard() {
           <h2 className="mb-4 text-[13px] font-extrabold tracking-wider">TOP BOOKS</h2>
           {stats.top.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              No books yet — Edit me book add karo.
+              No books yet — add one from Edit.
             </p>
           ) : (
             <div className="space-y-3.5">
@@ -465,7 +437,7 @@ export function WordsDashboard() {
             <EmptyState
               icon={BookOpen}
               title="No words here"
-              description={search ? `Nothing matches “${search}”.` : "Upar se pehla word add karo."}
+              description={search ? `Nothing matches “${search}”.` : "Add your first word above."}
             />
           </div>
         ) : (
@@ -501,7 +473,7 @@ export function WordsDashboard() {
                       )}
                     </div>
                     <div className="mt-0.5 truncate text-[13px] text-muted-foreground">
-                      {w.meaning || "meaning nahi hai — Edit se add karo"}
+                      {w.meaning || "No meaning yet — add one from Edit"}
                     </div>
                     {w.note && (
                       <div className="mt-0.5 truncate text-xs text-muted-foreground/80">

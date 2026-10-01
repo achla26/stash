@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUpdateWord } from "@/hooks/use-words";
+import { fetchWordDetails } from "@/lib/dictionary";
 import type { Word } from "@repo/contracts/types";
 
 interface Props {
@@ -30,6 +31,23 @@ export function WordEditDialog({ word, isOpen, onClose }: Props) {
   const [book, setBook] = useState("");
   const [page, setPage] = useState("");
   const [note, setNote] = useState("");
+  const [fetching, setFetching] = useState(false);
+
+  async function fetchAgain() {
+    if (!word) return;
+    setFetching(true);
+    const m = await fetchWordDetails(word.word);
+    setFetching(false);
+    if (!m) {
+      toast.info("No meaning found online");
+      return;
+    }
+    if (m.meaning) setMeaning(m.meaning);
+    if (m.pronunciation) setPronunciation(m.pronunciation);
+    if (m.partOfSpeech) setPartOfSpeech(m.partOfSpeech);
+    if (m.example) setExample(m.example);
+    toast.success("Meaning fetched");
+  }
 
   useEffect(() => {
     if (!word) return;
@@ -87,7 +105,17 @@ export function WordEditDialog({ word, isOpen, onClose }: Props) {
           </div>
 
           <div>
-            <span className={lab}>Meaning</span>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Meaning</span>
+              <button
+                type="button"
+                onClick={fetchAgain}
+                disabled={fetching}
+                className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+              >
+                {fetching ? "Fetching…" : "Fetch meaning"}
+              </button>
+            </div>
             <textarea
               value={meaning}
               onChange={(e) => setMeaning(e.target.value)}

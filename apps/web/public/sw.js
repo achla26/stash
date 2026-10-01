@@ -1,7 +1,7 @@
 /* Stash service worker — offline shell + offline reading */
 
 // Bump this on every release to bust old caches
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `stash-shell-${VERSION}`;
 const PAGE_CACHE = `stash-pages-${VERSION}`;
 const API_CACHE = `stash-api-${VERSION}`;
@@ -79,8 +79,8 @@ self.addEventListener("fetch", (event) => {
           const res = await fetch(req);
           if (res.ok && req.mode === "navigate") {
             const cache = await caches.open(PAGE_CACHE);
-            cache.put(req, res.clone());
-            trimCache(PAGE_CACHE, 40);
+            cache.put(req, res.clone()).catch(() => {});
+            trimCache(PAGE_CACHE, 40).catch(() => {});
           }
           return res;
         } catch {
@@ -113,8 +113,8 @@ self.addEventListener("fetch", (event) => {
         try {
           const res = await fetch(req);
           if (res.ok) {
-            cache.put(req, res.clone());
-            trimCache(API_CACHE, 60);
+            cache.put(req, res.clone()).catch(() => {});
+            trimCache(API_CACHE, 60).catch(() => {});
           }
           return res;
         } catch {
@@ -132,17 +132,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets (icons, images, fonts): cache-first
+  // Static assets (icons, images, fonts): cache-first, never reject
   event.respondWith(
     (async () => {
       const cached = await caches.match(req);
       if (cached) return cached;
-      const res = await fetch(req);
-      if (res.ok) {
-        const cache = await caches.open(SHELL_CACHE);
-        cache.put(req, res.clone());
+      try {
+        const res = await fetch(req);
+        if (res.ok) {
+          const cache = await caches.open(SHELL_CACHE);
+          cache.put(req, res.clone()).catch(() => {});
+        }
+        return res;
+      } catch {
+        return new Response("", { status: 503, statusText: "Offline" });
       }
-      return res;
     })()
   );
 });

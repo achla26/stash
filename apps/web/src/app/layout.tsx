@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 import QueryProvider from "@/components/providers/query-provider";
@@ -78,7 +77,9 @@ export default function RootLayout({
           }}
         />
 
-        {process.env.VERCEL && <Analytics />}
+        {/* Vercel Web Analytics is not enabled for this project — the script 404s.
+            To use it: enable Web Analytics in the Vercel dashboard, then re-add
+            import { Analytics } from "@vercel/analytics/next" and <Analytics /> here. */}
       </body>
     </html>
   );
