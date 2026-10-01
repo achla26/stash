@@ -28,8 +28,21 @@ function ShareHandler() {
     const url = extractUrl([rawUrl, text, title]);
 
     if (!url) {
-      setMsg("No link found in share.");
-      setTimeout(() => router.push("/links"), 1500);
+      const textForWord = (text || title).trim();
+      if (textForWord) {
+        // no link in share — treat as a word share
+        const authed = !!localStorage.getItem("access_token");
+        if (!authed) {
+          localStorage.setItem("stash_pending_word", textForWord);
+          setMsg("Please log in — we'll add the word after.");
+          router.push("/login");
+          return;
+        }
+        router.push(`/words?shared=${encodeURIComponent(textForWord)}`);
+      } else {
+        setMsg("No link or text found in share.");
+        setTimeout(() => router.push("/links"), 1500);
+      }
       return;
     }
 

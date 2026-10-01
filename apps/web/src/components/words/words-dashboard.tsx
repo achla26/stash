@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BookOpen,
   Library,
@@ -15,6 +16,7 @@ import {
   Download,
   X,
   GraduationCap,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +33,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { WordEditDialog } from "./word-edit-dialog";
+import { ReviewSession } from "./review-session";
 import type { Word } from "@repo/contracts/types";
 
 const DAY = 86400000;
@@ -61,7 +64,40 @@ export function WordsDashboard() {
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [editing, setEditing] = useState<Word | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  /* ---------- share-to-add (PWA share target) ---------- */
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const sharedInfo = useMemo(() => {
+    const raw = (params.get("shared") ?? "").trim();
+    if (!raw) return null;
+    const clean = raw.replace(/https?:\/\/\S+/g, " ");
+    const m = clean.match(/[A-Za-z][A-Za-z'\-]{1,24}/);
+    return { raw, word: m ? m[0].toLowerCase() : "" };
+  }, [params]);
+
+  useEffect(() => {
+    if (sharedInfo?.word) setNewWord(sharedInfo.word);
+  }, [sharedInfo]);
+
+  useEffect(() => {
+    const pending = localStorage.getItem("stash_pending_word");
+    if (pending) {
+      localStorage.removeItem("stash_pending_word");
+      const m = pending.replace(/https?:\/\/\S+/g, " ").match(/[A-Za-z][A-Za-z'\-]{1,24}/);
+      if (m) {
+        setNewWord(m[0].toLowerCase());
+        toast.info("Shared word loaded — tap Add word");
+      }
+    }
+  }, []);
+
+  function dismissShare() {
+    router.replace(pathname);
+  }
 
   const {
     data: words = [],
@@ -74,6 +110,7 @@ export function WordsDashboard() {
   const createM = useCreateWord();
   const deleteM = useDeleteWord();
   const masteredM = useToggleMastered();
+  const unmastered = words.filter((w) => !w.mastered).length;
 
   useEffect(() => {
     if (!menuFor) return;
@@ -158,9 +195,13 @@ export function WordsDashboard() {
   }, [words, search, chip, sort]);
 
   /* ---------- add word: search + auto-save ---------- */
-  async function addWord(e: React.FormEvent) {
+  function addWord(e: React.FormEvent) {
     e.preventDefault();
-    const w = newWord.trim();
+    addWordText(newWord);
+  }
+
+  async function addWordText(raw: string) {
+    const w = raw.trim();
     if (!w) return;
     setAddErr("");
     setAdding(true);
@@ -251,6 +292,37 @@ export function WordsDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
+      {/* ---------- shared text banner ---------- */}
+      {sharedInfo && (
+        <div className="flex items-center gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+          <Share2 className="h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1 text-[13px]">
+            <span className="font-bold">Shared text:</span>{" "}
+            <span className="text-muted-foreground">
+              “{sharedInfo.raw.slice(0, 90)}”
+            </span>
+          </div>
+          {sharedInfo.word && (
+            <Button
+              type="button"
+              size="sm"
+              disabled={adding}
+              onClick={() => addWordText(sharedInfo.word)}
+            >
+              Add “{sharedInfo.word}”
+            </Button>
+          )}
+          <button
+            type="button"
+            onClick={dismissShare}
+            aria-label="Dismiss"
+            className="rounded p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* ---------- add word ---------- */}
       <form onSubmit={addWord} className={cn(card, "p-5 sm:p-6")}>
         <h1 className="flex items-center gap-2.5 text-lg font-extrabold tracking-wide sm:text-xl">
@@ -389,9 +461,23 @@ export function WordsDashboard() {
               {filtered.length}
             </span>
           </h2>
-          <Button variant="outline" size="sm" onClick={exportCsv}>
-            <Download className="h-3.5 w-3.5" /> Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReviewOpen(true)}
+              disabled={unmastered === 0}
+              title={unmastered === 0 ? "All words mastered" : "Review flashcards"}
+            >
+              <GraduationCap className="h-3.5 w-3.5" /> Review
+              <span className="ml-1 rounded-full bg-primary/10 px-1.5 text-[10.5px] font-bold text-primary">
+                {unmastered}
+              </span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <Download className="h-3.5 w-3.5" /> Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -575,6 +661,10 @@ export function WordsDashboard() {
         isOpen={!!editing}
         onClose={() => setEditing(null)}
       />
+
+      {reviewOpen && (
+        <ReviewSession words={words} onClose={() => setReviewOpen(false)} />
+      )}
     </div>
   );
 }
