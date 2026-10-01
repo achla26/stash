@@ -232,8 +232,17 @@ export function NoteEditor() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [preview, setPreview] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const [preview, setPreview] = useState(false);
   const [isDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const didInitPreview = useRef(false);
+
+  /* existing notes open in view mode; new/empty notes open in edit mode */
+  useEffect(() => {
+    if (didInitPreview.current || !note) return;
+    didInitPreview.current = true;
+    const hasContent = !!getTextContent(note.content).trim();
+    setPreview(hasContent || isDesktop);
+  }, [note, isDesktop]);
 
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
