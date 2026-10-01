@@ -35,6 +35,7 @@ const tables: Record<string, any> = {
   folders: schema.folders,
   notebooks: schema.notebooks,
   pads: schema.pads,
+  words: schema.words,
 };
 
 // T = Contract type (camelCase)

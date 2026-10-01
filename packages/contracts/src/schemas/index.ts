@@ -81,4 +81,11 @@ export {
   type ReminderRepeat,
 } from "./reminder.schema";
 
+export {
+  createWordSchema,
+  updateWordSchema,
+  type CreateWordInput,
+  type UpdateWordInput,
+} from "./word.schema";
+
 export { z, type ZodSchema } from "zod";

@@ -16,3 +16,4 @@ export { createTrashService, type TrashService } from "./trash.service";
 
 
 
+export { createWordsService, type WordsService } from "./words.service";

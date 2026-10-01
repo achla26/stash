@@ -8,12 +8,14 @@ import {
   Link2,
   NotebookPen,
   Settings,
+  SpellCheck,
 } from "lucide-react";
 
 const tabs = [
   { href: "/dashboard", label: "Home", icon: LayoutGrid },
   { href: "/notes", label: "Notes", icon: FileText },
   { href: "/links", label: "Links", icon: Link2 },
+  { href: "/words", label: "Words", icon: SpellCheck },
   { href: "/pad", label: "Pads", icon: NotebookPen },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -26,7 +28,7 @@ export function MobileTabBar() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-sidebar/95 backdrop-blur md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (

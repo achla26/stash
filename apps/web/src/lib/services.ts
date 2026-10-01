@@ -6,7 +6,8 @@ import {
   createFolderService,
   createLinkService,
   createNotebookService,
-  createPadService
+  createPadService,
+  createWordsService
 } from "@repo/api-services";
 
 export const notesService = createNotesService(apiClient as any);
@@ -16,6 +17,7 @@ export const folderService = createFolderService(apiClient as any);
 export const linkService = createLinkService(apiClient as any);
 export const notebookService = createNotebookService(apiClient as any);
 export const padService = createPadService(apiClient as any);
+export const wordsService = createWordsService(apiClient as any);
 
 export const exportService = {
   async getAll(): Promise<unknown> {

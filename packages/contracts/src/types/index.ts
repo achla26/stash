@@ -62,3 +62,5 @@ export type {
   ReminderStatus,
   ReminderRepeat,
 } from "./reminder.types";
+
+export type { Word } from "./word.types";

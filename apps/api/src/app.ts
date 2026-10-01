@@ -8,6 +8,7 @@ import notes from "./routes/notes";
 import links from "./routes/links"; 
 import folders from "./routes/folders"; 
 import notebooks from "./routes/notebooks"; 
+import words from "./routes/words";
 import pads, { protectedPadRoutes } from "./routes/pads";
 import { PadController } from "./controllers/pad.controller";
 import { NotesController } from "./controllers/notes.controller";
@@ -85,6 +86,7 @@ api.route("/notes", notes);
 api.route("/links", links);
 api.route("/folders", folders);
 api.route("/notebooks", notebooks);
+api.route("/words", words);
 api.route("/dashboard", dashboard);
 api.route("/export", exportRouter);
 
