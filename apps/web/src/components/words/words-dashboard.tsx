@@ -33,6 +33,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { WordEditDialog } from "./word-edit-dialog";
+import { WordManualDialog } from "./word-manual-dialog";
 import { ReviewSession } from "./review-session";
 import type { Word } from "@repo/contracts/types";
 
@@ -65,6 +66,7 @@ export function WordsDashboard() {
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [editing, setEditing] = useState<Word | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   /* ---------- share-to-add (PWA share target) ---------- */
@@ -348,6 +350,13 @@ export function WordsDashboard() {
             )}
           </Button>
         </div>
+        <button
+          type="button"
+          onClick={() => setManualOpen(true)}
+          className="mt-2.5 text-xs font-semibold text-primary hover:underline"
+        >
+          Add manually (write your own meaning)
+        </button>
         {addErr && <p className="mt-2 text-xs text-destructive">{addErr}</p>}
         {lastSaved && (
           <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
@@ -665,6 +674,12 @@ export function WordsDashboard() {
       {reviewOpen && (
         <ReviewSession words={words} onClose={() => setReviewOpen(false)} />
       )}
+
+      <WordManualDialog
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        words={words}
+      />
     </div>
   );
 }

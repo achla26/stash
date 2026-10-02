@@ -27,6 +27,7 @@ import {
   Quote,
   Eye,
   PencilLine,
+  Columns2,
   Highlighter,
   Palette,
   ImagePlus,
@@ -232,17 +233,28 @@ export function NoteEditor() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [preview, setPreview] = useState(false);
+  const [viewMode, setViewMode] = useState<"split" | "view" | "edit">("edit");
   const [isDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
   const didInitPreview = useRef(false);
+  const preview = viewMode !== "edit";
 
-  /* existing notes open in view mode; new/empty notes open in edit mode */
+  /* Desktop: notes open in split view. Mobile: existing notes open in
+     single view, new/empty notes in edit.
+     Icon cycle — desktop: split → single view → edit → split;
+     mobile: view ↔ edit. */
   useEffect(() => {
     if (didInitPreview.current || !note) return;
     didInitPreview.current = true;
     const hasContent = !!getTextContent(note.content).trim();
-    setPreview(hasContent || isDesktop);
+    setViewMode(!hasContent ? "edit" : isDesktop ? "split" : "view");
   }, [note, isDesktop]);
+
+  function cycleMode() {
+    setViewMode((m) => {
+      if (!isDesktop) return m === "view" ? "edit" : "view";
+      return m === "split" ? "view" : m === "view" ? "edit" : "split";
+    });
+  }
 
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -348,7 +360,7 @@ export function NoteEditor() {
 
   useEffect(() => {
     resizeBody();
-  }, [content, resizeBody, preview]);
+  }, [content, resizeBody, viewMode]);
 
   const previewContent = useDebounce(content, 200);
 
@@ -672,7 +684,7 @@ export function NoteEditor() {
   return (
     <div className="min-h-screen bg-background">
       {/* Toolbar */}
-      <div className={cn("mx-auto w-full px-6 pt-6 sm:px-8", preview ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
+      <div className={cn("mx-auto w-full px-6 pt-6 sm:px-8", viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
         <div className="flex items-center justify-between gap-3 opacity-60 transition-opacity hover:opacity-100 focus-within:opacity-100">
           <button
             type="button"
@@ -690,15 +702,23 @@ export function NoteEditor() {
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setPreview((v) => !v)}
+              onClick={cycleMode}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                preview && "bg-accent text-foreground"
+                viewMode !== "edit" && "bg-accent text-foreground"
               )}
-              aria-label={preview ? "Edit" : "Preview"}
-              title={preview ? "Edit" : "Preview"}
+              aria-label={viewMode === "split" ? "Single view" : viewMode === "view" ? "Edit" : "Split view"}
+              title={viewMode === "split" ? "Single view" : viewMode === "view" ? "Edit" : "Split view"}
             >
-              {preview ? <PencilLine className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {viewMode === "split" ? (
+                <Eye className="h-4 w-4" />
+              ) : viewMode === "view" ? (
+                <PencilLine className="h-4 w-4" />
+              ) : isDesktop ? (
+                <Columns2 className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
             <button
               ref={overflowBtnRef}
@@ -718,7 +738,7 @@ export function NoteEditor() {
         </div>
 
         {/* Formatting toolbar (edit mode only) */}
-        {(!preview || isDesktop) && (
+        {viewMode !== "view" && (
           <div className="mt-4 flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
             <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />
@@ -990,10 +1010,19 @@ export function NoteEditor() {
       <div
         className={cn(
           "mx-auto w-full px-6 pb-24 pt-6 sm:px-8",
-          preview ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl"
+          viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl"
         )}
       >
-        {preview ? (
+        {viewMode === "view" ? (
+          <div className="min-w-0">
+            <h1 className="w-full text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+              {title || "Untitled"}
+            </h1>
+            <div className="mt-8">
+              <MarkdownPreview text={previewContent} />
+            </div>
+          </div>
+        ) : viewMode === "split" ? (
           <div className="gap-12 md:grid md:grid-cols-2">
             {/* live editor — desktop only */}
             <div className="hidden md:block">
