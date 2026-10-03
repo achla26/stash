@@ -684,7 +684,7 @@ export function NoteEditor() {
   return (
     <div className="min-h-screen bg-background">
       {/* Toolbar */}
-      <div className={cn("mx-auto w-full px-6 pt-6 sm:px-8", viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
+      <div className={cn("mx-auto w-full px-6 pb-12 pt-6 sm:px-8", viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
         <div className="flex items-center justify-between gap-3 opacity-60 transition-opacity hover:opacity-100 focus-within:opacity-100">
           <button
             type="button"
@@ -739,7 +739,8 @@ export function NoteEditor() {
 
         {/* Formatting toolbar (edit mode only) */}
         {viewMode !== "view" && (
-          <div className="mt-4 flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
+          <div className="sticky top-0 z-20 -mx-2 bg-background/95 px-2 pt-2 backdrop-blur">
+          <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
             <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />
             </button>
@@ -794,6 +795,7 @@ export function NoteEditor() {
               )}
             </button>
           </div>
+          </div>
         )}
 
         {/* Color swatches */}
@@ -835,7 +837,6 @@ export function NoteEditor() {
             e.target.value = "";
           }}
         />
-      </div>
 
       {/* Overflow popover */}
       <AnchoredPopover
@@ -1006,19 +1007,13 @@ export function NoteEditor() {
         )}
       </AnchoredPopover>
 
-      {/* Writing surface / preview */}
-      <div
-        className={cn(
-          "mx-auto w-full px-6 pb-24 pt-6 sm:px-8",
-          viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl"
-        )}
-      >
+      {/* Writing surface / preview (same container so the sticky toolbar can pin) */}
         {viewMode === "view" ? (
           <div className="min-w-0">
-            <h1 className="w-full text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+            <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               {title || "Untitled"}
             </h1>
-            <div className="mt-8">
+            <div className="mt-4">
               <MarkdownPreview text={previewContent} />
             </div>
           </div>
@@ -1031,7 +1026,7 @@ export function NoteEditor() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Untitled"
-                className="w-full resize-none border-none bg-transparent text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-5xl"
+                className="w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
                 spellCheck={false}
               />
               <textarea
@@ -1041,17 +1036,17 @@ export function NoteEditor() {
                 onKeyDown={handleBodyKeyDown}
                 onPaste={handlePaste}
                 placeholder="Start writing…"
-                className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
+                className="mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
                 spellCheck={false}
                 rows={1}
               />
             </div>
             {/* preview column */}
             <div className="min-w-0">
-              <h1 className="w-full text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+              <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {title || "Untitled"}
               </h1>
-              <div className="mt-8">
+              <div className="mt-4">
                 <MarkdownPreview text={previewContent} />
               </div>
             </div>
@@ -1064,7 +1059,7 @@ export function NoteEditor() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Untitled"
-              className="w-full resize-none border-none bg-transparent text-4xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-5xl"
+              className="w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
               spellCheck={false}
             />
             <textarea
@@ -1074,7 +1069,7 @@ export function NoteEditor() {
               onKeyDown={handleBodyKeyDown}
                 onPaste={handlePaste}
               placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
-              className="mt-8 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
+              className="mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
               spellCheck={false}
               rows={1}
             />
@@ -1083,7 +1078,7 @@ export function NoteEditor() {
 
         {/* Bottom meta */}
         {(wordCount > 0 || charCount > 0) && (
-          <div className="mt-16 text-right text-[11px] text-muted-foreground/50">
+          <div className="mt-8 text-right text-[11px] text-muted-foreground/50">
             {wordCount} {wordCount === 1 ? "word" : "words"}
             {charCount > 0 && <> · {charCount} chars</>}
             {wordCount > 0 && <> · ~{readMins} min read</>}
