@@ -1,17 +1,29 @@
 "use client";
 
-import { Check } from "lucide-react";
+import Link from "next/link";
+import { Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNotes } from "@/hooks/use-notes";
+
+export interface NoteLite {
+  id: string;
+  title: string;
+  content: string | null;
+}
 
 /* ============================================================
    Tiny markdown preview (dependency-free, safe React nodes)
    Shared by note editor + public share page
    ============================================================ */
 
-function renderInline(text: string, keyBase: string): React.ReactNode[] {
+function renderInline(
+  text: string,
+  keyBase: string,
+  notes: NoteLite[] = []
+): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const regex =
-    /(<mark style="background-color:#[0-9a-fA-F]{3,8}">[^<]*<\/mark>|<span style="color:#[0-9a-fA-F]{3,8}">[^<]*<\/span>|!\[[^\]]*\]\([^)\s]+\)|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\))/g;
+    /(<mark style="background-color:#[0-9a-fA-F]{3,8}">[^<]*<\/mark>|<span style="color:#[0-9a-fA-F]{3,8}">[^<]*<\/span>|!\[[^\]]*\]\([^)\s]+\)|!\[\[[^\]]+\]\]|\[\[[^\]]+\]\]|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\))/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
@@ -61,6 +73,26 @@ function renderInline(text: string, keyBase: string): React.ReactNode[] {
           />
         );
       }
+    } else if (/^!?\[\[/.test(tok)) {
+      const title = tok.replace(/^!?\[\[/, "").replace(/\]\]$/, "").trim();
+      const n = notes.find(
+        (x) => (x.title ?? "").toLowerCase() === title.toLowerCase()
+      );
+      nodes.push(
+        n ? (
+          <Link
+            key={k}
+            href={`/notes/${n.id}`}
+            className="mx-0.5 inline-flex items-center gap-1 rounded-full border border-border bg-accent px-2 py-0.5 text-[0.85em] font-semibold text-foreground transition-colors hover:border-primary/60 hover:text-primary"
+          >
+            <FileText className="h-3 w-3" /> {n.title}
+          </Link>
+        ) : (
+          <span key={k} className="opacity-50">
+            {tok}
+          </span>
+        )
+      );
     } else if (tok.startsWith("**")) {
       nodes.push(
         <strong key={k} className="font-semibold text-foreground">
@@ -108,11 +140,23 @@ function isBlockStart(line: string): boolean {
     /^\d+\.\s/.test(line) ||
     line.startsWith("```") ||
     /^[-*]\s\[[ xX]\]\s/.test(line) ||
+    /^!\[\[/.test(line) ||
     /^!\[[^\]]*\]\([^)\s]+\)\s*$/.test(line)
   );
 }
 
-export function MarkdownPreview({ text }: { text: string }) {
+export function MarkdownPreview({
+  text,
+  depth = 0,
+  notesProp,
+}: {
+  text: string;
+  depth?: number;
+  notesProp?: NoteLite[];
+}) {
+  const { data: fetched = [] } = useNotes();
+  const notes: NoteLite[] =
+    notesProp && notesProp.length ? notesProp : (fetched as NoteLite[]);
   // iOS/paste lookalikes → ascii so markdown always converts
   text = text.replace(/[*＊∗✱⁎]/g, "*").replace(/ /g, " ");
   const lines = text.split("\n");
@@ -163,10 +207,55 @@ export function MarkdownPreview({ text }: { text: string }) {
       continue;
     }
 
+    // embedded note: ![[Title]]
+    const emb = line.match(/^!\[\[([^\]]+)\]\]\s*$/);
+    if (emb) {
+      const t = (emb[1] ?? "").trim();
+      const n = notes.find(
+        (x) => (x.title ?? "").toLowerCase() === t.toLowerCase()
+      );
+      out.push(
+        <div
+          key={key++}
+          className="my-4 rounded-xl border border-border bg-accent/40 p-4"
+        >
+          {n ? (
+            <>
+              <Link
+                href={`/notes/${n.id}`}
+                className="flex items-center gap-1.5 text-sm font-bold hover:text-primary"
+              >
+                <FileText className="h-3.5 w-3.5" /> {n.title}
+              </Link>
+              <div className="mt-2 border-l-2 border-border pl-3 text-[15px]">
+                {depth < 2 ? (
+                  <MarkdownPreview
+                    text={n.content ?? ""}
+                    depth={depth + 1}
+                    notesProp={notes}
+                  />
+                ) : (
+                  <span className="text-muted-foreground">
+                    Embedded note too deep to render.
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Note “{t}” not found
+            </span>
+          )}
+        </div>
+      );
+      i++;
+      continue;
+    }
+
     if (/^###\s?/.test(line)) {
       out.push(
         <h3 key={key++} className="mt-5 mb-1.5 text-lg font-semibold">
-          {renderInline(line.replace(/^###\s?/, ""), `h3${key}`)}
+          {renderInline(line.replace(/^###\s?/, ""), `h3${key}`, notes)}
         </h3>
       );
       i++;
@@ -175,7 +264,7 @@ export function MarkdownPreview({ text }: { text: string }) {
     if (/^##\s?/.test(line)) {
       out.push(
         <h2 key={key++} className="mt-6 mb-2 text-xl font-bold">
-          {renderInline(line.replace(/^##\s?/, ""), `h2${key}`)}
+          {renderInline(line.replace(/^##\s?/, ""), `h2${key}`, notes)}
         </h2>
       );
       i++;
@@ -184,7 +273,7 @@ export function MarkdownPreview({ text }: { text: string }) {
     if (/^#\s?/.test(line)) {
       out.push(
         <h1 key={key++} className="mt-6 mb-2 text-2xl font-bold">
-          {renderInline(line.replace(/^#\s?/, ""), `h1${key}`)}
+          {renderInline(line.replace(/^#\s?/, ""), `h1${key}`, notes)}
         </h1>
       );
       i++;
@@ -197,7 +286,7 @@ export function MarkdownPreview({ text }: { text: string }) {
           key={key++}
           className="my-3 border-l-2 border-primary/50 pl-3 text-muted-foreground"
         >
-          {renderInline(line.replace(/^>\s?/, ""), `q${key}`)}
+          {renderInline(line.replace(/^>\s?/, ""), `q${key}`, notes)}
         </blockquote>
       );
       i++;
@@ -219,7 +308,7 @@ export function MarkdownPreview({ text }: { text: string }) {
             {task[1] !== " " && <Check className="h-3 w-3" />}
           </span>
           <span className={task[1] !== " " ? "line-through opacity-60" : ""}>
-            {renderInline(task[2] ?? "", `t${key}`)}
+            {renderInline(task[2] ?? "", `t${key}`, notes)}
           </span>
         </div>
       );
@@ -236,7 +325,7 @@ export function MarkdownPreview({ text }: { text: string }) {
       out.push(
         <ul key={key++} className="my-2 list-disc space-y-1 pl-5">
           {items.map((it, j) => (
-            <li key={j}>{renderInline(it, `ul${key}-${j}`)}</li>
+            <li key={j}>{renderInline(it, `ul${key}-${j}`, notes)}</li>
           ))}
         </ul>
       );
@@ -252,7 +341,7 @@ export function MarkdownPreview({ text }: { text: string }) {
       out.push(
         <ol key={key++} className="my-2 list-decimal space-y-1 pl-5">
           {items.map((it, j) => (
-            <li key={j}>{renderInline(it, `ol${key}-${j}`)}</li>
+            <li key={j}>{renderInline(it, `ol${key}-${j}`, notes)}</li>
           ))}
         </ol>
       );
@@ -283,7 +372,7 @@ export function MarkdownPreview({ text }: { text: string }) {
         {buf.map((b, j) => (
           <span key={j}>
             {j > 0 && <br />}
-            {renderInline(b, `p${key}-${j}`)}
+            {renderInline(b, `p${key}-${j}`, notes)}
           </span>
         ))}
       </p>

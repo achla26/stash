@@ -36,7 +36,12 @@ import {
   Copy,
 } from "lucide-react";
 
-import { useDeleteNote, useNote, useUpdateNote } from "@/hooks/use-notes";
+import {
+  useDeleteNote,
+  useNote,
+  useNotes,
+  useUpdateNote,
+} from "@/hooks/use-notes";
 import { useFolders } from "@/hooks/use-folder";
 import { useNotebooks } from "@/hooks/use-notebooks";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -229,6 +234,7 @@ export function NoteEditor() {
   const deleteNoteMutation = useDeleteNote();
   const { data: folders = [] } = useFolders();
   const { data: notebooks = [] } = useNotebooks();
+  const { data: allNotes = [] } = useNotes();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -256,11 +262,22 @@ export function NoteEditor() {
     });
   }
 
+
+
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [colorPanel, setColorPanel] = useState<"none" | "text" | "highlight">("none");
   const [sharePanel, setSharePanel] = useState(false);
+  const [notePickerOpen, setNotePickerOpen] = useState(false);
+  const [notePickerSearch, setNotePickerSearch] = useState("");
+  const pickerNotes = allNotes
+    .filter(
+      (n) =>
+        n.id !== noteId &&
+        (n.title ?? "").toLowerCase().includes(notePickerSearch.toLowerCase())
+    )
+    .slice(0, 8);
   const [copied, setCopied] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -767,6 +784,14 @@ export function NoteEditor() {
             </button>
             <button
               type="button"
+              className={cn(toolBtn, notePickerOpen && "bg-accent text-foreground")}
+              title="Insert note"
+              onClick={() => setNotePickerOpen((v) => !v)}
+            >
+              <FileText className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
               className={cn(toolBtn, colorPanel === "highlight" && "bg-accent text-foreground")}
               title="Highlight"
               onClick={() => setColorPanel((v) => (v === "highlight" ? "none" : "highlight"))}
@@ -822,6 +847,44 @@ export function NoteEditor() {
             >
               Done
             </button>
+          </div>
+        )}
+
+        {/* Insert-note picker */}
+        {notePickerOpen && (
+          <div className="mt-2 w-full max-w-sm rounded-xl border border-border bg-card p-2 shadow-sm">
+            <input
+              autoFocus
+              value={notePickerSearch}
+              onChange={(e) => setNotePickerSearch(e.target.value)}
+              placeholder="Search notes…"
+              className="mb-2 h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none"
+            />
+            <div className="max-h-48 overflow-y-auto">
+              {pickerNotes.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => {
+                    insertAtCursor(`[[${n.title || "Untitled"}]]`);
+                    setNotePickerOpen(false);
+                    setNotePickerSearch("");
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-accent"
+                >
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{n.title || "Untitled"}</span>
+                </button>
+              ))}
+              {pickerNotes.length === 0 && (
+                <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                  No matching notes
+                </p>
+              )}
+            </div>
+            <p className="mt-1.5 border-t border-border/60 px-1 pt-1.5 text-[11px] text-muted-foreground">
+              Link: [[Title]] · Full embed (own line): ![[Title]]
+            </p>
           </div>
         )}
 
