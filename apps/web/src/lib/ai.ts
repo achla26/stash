@@ -70,21 +70,51 @@ export async function askAI(opts: {
   return askGemini(opts);
 }
 
-async function askGroq(opts: {
-  key: string;
-  system: string;
-  history: ChatTurn[];
-  message: string;
-  maxTokens?: number;
-}): Promise<string> {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+/* Groq retires models over time — pick the best one actually available
+   on this key, cache it for the session. */
+const GROQ_PREFS = [
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+];
+let groqModelCache: string | null = null;
+
+async function pickGroqModel(key: string): Promise<string> {
+  if (groqModelCache) return groqModelCache;
+  try {
+    const r = await fetch("https://api.groq.com/openai/v1/models", {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const ids: string[] = (j?.data ?? []).map((m: any) => m.id);
+      const pick = GROQ_PREFS.find((p) => ids.includes(p)) ?? ids[0];
+      if (pick) groqModelCache = pick;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return groqModelCache ?? "llama-3.1-8b-instant";
+}
+
+export function resetGroqModelCache() {
+  groqModelCache = null;
+}
+
+async function groqChat(
+  key: string,
+  model: string,
+  opts: { system: string; history: ChatTurn[]; message: string; maxTokens?: number }
+): Promise<Response> {
+  return fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${opts.key}`,
+      Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model,
       temperature: 0.4,
       max_tokens: opts.maxTokens ?? 700,
       messages: [
@@ -97,6 +127,26 @@ async function askGroq(opts: {
       ],
     }),
   });
+}
+
+async function askGroq(opts: {
+  key: string;
+  system: string;
+  history: ChatTurn[];
+  message: string;
+  maxTokens?: number;
+}): Promise<string> {
+  let model = await pickGroqModel(opts.key);
+  let res = await groqChat(opts.key, model, opts);
+  if (!res.ok && (res.status === 400 || res.status === 404)) {
+    // model retired mid-session — repick and retry once
+    resetGroqModelCache();
+    const m2 = await pickGroqModel(opts.key);
+    if (m2 !== model) {
+      model = m2;
+      res = await groqChat(opts.key, model, opts);
+    }
+  }
   if (!res.ok) {
     const j = await res.json().catch(() => null);
     throw new Error(
