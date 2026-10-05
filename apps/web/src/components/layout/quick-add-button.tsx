@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Plus, FileText, Link2, BookOpen, FileCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function QuickAddButton() {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -28,6 +29,9 @@ export function QuickAddButton() {
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  // chat has its own input — the floating button would cover it
+  if (pathname === "/chat") return null;
 
   const actions = [
     {

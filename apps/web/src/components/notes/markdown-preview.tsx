@@ -149,10 +149,12 @@ export function MarkdownPreview({
   text,
   depth = 0,
   notesProp,
+  compact = false,
 }: {
   text: string;
   depth?: number;
   notesProp?: NoteLite[];
+  compact?: boolean;
 }) {
   const { data: fetched = [] } = useNotes();
   const notes: NoteLite[] =
@@ -353,6 +355,56 @@ export function MarkdownPreview({
       continue;
     }
 
+    // markdown table
+    if (line.trim().startsWith("|")) {
+      const rows: string[] = [];
+      while (i < lines.length && (lines[i] ?? "").trim().startsWith("|")) {
+        rows.push(lines[i] ?? "");
+        i++;
+      }
+      const parseRow = (r: string) =>
+        r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+      const cells = rows.map(parseRow);
+      const isSep = (c: string[]) => c.every((x) => /^:?-{2,}:?$/.test(x));
+      const data = cells.filter((c) => !isSep(c) && c.some((x) => x !== ""));
+      if (data.length) {
+        const [head, ...body] = data;
+        out.push(
+          <div key={key++} className="my-3 overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr>
+                  {(head ?? []).map((h, j) => (
+                    <th
+                      key={j}
+                      className="border border-border bg-accent/60 px-2.5 py-1.5 text-left font-semibold"
+                    >
+                      {renderInline(h, `th${key}-${j}`, notes)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {body.map((r, ri) => (
+                  <tr key={ri}>
+                    {r.map((c, j) => (
+                      <td
+                        key={j}
+                        className="border border-border px-2.5 py-1.5 align-top"
+                      >
+                        {renderInline(c, `td${key}-${ri}-${j}`, notes)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      continue;
+    }
+
     if (/^[-*_]{3,}\s*$/.test(line)) {
       out.push(<hr key={key++} className="my-6 border-border" />);
       i++;
@@ -381,7 +433,13 @@ export function MarkdownPreview({
   }
 
   return (
-    <div className="text-[17px] leading-[1.75] text-foreground">
+    <div
+      className={
+        compact
+          ? "text-[14px] leading-[1.65] text-foreground"
+          : "text-[17px] leading-[1.75] text-foreground"
+      }
+    >
       {out.length ? out : <p className="text-muted-foreground/50">Nothing to preview.</p>}
     </div>
   );

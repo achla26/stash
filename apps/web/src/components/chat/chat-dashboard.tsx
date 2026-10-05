@@ -18,6 +18,7 @@ import {
   type AIConfig,
 } from "@/lib/ai";
 import { buildSnapshot } from "@/lib/ai-snapshot";
+import { MarkdownPreview } from "@/components/notes/markdown-preview";
 
 const CHIPS = [
   "Last 5 links",
@@ -95,7 +96,7 @@ export function ChatDashboard() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-11rem)] max-w-3xl flex-col md:h-[calc(100vh-8rem)]">
       <div className="mb-3 flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-extrabold tracking-wide">
           <Sparkles className="h-5 w-5 text-primary" /> AI CHAT
@@ -150,7 +151,11 @@ export function ChatDashboard() {
                   : "border border-border bg-background"
               )}
             >
-              {m.text}
+              {m.role === "user" ? (
+                m.text
+              ) : (
+                <MarkdownPreview text={m.text} compact />
+              )}
             </div>
           </div>
         ))}

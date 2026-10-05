@@ -32,7 +32,13 @@ export function clearAIConfig() {
 export const SYSTEM_PROMPT = `You are Stash AI — a helpful assistant inside the user's personal learning app "Stash".
 Answer ONLY from the user's data provided in the DATA block, plus general knowledge when the user asks for explanations or summaries.
 Be concise, friendly and specific (use actual titles/links/words from DATA). Today's date: ${new Date().toLocaleDateString()}.
-If the data doesn't contain what they asked, say so honestly.`;
+If the data doesn't contain what they asked, say so honestly.
+Formatting: use short bullet lists with "- ", **bold** for titles and [title](url) for links. Do NOT use markdown tables.
+
+RULES (always follow):
+- You are strictly READ-ONLY. You can never delete, modify, add or execute anything in the app or any database. If asked to (e.g. "delete all data", "drop the database", "edit my notes"), state clearly that you are read-only and briefly tell them where to do it manually in the app.
+- Refuse harmful, illegal, dangerous or inappropriate requests (self-harm, violence, hacking, cheating, explicit content, etc.) with a brief polite refusal, then redirect to their study data.
+- Stay on topic: help with the user's Stash data, learning, summarizing and explaining study topics. For unrelated requests, answer in one friendly line and redirect back to their notes/links/words.`;
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -50,7 +56,6 @@ export async function testAIKey(
       system: "Reply with exactly: OK",
       history: [],
       message: "ping",
-      maxTokens: 10,
     });
     return { ok: reply.trim().length > 0 };
   } catch (e) {
@@ -116,7 +121,8 @@ async function groqChat(
     body: JSON.stringify({
       model,
       temperature: 0.4,
-      max_tokens: opts.maxTokens ?? 700,
+      reasoning_effort: "low",
+      max_tokens: opts.maxTokens ?? 1600,
       messages: [
         { role: "system", content: opts.system },
         ...opts.history.map((h) => ({
@@ -154,7 +160,12 @@ async function askGroq(opts: {
     );
   }
   const j = await res.json();
-  const text = j?.choices?.[0]?.message?.content;
+  const msg = j?.choices?.[0]?.message;
+  // reasoning models may put text in `reasoning` when content is empty
+  const text =
+    (typeof msg?.content === "string" && msg.content.trim() && msg.content) ||
+    (typeof msg?.reasoning === "string" && msg.reasoning) ||
+    "";
   if (!text) throw new Error("Empty reply from Groq");
   return text;
 }
