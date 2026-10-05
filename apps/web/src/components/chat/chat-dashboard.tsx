@@ -145,7 +145,7 @@ export function ChatDashboard() {
           >
             <div
               className={cn(
-                "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
+                "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere]",
                 m.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : "border border-border bg-background"

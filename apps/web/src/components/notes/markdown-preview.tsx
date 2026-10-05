@@ -23,7 +23,7 @@ function renderInline(
 ): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const regex =
-    /(<mark style="background-color:#[0-9a-fA-F]{3,8}">[^<]*<\/mark>|<span style="color:#[0-9a-fA-F]{3,8}">[^<]*<\/span>|!\[[^\]]*\]\([^)\s]+\)|!\[\[[^\]]+\]\]|\[\[[^\]]+\]\]|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\))/g;
+    /(<mark style="background-color:#[0-9a-fA-F]{3,8}">[^<]*<\/mark>|<span style="color:#[0-9a-fA-F]{3,8}">[^<]*<\/span>|!\[[^\]]*\]\([^)\s]+\)|!\[\[[^\]]+\]\]|\[\[[^\]]+\]\]|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\)|https?:\/\/[^\s<>]+)/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
@@ -92,6 +92,28 @@ function renderInline(
             {tok}
           </span>
         )
+      );
+    } else if (/^https?:\/\//.test(tok)) {
+      let href = tok;
+      let trail = "";
+      const mm = href.match(/^(.*?)([.,;:!?]+)$/);
+      if (mm) {
+        href = mm[1] ?? href;
+        trail = mm[2] ?? "";
+      }
+      nodes.push(
+        <a
+          key={k}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="break-all text-primary underline decoration-primary/40 underline-offset-2"
+        >
+          {href.replace(/^https?:\/\//, "").length > 40
+            ? href.replace(/^https?:\/\//, "").slice(0, 37) + "…"
+            : href}
+        </a>,
+        trail
       );
     } else if (tok.startsWith("**")) {
       nodes.push(
