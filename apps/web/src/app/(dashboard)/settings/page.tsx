@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Moon, Sun, Monitor, KeyRound } from "lucide-react";
+import { Download, Moon, Sun, Monitor, KeyRound, Sparkles } from "lucide-react";
 import { exportService } from "@/lib/services";
 import { useTheme } from "@/components/providers/theme-provider";
 import { apiClient } from "@/lib/api-client";
+import {
+  getAIConfig,
+  saveAIConfig,
+  clearAIConfig,
+  testAIKey,
+  type AIProvider,
+} from "@/lib/ai";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -14,6 +21,41 @@ export default function SettingsPage() {
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const [aiCfg, setAiCfg] = useState(() => getAIConfig());
+  const [aiProvider, setAiProvider] = useState<AIProvider>(
+    aiCfg?.provider ?? "groq"
+  );
+  const [aiKey, setAiKey] = useState(aiCfg?.key ?? "");
+  const [aiMsg, setAiMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [aiBusy, setAiBusy] = useState<"" | "test">("");
+
+  function aiSave() {
+    if (!aiKey.trim()) return;
+    saveAIConfig({ provider: aiProvider, key: aiKey.trim() });
+    setAiCfg(getAIConfig());
+    setAiMsg({ ok: true, text: "Key saved on this device." });
+  }
+
+  async function aiTest() {
+    if (!aiKey.trim()) return;
+    setAiBusy("test");
+    setAiMsg(null);
+    const r = await testAIKey(aiProvider, aiKey.trim());
+    setAiBusy("");
+    setAiMsg(
+      r.ok
+        ? { ok: true, text: "Key works!" }
+        : { ok: false, text: r.error || "Key failed." }
+    );
+  }
+
+  function aiRemove() {
+    clearAIConfig();
+    setAiCfg(null);
+    setAiKey("");
+    setAiMsg({ ok: true, text: "Key removed." });
+  }
 
   async function downloadBackup() {
     setBusy(true);
@@ -165,6 +207,71 @@ export default function SettingsPage() {
             </p>
           )}
         </form>
+      </div>
+
+      {/* AI assistant */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Sparkles className="h-4 w-4 text-primary" /> AI Assistant
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add your own free Groq or Gemini API key to enable AI Chat. The key
+          is stored only in this browser — never sent to our server.
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <select
+            value={aiProvider}
+            onChange={(e) => setAiProvider(e.target.value as AIProvider)}
+            className="h-10 rounded-xl border border-border bg-background px-3 text-sm outline-none"
+          >
+            <option value="groq">Groq (fast)</option>
+            <option value="gemini">Gemini (generous free)</option>
+          </select>
+          <input
+            type="password"
+            value={aiKey}
+            onChange={(e) => setAiKey(e.target.value)}
+            placeholder={aiProvider === "groq" ? "gsk_…" : "AIza…"}
+            className="h-10 flex-1 rounded-xl border border-border bg-background px-3 text-sm outline-none"
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            onClick={aiSave}
+            disabled={!aiKey.trim()}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+          >
+            Save key
+          </button>
+          <button
+            onClick={aiTest}
+            disabled={!aiKey.trim() || aiBusy === "test"}
+            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+          >
+            {aiBusy === "test" ? "Testing…" : "Test key"}
+          </button>
+          {aiCfg && (
+            <button
+              onClick={aiRemove}
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+        {aiCfg && !aiMsg && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Active: {aiCfg.provider} key saved on this device.
+          </p>
+        )}
+        {aiMsg && (
+          <p
+            className="mt-2 text-xs"
+            style={{ color: aiMsg.ok ? "var(--success)" : "var(--destructive)" }}
+          >
+            {aiMsg.text}
+          </p>
+        )}
       </div>
 
       {/* Data backup */}

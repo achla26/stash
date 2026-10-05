@@ -6,6 +6,7 @@ import {
   NotebookPen,
   Settings,
   SpellCheck,
+  Sparkles,
 } from "lucide-react";
 
 export const navItems = [
@@ -15,5 +16,6 @@ export const navItems = [
   { href: "/words", label: "Words", icon: SpellCheck },
   { href: "/notebooks", label: "Notebooks", icon: BookOpen },
   { href: "/pad", label: "Pads", icon: NotebookPen },
+  { href: "/chat", label: "AI Chat", icon: Sparkles },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
