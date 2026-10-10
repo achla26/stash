@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
 import { createNoteSchema, type CreateNoteInput } from "@repo/contracts/schemas";
 import { useCreateNote } from "@/hooks/use-notes";
@@ -90,6 +91,7 @@ function PopoverItem({
 /* ---------- Main dialog ---------- */
 
 export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
+  const router = useRouter();
   const createNoteMutation = useCreateNote();
   const { data: folders = [] } = useTypeFolders("note");
 
@@ -102,6 +104,7 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
     control,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateNoteInput>({
     resolver: zodResolver(createNoteSchema),
@@ -124,7 +127,7 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !createNoteMutation.isPending) handleClose();
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        handleSubmit(onSubmit)();
+        submitNow();
       }
     };
     document.addEventListener("keydown", onKey);
@@ -135,6 +138,12 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // empty title → "Untitled" before validation, so Save always works
+  function submitNow() {
+    if (!watch("title")?.trim()) setValue("title", "Untitled");
+    handleSubmit(onSubmit)();
+  }
+
   function onSubmit(values: CreateNoteInput) {
     createNoteMutation.mutate(
       {
@@ -142,9 +151,10 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
         title: values.title?.trim() || "Untitled",
       },
       {
-        onSuccess: () => {
+        onSuccess: (note) => {
           reset();
           onClose();
+          router.push(`/notes/${note.id}`);
         },
       },
     );
@@ -191,7 +201,7 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
 
           <button
             type="button"
-            onClick={handleSubmit(onSubmit)}
+            onClick={submitNow}
             disabled={createNoteMutation.isPending}
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
           >
@@ -208,7 +218,10 @@ export function CreateNoteDialog({ isOpen, onClose }: CreateNoteDialogProps) {
 
         {/* Writing surface */}
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitNow();
+          }}
           className="flex max-h-[70vh] flex-col overflow-y-auto px-6 py-6 sm:px-8 sm:py-8"
         >
           {/* Title */}

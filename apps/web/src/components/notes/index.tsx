@@ -12,6 +12,7 @@ import {
   SearchX,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { useCreateNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
 import { useFolders } from "@/hooks/use-folder";
@@ -38,6 +39,7 @@ type Placement = {
 /* ===== Main Component ===== */
 
 export function NotesContent() {
+  const router = useRouter();
   const [activeFolder, setActiveFolder] = useState<string>("All Notes");
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -86,11 +88,17 @@ export function NotesContent() {
   }, [notes, activeFolder, searchQuery, folders, notebooks]);
 
   const handleCreateNote = () => {
-    createNoteMutation.mutate({
-      title: "Untitled",
-      content: null,
-      folderId: null,
-    });
+    createNoteMutation.mutate(
+      {
+        title: "Untitled",
+        content: null,
+        folderId: null,
+      },
+      {
+        // open the editor straight away instead of just showing the card
+        onSuccess: (note) => router.push(`/notes/${note.id}`),
+      },
+    );
   };
 
   const handleDeleteNote = (id: string) => {

@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Plus, FileText, Link2, BookOpen, FileCode } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 
 export function QuickAddButton() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   // Close on outside click + Escape
@@ -37,7 +39,8 @@ export function QuickAddButton() {
     {
       label: "New Note",
       icon: FileText,
-      onClick: () => router.push("/notes"),
+      // FAB creates a note right here (also on notebooks) and opens the editor
+      onClick: () => setNoteDialogOpen(true),
     },
     {
       label: "Save Link",
@@ -57,6 +60,7 @@ export function QuickAddButton() {
   ];
 
   return (
+    <>
     <div ref={ref} className="fixed bottom-24 right-5 z-40 md:bottom-6 md:right-6">
       {/* Actions menu — opens above the button */}
       {open && (
@@ -99,5 +103,10 @@ export function QuickAddButton() {
         <Plus className="h-6 w-6 transition-transform" />
       </button>
     </div>
+    <CreateNoteDialog
+      isOpen={noteDialogOpen}
+      onClose={() => setNoteDialogOpen(false)}
+    />
+    </>
   );
 }

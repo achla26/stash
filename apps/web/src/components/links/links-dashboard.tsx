@@ -415,9 +415,9 @@ export function LinksDashboard() {
                   <div key={link.id} className="relative flex items-center gap-3 py-3">
                     <Favicon link={link} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex min-w-0 items-center gap-1.5">
                         {link.isPinned && <Pin className="h-3 w-3 shrink-0 fill-primary text-primary" />}
-                        <span className="truncate text-sm font-semibold">
+                        <span className="min-w-0 truncate text-sm font-semibold">
                           {link.title ?? hostOf(link.url)}
                         </span>
                       </div>
@@ -432,7 +432,7 @@ export function LinksDashboard() {
                             {t}
                           </span>
                         ))}
-                        <span className="truncate">
+                        <span className="min-w-0 max-w-full truncate">
                           {hostOf(link.url)} · {fmtDate(link.createdAt)}
                         </span>
                       </div>
