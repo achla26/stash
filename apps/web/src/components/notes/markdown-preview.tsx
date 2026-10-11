@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Fragment } from "react";
 import { Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotes } from "@/hooks/use-notes";
@@ -172,11 +173,13 @@ export function MarkdownPreview({
   depth = 0,
   notesProp,
   compact = false,
+  onLineClick,
 }: {
   text: string;
   depth?: number;
   notesProp?: NoteLite[];
   compact?: boolean;
+  onLineClick?: (line: number) => void;
 }) {
   const { data: fetched = [] } = useNotes();
   const notes: NoteLite[] =
@@ -187,8 +190,31 @@ export function MarkdownPreview({
   const out: React.ReactNode[] = [];
   let i = 0;
   let key = 0;
+  let curStart = 0;
+
+  // wrap every top-level block so a click can jump the editor to its source line
+  const pushBlock = (node: React.ReactNode) => {
+    const k = key++;
+    const ln = curStart; // capture per-block value for the click closure
+    if (!onLineClick) {
+      out.push(<Fragment key={k}>{node}</Fragment>);
+      return;
+    }
+    out.push(
+      <div
+        key={k}
+        data-line={ln}
+        onClick={() => onLineClick(ln)}
+        title="Click to edit this block"
+        className="-mx-2 cursor-pointer rounded-lg px-2 transition-colors hover:bg-accent/50"
+      >
+        {node}
+      </div>
+    );
+  };
 
   while (i < lines.length) {
+    curStart = i;
     const line = lines[i] ?? "";
 
     if (line.startsWith("```")) {
@@ -199,7 +225,7 @@ export function MarkdownPreview({
         i++;
       }
       i++; // closing fence
-      out.push(
+      pushBlock(
         <pre
           key={key++}
           className="my-3 overflow-x-auto rounded-xl border border-border bg-accent/50 p-3 font-mono text-[13px] leading-relaxed"
@@ -214,7 +240,7 @@ export function MarkdownPreview({
     const imgLine = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)\s*$/);
     if (imgLine) {
       const safe = /^(\/api\/uploads\/|https?:\/\/)/.test(imgLine[2] ?? "");
-      out.push(
+      pushBlock(
         <p key={key++} className="my-3">
           {safe && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -238,7 +264,7 @@ export function MarkdownPreview({
       const n = notes.find(
         (x) => (x.title ?? "").toLowerCase() === t.toLowerCase()
       );
-      out.push(
+      pushBlock(
         <div
           key={key++}
           className="my-4 rounded-xl border border-border bg-accent/40 p-4"
@@ -277,7 +303,7 @@ export function MarkdownPreview({
     }
 
     if (/^###\s?/.test(line)) {
-      out.push(
+      pushBlock(
         <h3 key={key++} className="mt-5 mb-1.5 text-lg font-semibold">
           {renderInline(line.replace(/^###\s?/, ""), `h3${key}`, notes)}
         </h3>
@@ -286,7 +312,7 @@ export function MarkdownPreview({
       continue;
     }
     if (/^##\s?/.test(line)) {
-      out.push(
+      pushBlock(
         <h2 key={key++} className="mt-6 mb-2 text-xl font-bold">
           {renderInline(line.replace(/^##\s?/, ""), `h2${key}`, notes)}
         </h2>
@@ -295,7 +321,7 @@ export function MarkdownPreview({
       continue;
     }
     if (/^#\s?/.test(line)) {
-      out.push(
+      pushBlock(
         <h1 key={key++} className="mt-6 mb-2 text-2xl font-bold">
           {renderInline(line.replace(/^#\s?/, ""), `h1${key}`, notes)}
         </h1>
@@ -305,7 +331,7 @@ export function MarkdownPreview({
     }
 
     if (/^>\s?/.test(line)) {
-      out.push(
+      pushBlock(
         <blockquote
           key={key++}
           className="my-3 border-l-2 border-primary/50 pl-3 text-muted-foreground"
@@ -319,7 +345,7 @@ export function MarkdownPreview({
 
     const task = line.match(/^[-*]\s\[( |x|X)\]\s(.*)$/);
     if (task) {
-      out.push(
+      pushBlock(
         <div key={key++} className="my-1 flex items-start gap-2">
           <span
             className={cn(
@@ -346,7 +372,7 @@ export function MarkdownPreview({
         items.push((lines[i] ?? "").replace(/^[-*]\s/, ""));
         i++;
       }
-      out.push(
+      pushBlock(
         <ul key={key++} className="my-2 list-disc space-y-1 pl-5">
           {items.map((it, j) => (
             <li key={j}>{renderInline(it, `ul${key}-${j}`, notes)}</li>
@@ -362,7 +388,7 @@ export function MarkdownPreview({
         items.push((lines[i] ?? "").replace(/^\d+\.\s/, ""));
         i++;
       }
-      out.push(
+      pushBlock(
         <ol key={key++} className="my-2 list-decimal space-y-1 pl-5">
           {items.map((it, j) => (
             <li key={j}>{renderInline(it, `ol${key}-${j}`, notes)}</li>
@@ -391,7 +417,7 @@ export function MarkdownPreview({
       const data = cells.filter((c) => !isSep(c) && c.some((x) => x !== ""));
       if (data.length) {
         const [head, ...body] = data;
-        out.push(
+        pushBlock(
           <div key={key++} className="my-3 overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
@@ -428,7 +454,7 @@ export function MarkdownPreview({
     }
 
     if (/^[-*_]{3,}\s*$/.test(line)) {
-      out.push(<hr key={key++} className="my-6 border-border" />);
+      pushBlock(<hr key={key++} className="my-6 border-border" />);
       i++;
       continue;
     }
@@ -441,7 +467,7 @@ export function MarkdownPreview({
       buf.push(nxt);
       i++;
     }
-    out.push(
+    pushBlock(
       <p key={key++} className="my-2">
         {buf.map((b, j) => (
           <span key={j}>

@@ -293,6 +293,52 @@ export function NoteEditor() {
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const overflowBtnRef = useRef<HTMLButtonElement>(null);
+  const leftScrollRef = useRef<HTMLDivElement>(null);
+  const rightScrollRef = useRef<HTMLDivElement>(null);
+  const syncLock = useRef<"" | "l" | "r">("");
+
+  /* ---------- Split-view scroll sync (editor <-> preview) ---------- */
+  const syncScroll = (src: "l" | "r") => {
+    const L = leftScrollRef.current;
+    const R = rightScrollRef.current;
+    if (!L || !R) return;
+    if (syncLock.current && syncLock.current !== src) return;
+    syncLock.current = src;
+    const a = src === "l" ? L : R;
+    const b = src === "l" ? R : L;
+    const ratio = a.scrollTop / Math.max(1, a.scrollHeight - a.clientHeight);
+    b.scrollTop = ratio * (b.scrollHeight - b.clientHeight);
+    window.setTimeout(() => {
+      if (syncLock.current === src) syncLock.current = "";
+    }, 100);
+  };
+
+  /* ---------- Click a preview block -> caret + scroll on that source line ---------- */
+  const jumpToLine = (line: number) => {
+    if (viewMode === "view") setViewMode("edit");
+    const ls = content.split("\n");
+    let idx = 0;
+    for (let n = 0; n < line && n < ls.length; n++) idx += (ls[n]?.length ?? 0) + 1;
+    window.setTimeout(() => {
+      const t = bodyRef.current;
+      if (!t) return;
+      t.focus({ preventScroll: true });
+      t.setSelectionRange(idx, idx);
+    }, 40);
+    const lh = 17 * 1.75; // textarea line-height (17px * 1.75)
+    const target = Math.max(0, line * lh - 90);
+    const L = leftScrollRef.current;
+    if (L && viewMode === "split") {
+      L.scrollTop = target;
+      syncLock.current = "";
+      syncScroll("l");
+    } else {
+      const t = bodyRef.current;
+      let p: HTMLElement | null = t?.parentElement ?? null;
+      while (p && p.scrollHeight <= p.clientHeight + 4) p = p.parentElement;
+      if (p && t) p.scrollTop = t.offsetTop + target - 120;
+    }
+  };
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   latestRef.current = { title, content };
@@ -1077,13 +1123,17 @@ export function NoteEditor() {
               {title || "Untitled"}
             </h1>
             <div className="mt-4">
-              <MarkdownPreview text={previewContent} />
+              <MarkdownPreview text={previewContent} onLineClick={jumpToLine} />
             </div>
           </div>
         ) : viewMode === "split" ? (
           <div className="gap-12 md:grid md:grid-cols-2">
-            {/* live editor — desktop only */}
-            <div className="hidden md:block">
+            {/* live editor — desktop only, own scroller for sync */}
+            <div
+              ref={leftScrollRef}
+              onScroll={() => syncScroll("l")}
+              className="hidden md:block md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-4"
+            >
               <input
                 type="text"
                 value={title}
@@ -1104,13 +1154,17 @@ export function NoteEditor() {
                 rows={1}
               />
             </div>
-            {/* preview column */}
-            <div className="min-w-0">
+            {/* preview column — own scroller, synced with editor */}
+            <div
+              ref={rightScrollRef}
+              onScroll={() => syncScroll("r")}
+              className="min-w-0 md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-2"
+            >
               <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {title || "Untitled"}
               </h1>
               <div className="mt-4">
-                <MarkdownPreview text={previewContent} />
+                <MarkdownPreview text={previewContent} onLineClick={jumpToLine} />
               </div>
             </div>
           </div>
