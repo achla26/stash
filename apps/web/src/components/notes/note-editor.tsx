@@ -297,20 +297,54 @@ export function NoteEditor() {
   const rightScrollRef = useRef<HTMLDivElement>(null);
   const syncLock = useRef<"" | "l" | "r">("");
 
-  /* ---------- Split-view scroll sync (editor <-> preview) ---------- */
+  /* ---------- Split-view scroll sync (line-accurate, both directions) ---------- */
+  const LH = 17 * 1.75; // textarea line-height in px
+
+  const alignPreviewToLine = (topLine: number) => {
+    const R = rightScrollRef.current;
+    if (!R) return;
+    const blocks = Array.from(R.querySelectorAll("[data-line]")) as HTMLElement[];
+    let target: HTMLElement | null = null;
+    for (const b of blocks) {
+      const ln = parseInt(b.dataset.line ?? "0", 10);
+      if (ln <= topLine) target = b;
+      else break;
+    }
+    if (target) R.scrollTop = Math.max(0, target.offsetTop - 12);
+  };
+
+  const alignEditorToPreview = () => {
+    const R = rightScrollRef.current;
+    const L = leftScrollRef.current;
+    if (!R || !L) return;
+    const blocks = Array.from(R.querySelectorAll("[data-line]")) as HTMLElement[];
+    let line = 0;
+    for (const b of blocks) {
+      if (b.offsetTop <= R.scrollTop + 16)
+        line = parseInt(b.dataset.line ?? "0", 10);
+      else break;
+    }
+    const ta = bodyRef.current;
+    const taTop = ta?.offsetTop ?? 60;
+    L.scrollTop = Math.max(0, taTop + line * LH - 70);
+  };
+
   const syncScroll = (src: "l" | "r") => {
     const L = leftScrollRef.current;
     const R = rightScrollRef.current;
     if (!L || !R) return;
     if (syncLock.current && syncLock.current !== src) return;
     syncLock.current = src;
-    const a = src === "l" ? L : R;
-    const b = src === "l" ? R : L;
-    const ratio = a.scrollTop / Math.max(1, a.scrollHeight - a.clientHeight);
-    b.scrollTop = ratio * (b.scrollHeight - b.clientHeight);
+    if (src === "l") {
+      const ta = bodyRef.current;
+      const taTop = ta?.offsetTop ?? 60;
+      alignPreviewToLine(Math.max(0, Math.floor((L.scrollTop + 24 - taTop) / LH)));
+    } else {
+      alignEditorToPreview();
+    }
     window.setTimeout(() => {
       if (syncLock.current === src) syncLock.current = "";
-    }, 100);
+    }, 120);
   };
 
   /* ---------- Click a preview block -> caret + scroll on that source line ---------- */
@@ -325,13 +359,11 @@ export function NoteEditor() {
       t.focus({ preventScroll: true });
       t.setSelectionRange(idx, idx);
     }, 40);
-    const lh = 17 * 1.75; // textarea line-height (17px * 1.75)
-    const target = Math.max(0, line * lh - 90);
+    const target = Math.max(0, (bodyRef.current?.offsetTop ?? 60) + line * LH - 90);
     const L = leftScrollRef.current;
     if (L && viewMode === "split") {
       L.scrollTop = target;
-      syncLock.current = "";
-      syncScroll("l");
+      alignPreviewToLine(line);
     } else {
       const t = bodyRef.current;
       let p: HTMLElement | null = t?.parentElement ?? null;
@@ -1132,7 +1164,7 @@ export function NoteEditor() {
             <div
               ref={leftScrollRef}
               onScroll={() => syncScroll("l")}
-              className="hidden md:block md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-4"
+              className="relative hidden md:block md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-4"
             >
               <input
                 type="text"
@@ -1158,7 +1190,7 @@ export function NoteEditor() {
             <div
               ref={rightScrollRef}
               onScroll={() => syncScroll("r")}
-              className="min-w-0 md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-2"
+              className="relative min-w-0 md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-2"
             >
               <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {title || "Untitled"}
