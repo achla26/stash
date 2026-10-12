@@ -2,6 +2,7 @@ import { Context } from "hono";
 import { PadService } from "../services/pad.service";
 import { ApiResponse } from "../lib/api-response";
 import { ApiError } from "../lib/api-error";
+import { assertItemLimit } from "../lib/plan";
 import { createPadSchema, updatePadSchema } from "@repo/contracts/schemas";
 import { AuthService } from "../services/auth.service";
 
@@ -62,6 +63,7 @@ export class PadController {
     }
 
     const userId = await PadController.getOptionalUser(c);
+    if (userId) await assertItemLimit(userId);
     const pad = await PadService.create(parsed.data, userId);
     return ApiResponse.created(c, pad, "Pad created successfully");
   }

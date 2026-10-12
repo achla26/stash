@@ -2,6 +2,7 @@ import { Context } from "hono";
 import { BaseService, PaginationParams } from "../services/base.service";
 import { ApiResponse } from "../lib/api-response";
 import { validateRequest } from "../middleware/validate-request";
+import { assertItemLimit } from "../lib/plan";
 import { ZodSchema } from "@repo/contracts/schemas"; 
 export class BaseController<
   T,
@@ -37,6 +38,9 @@ export class BaseController<
     return ApiResponse.success(c, data);
   }
 
+  // set true in resource controllers that count toward the free item limit
+  protected limitItems = false;
+
   async create(c: Context) {
     if (!this.createSchema) {
       throw new Error("Create schema not provided");
@@ -44,6 +48,7 @@ export class BaseController<
 
     const body = await validateRequest(c, this.createSchema);
     const userId = await this.getUserId(c);
+    if (this.limitItems) await assertItemLimit(userId);
     const data = await this.service.create(
       userId,
       body as Record<string, unknown>

@@ -2,6 +2,7 @@ import { Context } from "hono";
 import { NotesService } from "../services/notes.service";
 import { ApiResponse } from "../lib/api-response";
 import { ApiError } from "../lib/api-error";
+import { assertItemLimit } from "../lib/plan";
 import { createNoteSchema, updateNoteSchema } from "@repo/contracts/schemas";
 
 const notesService = new NotesService();
@@ -36,6 +37,7 @@ export class NotesController {
       throw ApiError.badRequest("Validation failed", parsed.error.flatten());
     }
 
+    await assertItemLimit(userId);
     const note = await notesService.create(userId, parsed.data);
     return ApiResponse.created(c, note, "Note created successfully");
   }

@@ -13,6 +13,8 @@ import { useNotebooks } from "@/hooks/use-notebooks";
 import {
   getAIConfig,
   askAI,
+  askStashAI,
+  getStashAIUsage,
   SYSTEM_PROMPT,
   type ChatTurn,
   type AIConfig,
@@ -33,6 +35,11 @@ export function ChatDashboard() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [usage, setUsage] = useState<{
+    used: number;
+    limit: number;
+    plan: string;
+  } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const { data: links = [] } = useLinks();
@@ -45,13 +52,15 @@ export function ChatDashboard() {
   }, [messages, pending]);
 
   useEffect(() => {
-    setCfg(getAIConfig());
+    const c = getAIConfig();
+    setCfg(c);
+    if (!c) getStashAIUsage().then(setUsage);
   }, []);
 
   async function send(text: string) {
     const t = text.trim();
     const c = getAIConfig();
-    if (!t || pending || !c) return;
+    if (!t || pending) return;
     setCfg(c);
     setInput("");
     setError("");
@@ -60,39 +69,26 @@ export function ChatDashboard() {
     setPending(true);
     try {
       const snapshot = buildSnapshot({ links, notes, words, notebooks });
-      const reply = await askAI({
-        provider: c.provider,
-        key: c.key,
-        system: `${SYSTEM_PROMPT}\n\nDATA:\n${snapshot}`,
-        history: history.slice(0, -1).slice(-8),
-        message: t,
-      });
+      const system = `${SYSTEM_PROMPT}\n\nDATA:\n${snapshot}`;
+      const reply = c
+        ? await askAI({
+            provider: c.provider,
+            key: c.key,
+            system,
+            history: history.slice(0, -1).slice(-8),
+            message: t,
+          })
+        : await askStashAI({
+            system,
+            history: history.slice(0, -1).slice(-8),
+            message: t,
+          });
       setMessages((m) => [...m, { role: "assistant", text: reply }]);
+      if (!c) getStashAIUsage().then(setUsage);
     } catch (e) {
       setError((e as Error).message || "AI request failed");
     }
     setPending(false);
-  }
-
-  if (!cfg) {
-    return (
-      <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-10 text-center">
-          <Sparkles className="h-8 w-8 text-primary" />
-          <h1 className="mt-3 text-lg font-extrabold tracking-wide">AI CHAT</h1>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-            Add your free Groq or Gemini API key in Settings to chat with your
-            data — summaries, last links, word quizzes and more. Your key stays
-            on this device only.
-          </p>
-          <Link href="/settings" className="mt-5">
-            <Button>
-              <Settings2 className="h-4 w-4" /> Open Settings
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -101,8 +97,21 @@ export function ChatDashboard() {
         <h1 className="flex items-center gap-2 text-lg font-extrabold tracking-wide">
           <Sparkles className="h-5 w-5 text-primary" /> AI CHAT
           <span className="rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold uppercase text-muted-foreground">
-            {cfg.provider}
+            {cfg ? cfg.provider : "stash ai"}
           </span>
+          {usage && usage.plan !== "pro" && (
+            <span className="rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-muted-foreground">
+              {usage.used}/{usage.limit} today
+            </span>
+          )}
+          {!cfg && (
+            <Link
+              href="/settings"
+              className="ml-1 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <Settings2 className="h-3 w-3" /> use own key (optional)
+            </Link>
+          )}
         </h1>
         {messages.length > 0 && (
           <button

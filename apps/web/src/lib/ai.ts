@@ -75,6 +75,60 @@ export async function askAI(opts: {
   return askGemini(opts);
 }
 
+/* No personal key → Stash backend proxy (server Groq key, daily quota) */
+export async function askStashAI(opts: {
+  system: string;
+  history: ChatTurn[];
+  message: string;
+}): Promise<string> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : "";
+  const messages = [
+    { role: "system", content: opts.system },
+    ...opts.history.slice(-8).map((h) => ({ role: h.role, content: h.text })),
+    { role: "user", content: opts.message },
+  ];
+  const r = await fetch("/api/ai/chat", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ messages }),
+  });
+  const j = (await r.json().catch(() => null)) as {
+    data?: { text?: string };
+    error?: { message?: string };
+  } | null;
+  if (!r.ok) {
+    throw new Error(
+      j?.error?.message ??
+        (r.status === 429
+          ? "Daily free limit reached (10 chats/day)."
+          : "Stash AI request failed")
+    );
+  }
+  return j?.data?.text ?? "";
+}
+
+export async function getStashAIUsage(): Promise<{
+  used: number;
+  limit: number;
+  plan: string;
+} | null> {
+  try {
+    const token = localStorage.getItem("access_token");
+    const r = await fetch("/api/ai/usage", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { data?: { used: number; limit: number; plan: string } };
+    return j.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /* Groq retires models over time — pick the best one actually available
    on this key, cache it for the session. */
 const GROQ_PREFS = [

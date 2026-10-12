@@ -13,6 +13,7 @@ export class LinksController extends BaseController<Link, LinkRow> {
     const service = new LinksService();
     super(service, createLinkSchema, updateLinkSchema);
     this.linksService = service;
+    this.limitItems = true;
   }
 
   protected async getFilters(c: Context): Promise<Record<string, unknown>> {

@@ -9,6 +9,7 @@ interface SnapNote {
   title?: string | null;
   content?: string | null;
   createdAt: string;
+  notebookId?: string | null;
 }
 interface SnapWord {
   word: string;
@@ -27,7 +28,7 @@ export function buildSnapshot(opts: {
   links: SnapLink[];
   notes: SnapNote[];
   words: SnapWord[];
-  notebooks: { title?: string; name?: string }[];
+  notebooks: { id?: string; title?: string; name?: string }[];
 }): string {
   const { links, notes, words, notebooks } = opts;
   const now = Date.now();
@@ -64,6 +65,22 @@ export function buildSnapshot(opts: {
   );
 
   const ws = words.slice(0, 200);
+  parts.push(
+    "NOTEBOOKS:\n" +
+      (notebooks.length
+        ? notebooks
+            .map((nb) => {
+              const inside = notes
+                .filter((n) => n.notebookId && n.notebookId === nb.id)
+                .map((n) => n.title || "Untitled");
+              return `- ${nb.name || nb.title || "Untitled"}${
+                inside.length ? `: ${inside.join(", ")}` : " (empty)"
+              }`;
+            })
+            .join("\n")
+        : "(none)")
+  );
+
   parts.push(
     "WORDS:\n" +
       (ws.length

@@ -1,7 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Download, Moon, Sun, Monitor, KeyRound, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Download,
+  Moon,
+  Sun,
+  Monitor,
+  KeyRound,
+  Sparkles,
+  Crown,
+} from "lucide-react";
 import { exportService } from "@/lib/services";
 import { useTheme } from "@/components/providers/theme-provider";
 import { apiClient } from "@/lib/api-client";
@@ -29,6 +37,55 @@ export default function SettingsPage() {
   const [aiKey, setAiKey] = useState(aiCfg?.key ?? "");
   const [aiMsg, setAiMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [aiBusy, setAiBusy] = useState<"" | "test">("");
+
+  const [plan, setPlan] = useState<"free" | "pro">("free");
+  const [expBusy, setExpBusy] = useState(false);
+  const [expMsg, setExpMsg] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const r = await fetch("/api/auth/me", {
+          headers: { authorization: `Bearer ${token}` },
+        });
+        const j = (await r.json()) as { data?: { plan?: string } };
+        if (j.data?.plan === "pro") setPlan("pro");
+      } catch {
+        /* keep free */
+      }
+    })();
+  }, []);
+
+  async function doExport(format: "json" | "markdown") {
+    setExpBusy(true);
+    setExpMsg("");
+    try {
+      const token = localStorage.getItem("access_token");
+      const r = await fetch(`/api/export?format=${format}`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) {
+        const j = (await r.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        setExpMsg(j?.error?.message ?? "Export failed");
+        return;
+      }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = format === "json" ? "stash-export.json" : "stash-export.md";
+      a.click();
+      URL.revokeObjectURL(url);
+      setExpMsg("Download started.");
+    } catch {
+      setExpMsg("Export failed — try again.");
+    } finally {
+      setExpBusy(false);
+    }
+  }
 
   function aiSave() {
     if (!aiKey.trim()) return;
@@ -207,6 +264,43 @@ export default function SettingsPage() {
             </p>
           )}
         </form>
+      </div>
+
+      {/* Plan & export */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Crown className="h-4 w-4 text-primary" /> Plan & Export
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Current plan:{" "}
+          <span className="font-semibold capitalize text-foreground">{plan}</span>{" "}
+          — Free includes 10 AI chats/day and 50 items total. Pro (₹399 / $9
+          one-time) unlocks unlimited items, 200 AI chats/day and full export.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            onClick={() => doExport("json")}
+            disabled={plan !== "pro" || expBusy}
+            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+          >
+            Export JSON
+          </button>
+          <button
+            onClick={() => doExport("markdown")}
+            disabled={plan !== "pro" || expBusy}
+            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+          >
+            Export Markdown
+          </button>
+          {plan !== "pro" && (
+            <span className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+              Upgrade to Pro — coming soon
+            </span>
+          )}
+        </div>
+        {expMsg && (
+          <p className="mt-2 text-xs text-muted-foreground">{expMsg}</p>
+        )}
       </div>
 
       {/* AI assistant */}

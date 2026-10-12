@@ -15,6 +15,7 @@ import { NotesController } from "./controllers/notes.controller";
 import { UploadsController } from "./controllers/uploads.controller";
 import dashboard from "./routes/dashboard";
 import exportRouter from "./routes/export";
+import ai from "./routes/ai";
 
 const app = new Hono();
 const api = new Hono();
@@ -89,6 +90,7 @@ api.route("/notebooks", notebooks);
 api.route("/words", words);
 api.route("/dashboard", dashboard);
 api.route("/export", exportRouter);
+api.route("/ai", ai);
 
 
 // Mount protected group
