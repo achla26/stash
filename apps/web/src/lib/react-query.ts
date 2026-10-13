@@ -15,6 +15,22 @@ export function isTransientError(error: unknown): boolean {
   return TRANSIENT_RE.test(`${e?.code ?? ""} ${e?.message ?? ""}`);
 }
 
+/* Auth change (login/signup/logout) ke baad purane user ka cached data
+   kabhi na dikhe — in-memory query cache + SW offline API cache dono clear. */
+export function clearAppCaches(qc: QueryClient) {
+  qc.clear();
+  if (typeof window !== "undefined" && "caches" in window) {
+    caches
+      .keys()
+      .then((ks) =>
+        Promise.all(
+          ks.filter((k) => k.includes("stash-api")).map((k) => caches.delete(k))
+        )
+      )
+      .catch(() => {});
+  }
+}
+
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {

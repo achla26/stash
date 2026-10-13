@@ -32,6 +32,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { LinksPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { EditLinkDialog } from "./edit-link-dialog";
+import { CreateLinkDialog } from "./create-link-dialog";
 import type { Link } from "@repo/contracts/types";
 
 /* ---------- helpers ---------- */
@@ -89,6 +90,7 @@ function Favicon({ link }: { link: Link }) {
 export function LinksDashboard() {
   /* list controls */
   const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
   const [sort, setSort] = useState<"new" | "old" | "az">("new");
   const [chip, setChip] = useState<string>("all");
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -401,11 +403,31 @@ export function LinksDashboard() {
 
           {filtered.length === 0 ? (
             <div className="py-8">
-              <EmptyState
-                icon={Layers}
-                title="No links here"
-                description={search ? `Nothing matches “${search}”.` : "Save a link above to get started."}
-              />
+              {stats.total === 0 && !search ? (
+                <EmptyState
+                  icon={Link2}
+                  title="No links yet"
+                  description="Save articles, videos and resources from anywhere — they'll be waiting here."
+                  actionLabel="Save Your First Link"
+                  onAction={() => setCreateOpen(true)}
+                  hint="Tip: the + button and the Chrome extension save any page in one click."
+                />
+              ) : (
+                <EmptyState
+                  icon={Layers}
+                  title="No links here"
+                  description={
+                    search
+                      ? `Nothing matches “${search}”.`
+                      : "Nothing in this view yet."
+                  }
+                  actionLabel={search || chip !== "all" ? "Clear filters" : undefined}
+                  onAction={() => {
+                    setSearch("");
+                    setChip("all");
+                  }}
+                />
+              )}
             </div>
           ) : (
             <div className="mt-1 divide-y divide-border">
@@ -620,6 +642,8 @@ export function LinksDashboard() {
           )}
         </div>
       </div>
+
+      <CreateLinkDialog isOpen={createOpen} onClose={() => setCreateOpen(false)} />
 
       <EditLinkDialog
         link={editing}

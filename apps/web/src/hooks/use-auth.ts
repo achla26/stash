@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearAppCaches } from "@/lib/react-query";
 import type { User } from "@repo/contracts/types";
 
 export function useAuth(options?: { redirect?: boolean }) {
   const shouldRedirect = options?.redirect ?? true;
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -26,6 +29,7 @@ export function useAuth(options?: { redirect?: boolean }) {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+    clearAppCaches(queryClient);
     router.push("/login");
   };
 

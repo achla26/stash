@@ -180,8 +180,13 @@ export function NotesContent() {
             icon={FileText}
             title={hasAnyNotes ? "No notes here" : "No notes yet"}
             description="Create your first note to get started."
-            actionLabel="New Note"
+            actionLabel={hasAnyNotes ? "New Note" : "Write Your First Note"}
             onAction={handleCreateNote}
+            hint={
+              hasAnyNotes
+                ? undefined
+                : "Markdown supported — headings, lists, code and more."
+            }
           />
         )
       ) : (

@@ -7,6 +7,7 @@ interface EmptyStateProps {
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  hint?: string;
   className?: string;
 }
 
@@ -16,12 +17,13 @@ export function EmptyState({
   description,
   actionLabel,
   onAction,
+  hint,
   className,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center",
+        "animate-fade-up flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center",
         className
       )}
     >
@@ -43,6 +45,10 @@ export function EmptyState({
           <Plus className="h-4 w-4" />
           {actionLabel}
         </button>
+      )}
+
+      {hint && (
+        <p className="mt-3 max-w-xs text-xs text-muted-foreground/80">{hint}</p>
       )}
     </div>
   );

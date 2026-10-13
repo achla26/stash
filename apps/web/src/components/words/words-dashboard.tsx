@@ -491,6 +491,7 @@ export function WordsDashboard() {
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
+            id="words-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search words or meanings…"
@@ -531,8 +532,22 @@ export function WordsDashboard() {
           <div className="py-8">
             <EmptyState
               icon={BookOpen}
-              title="No words here"
-              description={search ? `Nothing matches “${search}”.` : "Add your first word above."}
+              title={search ? "No words here" : "No words yet"}
+              description={
+                search
+                  ? `Nothing matches “${search}”.`
+                  : "Search any word above — it's saved automatically with its meaning."
+              }
+              actionLabel={search ? "Clear search" : "Add Your First Word"}
+              onAction={() => {
+                if (search) setSearch("");
+                else document.getElementById("words-search")?.focus();
+              }}
+              hint={
+                search
+                  ? undefined
+                  : "Want to write your own meaning? Use “Add manually” above."
+              }
             />
           </div>
         ) : (
