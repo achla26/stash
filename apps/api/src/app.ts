@@ -16,6 +16,7 @@ import { UploadsController } from "./controllers/uploads.controller";
 import dashboard from "./routes/dashboard";
 import exportRouter from "./routes/export";
 import ai from "./routes/ai";
+import { billingPublic, billingProtected } from "./routes/billing";
 
 const app = new Hono();
 const api = new Hono();
@@ -66,6 +67,9 @@ app.get("/health", (c) => {
 // Public auth routes (no middleware)
 app.route("/api/auth", auth);
 
+// Public billing webhook (signature-verified inside)
+app.route("/api/billing", billingPublic);
+
 // Protected /api/pads/me — MUST be before public /api/pads/:slug
 const padsMe = new Hono();
 padsMe.use("*", authMiddleware);
@@ -91,6 +95,7 @@ api.route("/words", words);
 api.route("/dashboard", dashboard);
 api.route("/export", exportRouter);
 api.route("/ai", ai);
+api.route("/billing", billingProtected);
 
 
 // Mount protected group

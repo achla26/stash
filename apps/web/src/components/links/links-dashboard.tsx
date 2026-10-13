@@ -311,7 +311,7 @@ export function LinksDashboard() {
       </div>
 
       {/* ---------- list + top tags ---------- */}
-      <div className="grid gap-3 lg:grid-cols-[1.7fr_1fr]">
+      <div className="grid gap-3 lg:grid-cols-[1.7fr_1fr] [&>div]:min-w-0 [&>div]:overflow-hidden">
         <div className={cn(card, "p-5")}>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[13px] font-extrabold tracking-wider">
@@ -568,7 +568,7 @@ export function LinksDashboard() {
       </div>
 
       {/* ---------- top collections + chart ---------- */}
-      <div className="grid gap-3 lg:grid-cols-[1fr_1.7fr]">
+      <div className="grid gap-3 lg:grid-cols-[1fr_1.7fr] [&>div]:min-w-0 [&>div]:overflow-hidden">
         <div className={cn(card, "p-5")}>
           <h2 className="mb-4 text-[13px] font-extrabold tracking-wider">
             TOP COLLECTIONS

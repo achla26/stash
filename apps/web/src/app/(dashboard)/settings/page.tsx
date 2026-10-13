@@ -41,6 +41,52 @@ export default function SettingsPage() {
   const [plan, setPlan] = useState<"free" | "pro">("free");
   const [expBusy, setExpBusy] = useState(false);
   const [expMsg, setExpMsg] = useState("");
+  const [upBusy, setUpBusy] = useState(false);
+
+  async function upgrade() {
+    setUpBusy(true);
+    setExpMsg("");
+    try {
+      const token = localStorage.getItem("access_token");
+      const r = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const j = (await r.json()) as {
+        data?: { url?: string };
+        error?: { message?: string };
+      };
+      if (!r.ok || !j.data?.url) {
+        setExpMsg(j.error?.message ?? "Checkout unavailable right now.");
+        return;
+      }
+      window.location.href = j.data.url;
+    } catch {
+      setExpMsg("Checkout unavailable right now.");
+    } finally {
+      setUpBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("upgraded=1")) {
+      setExpMsg("Payment received! Pro activates within a minute — refreshing…");
+      const t = setInterval(() => {
+        fetch("/api/auth/me", {
+          headers: { authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        })
+          .then((r) => r.json())
+          .then((j) => {
+            if (j?.data?.plan === "pro") {
+              setPlan("pro");
+              clearInterval(t);
+            }
+          })
+          .catch(() => {});
+      }, 5000);
+      setTimeout(() => clearInterval(t), 120000);
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -293,8 +339,17 @@ export default function SettingsPage() {
             Export Markdown
           </button>
           {plan !== "pro" && (
+            <button
+              onClick={upgrade}
+              disabled={upBusy}
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+            >
+              {upBusy ? "Opening checkout…" : "Upgrade to Pro — ₹399 / $9 once"}
+            </button>
+          )}
+          {plan === "pro" && (
             <span className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
-              Upgrade to Pro — coming soon
+              Pro active ✓ — unlimited everything
             </span>
           )}
         </div>
