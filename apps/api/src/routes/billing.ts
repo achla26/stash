@@ -65,24 +65,31 @@ function verifyDodo(raw: string, headers: Headers): boolean {
   // timestamp freshness: 5 min
   const ts = Number(wts);
   if (Number.isFinite(ts) && Math.abs(Date.now() / 1000 - ts) > 300) return false;
-  let key: Buffer;
-  try {
-    const b64 = secret.startsWith("whsec_") ? secret.slice(6) : secret;
-    key = Buffer.from(b64, "base64");
-  } catch {
-    key = Buffer.from(secret, "utf8");
-  }
-  const signed = `${wid}.${wts}.${raw}`;
-  const expected = crypto.createHmac("sha256", key).update(signed).digest("base64");
+  const keyCandidates: Buffer[] = [];
+  const s = secret.trim();
+  if (s.startsWith("whsec_")) keyCandidates.push(Buffer.from(s.slice(6), "base64"));
+  keyCandidates.push(Buffer.from(s, "base64"));
+  keyCandidates.push(Buffer.from(s, "utf8"));
+  // standardwebhooks: {id}.{ts}.{body} — Dodo examples also show {ts}.{body}
+  const msgs = [`${wid}.${wts}.${raw}`, `${wts}.${raw}`];
   const provided = wsig
     .split(" ")
     .filter((p) => p.startsWith("v1,"))
     .map((p) => p.slice(3));
-  return provided.some(
-    (p) =>
-      p.length === expected.length &&
-      crypto.timingSafeEqual(Buffer.from(p), Buffer.from(expected))
-  );
+  for (const key of keyCandidates) {
+    for (const m of msgs) {
+      const expected = crypto.createHmac("sha256", key).update(m).digest("base64");
+      for (const p of provided) {
+        if (
+          p.length === expected.length &&
+          crypto.timingSafeEqual(Buffer.from(p), Buffer.from(expected))
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /* ---------- POST /api/billing/webhook — payment.succeeded → plan = pro ---------- */
