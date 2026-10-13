@@ -40,7 +40,12 @@ billingProtected.post("/checkout", async (c: Context) => {
     }),
   });
   if (!r.ok) {
-    throw new ApiError(502, "Could not start checkout. Try again.", "CHECKOUT_FAILED");
+    const t = await r.text().catch(() => "");
+    throw new ApiError(
+      502,
+      `Dodo said ${r.status}: ${t.slice(0, 200)}`,
+      "CHECKOUT_FAILED"
+    );
   }
   const j = (await r.json()) as { checkout_url?: string };
   if (!j.checkout_url) {
