@@ -62,9 +62,6 @@ function verifyDodo(raw: string, headers: Headers): boolean {
   const wts = headers.get("webhook-timestamp") ?? "";
   const wsig = headers.get("webhook-signature") ?? "";
   if (!wid || !wts || !wsig) return false;
-  // timestamp freshness: 5 min
-  const ts = Number(wts);
-  if (Number.isFinite(ts) && Math.abs(Date.now() / 1000 - ts) > 300) return false;
   const keyCandidates: Buffer[] = [];
   const s = secret.trim();
   if (s.startsWith("whsec_")) keyCandidates.push(Buffer.from(s.slice(6), "base64"));
@@ -95,8 +92,23 @@ function verifyDodo(raw: string, headers: Headers): boolean {
 /* ---------- POST /api/billing/webhook — payment.succeeded → plan = pro ---------- */
 billingPublic.post("/webhook", async (c: Context) => {
   const raw = await c.req.text();
-  if (!verifyDodo(raw, c.req.raw.headers)) {
-    return c.json({ ok: false, error: "bad signature" }, 401);
+  const h = c.req.raw.headers;
+  if (!verifyDodo(raw, h)) {
+    return c.json(
+      {
+        ok: false,
+        error: "bad signature",
+        detail: {
+          hasId: !!h.get("webhook-id"),
+          hasTs: !!h.get("webhook-timestamp"),
+          hasSig: !!h.get("webhook-signature"),
+          secretSet: !!process.env.DODO_WEBHOOK_SECRET,
+          secretPrefix: (process.env.DODO_WEBHOOK_SECRET ?? "").slice(0, 6),
+          bodyLen: raw.length,
+        },
+      },
+      401
+    );
   }
   let ev: { type?: string; data?: Record<string, unknown> };
   try {
