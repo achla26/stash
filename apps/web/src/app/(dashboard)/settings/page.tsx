@@ -70,21 +70,30 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.search.includes("upgraded=1")) {
-      setExpMsg("Payment received! Pro activates within a minute — refreshing…");
-      const t = setInterval(() => {
-        fetch("/api/auth/me", {
-          headers: { authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      const hdrs = { authorization: `Bearer ${localStorage.getItem("access_token")}` };
+      fetch("/api/auth/me", { headers: hdrs })
+        .then((r) => r.json())
+        .then((j) => {
+          if (j?.data?.plan === "pro") {
+            setPlan("pro");
+            return;
+          }
+          setExpMsg("Payment received! Pro activates within a minute — refreshing…");
+          const t = setInterval(() => {
+            fetch("/api/auth/me", { headers: hdrs })
+              .then((r) => r.json())
+              .then((m) => {
+                if (m?.data?.plan === "pro") {
+                  setPlan("pro");
+                  setExpMsg("");
+                  clearInterval(t);
+                }
+              })
+              .catch(() => {});
+          }, 5000);
+          setTimeout(() => clearInterval(t), 120000);
         })
-          .then((r) => r.json())
-          .then((j) => {
-            if (j?.data?.plan === "pro") {
-              setPlan("pro");
-              clearInterval(t);
-            }
-          })
-          .catch(() => {});
-      }, 5000);
-      setTimeout(() => clearInterval(t), 120000);
+        .catch(() => {});
     }
   }, []);
 
