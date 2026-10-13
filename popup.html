@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root { --blue:#007AFF; --bg:#f6f7f9; --card:#fff; --line:#e6e9ef; --ink:#0b1220; --mut:#5b6472; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0b0e13; --card:#151a22; --line:#232a35; --ink:#e8ebf1; --mut:#8b93a1; }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  body { width:320px; background:var(--bg); color:var(--ink); }
+  .wrap { padding:14px; }
+  .head { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .logo { width:26px; height:26px; border-radius:8px; background:var(--blue); display:grid; place-items:center; flex:none; }
+  .head b { font-size:14px; letter-spacing:-.01em; }
+  .head span { margin-left:auto; font-size:10.5px; color:var(--mut); font-weight:600; }
+  label { display:block; font-size:11px; font-weight:600; color:var(--mut); margin:10px 0 4px; text-transform:uppercase; letter-spacing:.06em; }
+  input, textarea { width:100%; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:10px; padding:9px 10px; font-size:13px; outline:none; }
+  input:focus, textarea:focus { border-color:var(--blue); }
+  textarea { resize:none; height:56px; }
+  .btn { width:100%; margin-top:12px; border:none; border-radius:11px; background:var(--blue); color:#fff; font-size:13.5px; font-weight:700; padding:11px; cursor:pointer; }
+  .btn:disabled { opacity:.55; cursor:default; }
+  .btn.ghost { background:transparent; color:var(--mut); border:1px solid var(--line); font-weight:600; margin-top:8px; }
+  .msg { margin-top:10px; font-size:12px; font-weight:600; }
+  .msg.ok { color:#22c55e; }
+  .msg.err { color:#ef4444; }
+  .row { display:flex; gap:8px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <span class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8.5 15.5c-2 2-5.5 2-6.5-1s1-5 3.5-5c4 0 6.5 8 10.5 8 2.5 0 4.5-2 3.5-5s-4.5-3-6.5-1" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+      <b>Save to Stash</b>
+      <span id="serverLabel"></span>
+    </div>
+
+    <!-- first-run setup -->
+    <div id="setup" class="hidden">
+      <label>Stash server URL</label>
+      <input id="baseUrl" type="text" placeholder="https://your-stash.vercel.app" />
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@example.com" />
+      <label>Password</label>
+      <input id="password" type="password" placeholder="••••••••" />
+      <button class="btn" id="loginBtn">Connect to Stash</button>
+      <div class="msg" id="setupMsg"></div>
+    </div>
+
+    <!-- save form -->
+    <div id="save" class="hidden">
+      <label>Title</label>
+      <input id="title" type="text" />
+      <label>URL</label>
+      <input id="url" type="text" />
+      <label>Quick note (optional)</label>
+      <textarea id="note" placeholder="Why are you saving this?"></textarea>
+      <button class="btn" id="saveBtn">Save to Stash</button>
+      <button class="btn ghost" id="logoutBtn">Disconnect</button>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
