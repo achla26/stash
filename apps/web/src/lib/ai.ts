@@ -131,16 +131,17 @@ export async function getStashAIUsage(): Promise<{
 
 /* Groq retires models over time — pick the best one actually available
    on this key, cache it for the session. */
-const GROQ_PREFS = [
-  "openai/gpt-oss-120b",
-  "openai/gpt-oss-20b",
+const GROQ_PREFS = [ 
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
 ];
 let groqModelCache: string | null = null;
 
-async function pickGroqModel(key: string): Promise<string> {
-  if (groqModelCache) return groqModelCache;
+async function pickGroqModel(
+  key: string,
+  exclude?: Set<string>
+): Promise<string | null> {
+  if (!exclude && groqModelCache) return groqModelCache;
   try {
     const r = await fetch("https://api.groq.com/openai/v1/models", {
       headers: { Authorization: `Bearer ${key}` },
@@ -148,12 +149,16 @@ async function pickGroqModel(key: string): Promise<string> {
     if (r.ok) {
       const j = await r.json();
       const ids: string[] = (j?.data ?? []).map((m: any) => m.id);
-      const pick = GROQ_PREFS.find((p) => ids.includes(p)) ?? ids[0];
-      if (pick) groqModelCache = pick;
+      const avail = ids.filter((id) => !exclude?.has(id));
+      const pick =
+        GROQ_PREFS.find((p) => avail.includes(p)) ?? avail[0] ?? null;
+      if (pick && !exclude) groqModelCache = pick;
+      return pick;
     }
   } catch {
     /* fall through to default */
   }
+  if (exclude) return null;
   return groqModelCache ?? "llama-3.1-8b-instant";
 }
 
@@ -196,32 +201,40 @@ async function askGroq(opts: {
   message: string;
   maxTokens?: number;
 }): Promise<string> {
-  let model = await pickGroqModel(opts.key);
-  let res = await groqChat(opts.key, model, opts);
-  if (!res.ok && (res.status === 400 || res.status === 404)) {
-    // model retired mid-session — repick and retry once
-    resetGroqModelCache();
-    const m2 = await pickGroqModel(opts.key);
-    if (m2 !== model) {
+  const tried = new Set<string>();
+  let model = (await pickGroqModel(opts.key)) ?? "llama-3.1-8b-instant";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    tried.add(model);
+    const res = await groqChat(opts.key, model, opts);
+    if (!res.ok && (res.status === 400 || res.status === 404)) {
+      // model retired mid-session — pick a different one and retry
+      resetGroqModelCache();
+      const m2 = await pickGroqModel(opts.key, tried);
+      if (!m2) break;
       model = m2;
-      res = await groqChat(opts.key, model, opts);
+      continue;
     }
+    if (!res.ok) {
+      const j = await res.json().catch(() => null);
+      throw new Error(
+        j?.error?.message || `Groq error ${res.status} — check your key`
+      );
+    }
+    const j = await res.json();
+    const msg = j?.choices?.[0]?.message;
+    // reasoning models may put text in `reasoning` when content is empty
+    const text =
+      (typeof msg?.content === "string" && msg.content.trim() && msg.content) ||
+      (typeof msg?.reasoning === "string" && msg.reasoning) ||
+      "";
+    if (text) return text;
+    // empty reply — try a different model once
+    resetGroqModelCache();
+    const m3 = await pickGroqModel(opts.key, tried);
+    if (!m3) break;
+    model = m3;
   }
-  if (!res.ok) {
-    const j = await res.json().catch(() => null);
-    throw new Error(
-      j?.error?.message || `Groq error ${res.status} — check your key`
-    );
-  }
-  const j = await res.json();
-  const msg = j?.choices?.[0]?.message;
-  // reasoning models may put text in `reasoning` when content is empty
-  const text =
-    (typeof msg?.content === "string" && msg.content.trim() && msg.content) ||
-    (typeof msg?.reasoning === "string" && msg.reasoning) ||
-    "";
-  if (!text) throw new Error("Empty reply from Groq");
-  return text;
+  throw new Error("Empty reply from Groq");
 }
 
 async function askGemini(opts: {

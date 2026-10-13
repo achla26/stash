@@ -5,9 +5,7 @@ import { consumeAiChat, getAiUsage } from "../lib/plan";
 
 const ai = new Hono();
 
-const GROQ_PREFS = [
-  "openai/gpt-oss-20b",
-  "openai/gpt-oss-120b",
+const GROQ_PREFS = [ 
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
 ];
@@ -36,7 +34,12 @@ ai.post("/chat", async (c: Context) => {
   if (!body.messages?.length) throw ApiError.badRequest("messages required");
 
   const base = process.env.GROQ_BASE_URL ?? "https://api.groq.com/openai/v1";
-  const models = body.model ? [body.model] : GROQ_PREFS;
+  const override = process.env.GROQ_MODEL?.trim();
+  const models = body.model
+    ? [body.model]
+    : override
+      ? [override, ...GROQ_PREFS.filter((m) => m !== override)]
+      : GROQ_PREFS;
   let lastErr = "";
   for (const model of models) {
     const r = await fetch(`${base}/chat/completions`, {
@@ -70,6 +73,10 @@ ai.post("/chat", async (c: Context) => {
     const msg = j.choices?.[0]?.message;
     const text =
       (msg?.content ?? "").trim() || (msg?.reasoning ?? "").trim() || "";
+    if (!text) {
+      lastErr = "empty reply";
+      continue; // empty answer — fall through to next model
+    }
     return ApiResponse.success(c, { text, quota, model });
   }
   throw new ApiError(502, "No AI model available right now.", "AI_NO_MODEL");
