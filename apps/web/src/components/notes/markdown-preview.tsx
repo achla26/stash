@@ -17,6 +17,30 @@ export interface NoteLite {
    Shared by note editor + public share page
    ============================================================ */
 
+/* Nested <mark>/<span> tags ke liye balanced closing tag dhundo */
+function balancedEnd(
+  text: string,
+  start: number,
+  open: string,
+  close: string
+): number {
+  let depth = 1;
+  let pos = start + open.length;
+  while (depth > 0) {
+    const no = text.indexOf(open, pos);
+    const nc = text.indexOf(close, pos);
+    if (nc === -1) return -1;
+    if (no !== -1 && no < nc) {
+      depth++;
+      pos = no + open.length;
+    } else {
+      depth--;
+      pos = nc + close.length;
+    }
+  }
+  return pos;
+}
+
 function renderInline(
   text: string,
   keyBase: string,
@@ -24,17 +48,26 @@ function renderInline(
 ): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   const regex =
-    /(<mark style="background-color:#[0-9a-fA-F]{3,8}">[^<]*<\/mark>|<span style="color:#[0-9a-fA-F]{3,8}">[^<]*<\/span>|!\[[^\]]*\]\([^)\s]+\)|!\[\[[^\]]+\]\]|\[\[[^\]]+\]\]|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\)|https?:\/\/[^\s<>]+)/g;
+    /(<mark style="background-color:#[0-9a-fA-F]{3,8}">.*?<\/mark>|<span style="color:#[0-9a-fA-F]{3,8}">.*?<\/span>|!\[[^\]]*\]\([^)\s]+\)|!\[\[[^\]]+\]\]|\[\[[^\]]+\]\]|~~[^~]+~~|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\([^)\s]+\)|https?:\/\/[^\s<>]+)/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
   while ((m = regex.exec(text))) {
     if (m.index > last) nodes.push(text.slice(last, m.index));
-    const tok = m[0];
+    let tok = m[0];
+    if (tok.startsWith("<mark") || tok.startsWith("<span")) {
+      const open = tok.startsWith("<mark") ? "<mark style=" : "<span style=";
+      const close = tok.startsWith("<mark") ? "</mark>" : "</span>";
+      const end = balancedEnd(text, m.index, open, close);
+      if (end > m.index + tok.length) {
+        tok = text.slice(m.index, end);
+        regex.lastIndex = end;
+      }
+    }
     const k = `${keyBase}-${i++}`;
     if (tok.startsWith("<mark")) {
       const mm = tok.match(
-        /<mark style="background-color:(#[0-9a-fA-F]{3,8})">([^<]*)<\/mark>/
+        /<mark style="background-color:(#[0-9a-fA-F]{3,8})">(.*)<\/mark>/
       );
       if (mm) {
         nodes.push(
@@ -43,21 +76,23 @@ function renderInline(
             style={{ backgroundColor: mm[1] }}
             className="rounded px-0.5 text-foreground"
           >
-            {mm[2]}
+            {renderInline(mm[2] ?? "", `${k}-in`, notes)}
           </mark>
         );
       }
     } else if (tok.startsWith("<span")) {
-      const mm = tok.match(
-        /<span style="color:(#[0-9a-fA-F]{3,8})">([^<]*)<\/span>/
-      );
+      const mm = tok.match(/<span style="color:(#[0-9a-fA-F]{3,8})">(.*)<\/span>/);
       if (mm) {
         nodes.push(
           <span key={k} style={{ color: mm[1] }}>
-            {mm[2]}
+            {renderInline(mm[2] ?? "", `${k}-in`, notes)}
           </span>
         );
       }
+    } else if (tok.startsWith("~~")) {
+      nodes.push(
+        <del key={k}>{renderInline(tok.slice(2, -2), `${k}-s`, notes)}</del>
+      );
     } else if (tok.startsWith("![")) {
       const mm = tok.match(/!\[([^\]]*)\]\(([^)\s]+)\)/);
       const src = mm?.[2] ?? "";

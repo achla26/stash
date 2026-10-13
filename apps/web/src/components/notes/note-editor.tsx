@@ -34,6 +34,8 @@ import {
   Globe,
   Link2,
   Copy,
+  Strikethrough,
+  Minus,
 } from "lucide-react";
 
 import {
@@ -176,6 +178,83 @@ function PopoverItem({
 }
 
 /* ============================================================
+   Selection floating toolbar — Notion-style mini popup
+   ============================================================ */
+
+function SelectionToolbar({
+  rect,
+  onBold,
+  onItalic,
+  onStrike,
+  onHighlight,
+  onLink,
+}: {
+  rect: { top: number; left: number };
+  onBold: () => void;
+  onItalic: () => void;
+  onStrike: () => void;
+  onHighlight: () => void;
+  onLink: (url: string) => void;
+}) {
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [url, setUrl] = useState("");
+  const keep = (e: React.MouseEvent) => e.preventDefault(); // keep textarea selection
+  const btn =
+    "flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  return (
+    <div
+      data-sel-toolbar
+      style={{ top: Math.max(8, rect.top), left: rect.left }}
+      className="animate-fade-up fixed z-50 flex -translate-x-1/2 items-center gap-0.5 rounded-xl border border-border bg-popover p-1 shadow-lg"
+      onMouseDown={keep}
+    >
+      <button type="button" className={btn} title="Bold" onClick={onBold}>
+        <Bold className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" className={btn} title="Italic" onClick={onItalic}>
+        <Italic className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" className={btn} title="Strikethrough" onClick={onStrike}>
+        <Strikethrough className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" className={btn} title="Highlight" onClick={onHighlight}>
+        <Highlighter className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        className={cn(btn, linkOpen && "bg-accent text-foreground")}
+        title="Link"
+        onClick={() => setLinkOpen((v) => !v)}
+      >
+        <Link2 className="h-3.5 w-3.5" />
+      </button>
+      {linkOpen && (
+        <>
+          <input
+            autoFocus
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && url.trim()) onLink(url.trim());
+            }}
+            placeholder="https://…"
+            className="h-7 w-36 rounded-md border border-input bg-background px-2 text-xs outline-none"
+          />
+          <button
+            type="button"
+            disabled={!url.trim()}
+            onClick={() => url.trim() && onLink(url.trim())}
+            className="h-7 rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            Add
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
    Save status
    ============================================================ */
 
@@ -255,14 +334,6 @@ export function NoteEditor() {
     setViewMode(!hasContent ? "edit" : isDesktop ? "split" : "view");
   }, [note, isDesktop]);
 
-  function cycleMode() {
-    setViewMode((m) => {
-      if (!isDesktop) return m === "view" ? "edit" : "view";
-      return m === "split" ? "view" : m === "view" ? "edit" : "split";
-    });
-  }
-
-
 
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -281,6 +352,15 @@ export function NoteEditor() {
   const [copied, setCopied] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [selRect, setSelRect] = useState<{ top: number; left: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const mirrorRef = useRef<HTMLDivElement | null>(null);
+  const hlBtnRef = useRef<HTMLButtonElement>(null);
+  const paletteBtnRef = useRef<HTMLButtonElement>(null);
+  const noteBtnRef = useRef<HTMLButtonElement>(null);
+  const linkBtnRef = useRef<HTMLButtonElement>(null);
 
   // Data-loss fix:
   // - loadedRef     → server note has been loaded into the editor at least once
@@ -296,9 +376,83 @@ export function NoteEditor() {
   const leftScrollRef = useRef<HTMLDivElement>(null);
   const rightScrollRef = useRef<HTMLDivElement>(null);
   const syncLock = useRef<"" | "l" | "r">("");
+  const progL = useRef(false);
+  const progR = useRef(false);
 
-  /* ---------- Split-view scroll sync (line-accurate, both directions) ---------- */
-  const LH = 17 * 1.75; // textarea line-height in px
+  /* ---------- Split-view scroll sync (wrap-accurate, both directions) ---------- */
+  const lineMapRef = useRef<HTMLDivElement | null>(null);
+  const lineTopsRef = useRef<number[]>([0]);
+
+  const buildLineMap = useCallback(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    let m = lineMapRef.current;
+    if (!m) {
+      m = document.createElement("div");
+      m.style.position = "absolute";
+      m.style.top = "-99999px";
+      m.style.left = "0";
+      m.style.visibility = "hidden";
+      m.style.pointerEvents = "none";
+      document.body.appendChild(m);
+      lineMapRef.current = m;
+    }
+    const cs = window.getComputedStyle(el);
+    m.style.width = `${el.clientWidth}px`;
+    m.style.font = cs.font;
+    m.style.lineHeight = cs.lineHeight;
+    m.style.letterSpacing = cs.letterSpacing;
+    m.style.padding = cs.padding;
+    m.style.border = cs.border;
+    m.style.boxSizing = cs.boxSizing;
+    m.style.wordBreak = "break-word";
+    m.style.whiteSpace = "pre-wrap";
+    const lines = el.value.split("\n");
+    m.textContent = "";
+    const frag = document.createDocumentFragment();
+    for (const ln of lines) {
+      const d = document.createElement("div");
+      d.textContent = ln.length ? ln : "\u00a0";
+      frag.appendChild(d);
+    }
+    m.appendChild(frag);
+    const tops: number[] = [];
+    for (const child of Array.from(m.children)) {
+      tops.push((child as HTMLElement).offsetTop);
+    }
+    lineTopsRef.current = tops.length ? tops : [0];
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(buildLineMap, 120);
+    return () => clearTimeout(t);
+  }, [content, buildLineMap]);
+
+  useEffect(() => {
+    window.addEventListener("resize", buildLineMap);
+    return () => window.removeEventListener("resize", buildLineMap);
+  }, [buildLineMap]);
+
+  const lineAtVisual = (px: number): number => {
+    const tops = lineTopsRef.current;
+    let lo = 0;
+    let hi = tops.length - 1;
+    let ans = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const tv = tops[mid] ?? 0;
+      if (tv <= px) {
+        ans = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
+    }
+    return ans;
+  };
+
+  const visualTopOf = (line: number): number => {
+    const tops = lineTopsRef.current;
+    return tops[Math.max(0, Math.min(line, tops.length - 1))] ?? 0;
+  };
 
   const alignPreviewToLine = (topLine: number) => {
     const R = rightScrollRef.current;
@@ -310,7 +464,10 @@ export function NoteEditor() {
       if (ln <= topLine) target = b;
       else break;
     }
-    if (target) R.scrollTop = Math.max(0, target.offsetTop - 12);
+    if (target) {
+      progR.current = true;
+      R.scrollTop = Math.max(0, target.offsetTop - 12);
+    }
   };
 
   const alignEditorToPreview = () => {
@@ -326,25 +483,35 @@ export function NoteEditor() {
     }
     const ta = bodyRef.current;
     const taTop = ta?.offsetTop ?? 60;
-    L.scrollTop = Math.max(0, taTop + line * LH - 70);
+    progL.current = true;
+    L.scrollTop = Math.max(0, taTop + visualTopOf(line) - 70);
   };
 
   const syncScroll = (src: "l" | "r") => {
     const L = leftScrollRef.current;
     const R = rightScrollRef.current;
     if (!L || !R) return;
+    // ignore scroll events caused by our own programmatic alignment
+    if (src === "l" && progL.current) {
+      progL.current = false;
+      return;
+    }
+    if (src === "r" && progR.current) {
+      progR.current = false;
+      return;
+    }
     if (syncLock.current && syncLock.current !== src) return;
     syncLock.current = src;
     if (src === "l") {
       const ta = bodyRef.current;
       const taTop = ta?.offsetTop ?? 60;
-      alignPreviewToLine(Math.max(0, Math.floor((L.scrollTop + 24 - taTop) / LH)));
+      alignPreviewToLine(lineAtVisual(Math.max(0, L.scrollTop + 24 - taTop)));
     } else {
       alignEditorToPreview();
     }
     window.setTimeout(() => {
       if (syncLock.current === src) syncLock.current = "";
-    }, 120);
+    }, 220);
   };
 
   /* ---------- Click a preview block -> caret + scroll on that source line ---------- */
@@ -359,9 +526,13 @@ export function NoteEditor() {
       t.focus({ preventScroll: true });
       t.setSelectionRange(idx, idx);
     }, 40);
-    const target = Math.max(0, (bodyRef.current?.offsetTop ?? 60) + line * LH - 90);
+    const target = Math.max(
+      0,
+      (bodyRef.current?.offsetTop ?? 60) + visualTopOf(line) - 90
+    );
     const L = leftScrollRef.current;
     if (L && viewMode === "split") {
+      progL.current = true;
       L.scrollTop = target;
       alignPreviewToLine(line);
     } else {
@@ -456,6 +627,80 @@ export function NoteEditor() {
   useEffect(() => {
     resizeBody();
   }, [content, resizeBody, viewMode]);
+
+  /* ---------- Selection position → floating toolbar ---------- */
+  const updateSelRect = useCallback(() => {
+    const el = bodyRef.current;
+    if (!el || document.activeElement !== el) {
+      setSelRect(null);
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    if (start === end) {
+      setSelRect(null);
+      return;
+    }
+    let m = mirrorRef.current;
+    if (!m) {
+      m = document.createElement("div");
+      m.style.position = "absolute";
+      m.style.top = "0";
+      m.style.left = "0";
+      m.style.visibility = "hidden";
+      m.style.zIndex = "-1";
+      document.body.appendChild(m);
+      mirrorRef.current = m;
+    }
+    const cs = window.getComputedStyle(el);
+    m.style.width = `${el.clientWidth}px`;
+    m.style.font = cs.font;
+    m.style.lineHeight = cs.lineHeight;
+    m.style.letterSpacing = cs.letterSpacing;
+    m.style.padding = cs.padding;
+    m.style.border = cs.border;
+    m.style.boxSizing = cs.boxSizing;
+    m.style.whiteSpace = "pre-wrap";
+    m.style.wordBreak = "break-word";
+    m.textContent = el.value.slice(0, end);
+    const marker = document.createElement("span");
+    marker.textContent = el.value.slice(start, end) || ".";
+    m.appendChild(marker);
+    const mBase = m.getBoundingClientRect();
+    const kRect = marker.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const top = elRect.top + (kRect.top - mBase.top) - 46;
+    const left = Math.min(
+      Math.max(elRect.left + (kRect.left - mBase.left) + kRect.width / 2, 90),
+      window.innerWidth - 90
+    );
+    setSelRect({ top, left });
+  }, []);
+
+  useEffect(() => {
+    const hide = () => updateSelRect();
+    window.addEventListener("scroll", hide, true);
+    window.addEventListener("resize", hide);
+    return () => {
+      window.removeEventListener("scroll", hide, true);
+      window.removeEventListener("resize", hide);
+    };
+  }, [updateSelRect]);
+
+  const applyLink = (url: string) => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    const label = content.slice(s, e) || "link text";
+    const snippet = `[${label}](${url})`;
+    setContent(content.slice(0, s) + snippet + content.slice(e));
+    setSelRect(null);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(s + 1, s + 1 + label.length);
+    });
+  };
 
   const previewContent = useDebounce(content, 200);
 
@@ -780,7 +1025,7 @@ export function NoteEditor() {
     <div className="min-h-screen bg-background">
       {/* Toolbar */}
       <div className={cn("mx-auto w-full px-6 pb-12 pt-6 sm:px-8", viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
-        <div className="flex items-center justify-between gap-3 opacity-60 transition-opacity hover:opacity-100 focus-within:opacity-100">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => router.push("/notes")}
@@ -790,31 +1035,44 @@ export function NoteEditor() {
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <div className="flex h-8 min-w-[100px] items-center justify-center">
-            <SaveIndicator status={saveStatus} onRetry={() => doSave(title, content)} />
-          </div>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={cycleMode}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                viewMode !== "edit" && "bg-accent text-foreground"
-              )}
-              aria-label={viewMode === "split" ? "Single view" : viewMode === "view" ? "Edit" : "Split view"}
-              title={viewMode === "split" ? "Single view" : viewMode === "view" ? "Edit" : "Split view"}
+          <div className="flex items-center gap-2.5">
+            <div className="hidden min-w-[100px] justify-start sm:flex">
+              <SaveIndicator status={saveStatus} onRetry={() => doSave(title, content)} />
+            </div>
+            <div
+              className="flex items-center rounded-full border border-border bg-card p-0.5"
+              role="group"
+              aria-label="Editor view mode"
             >
-              {viewMode === "split" ? (
-                <Eye className="h-4 w-4" />
-              ) : viewMode === "view" ? (
-                <PencilLine className="h-4 w-4" />
-              ) : isDesktop ? (
-                <Columns2 className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
+              {(
+                [
+                  { id: "edit", label: "Write", icon: PencilLine },
+                  ...(isDesktop
+                    ? [{ id: "split", label: "Split", icon: Columns2 }]
+                    : []),
+                  { id: "view", label: "Read", icon: Eye },
+                ] as { id: "edit" | "split" | "view"; label: string; icon: React.ComponentType<{ className?: string }> }[]
+              ).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setViewMode(m.id)}
+                  className={cn(
+                    "flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors",
+                    viewMode === m.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-pressed={viewMode === m.id}
+                >
+                  <m.icon className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex sm:hidden">
+              <SaveIndicator status={saveStatus} onRetry={() => doSave(title, content)} />
+            </div>
             <button
               ref={overflowBtnRef}
               type="button"
@@ -835,13 +1093,20 @@ export function NoteEditor() {
         {/* Formatting toolbar (edit mode only) */}
         {viewMode !== "view" && (
           <div className="sticky top-0 z-20 -mx-2 bg-background/95 px-2 pt-2 backdrop-blur">
-          <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2 opacity-70 transition-opacity hover:opacity-100 focus-within:opacity-100">
+          <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2">
             <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />
             </button>
             <button type="button" className={toolBtn} title="Italic (⌘I)" onClick={() => wrapSelection("*", "*")}>
               <Italic className="h-3.5 w-3.5" />
             </button>
+            <button type="button" className={toolBtn} title="Strikethrough" onClick={() => wrapSelection("~~", "~~")}>
+              <Strikethrough className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" className={toolBtn} title="Code" onClick={() => wrapSelection("`", "`")}>
+              <Code className="h-3.5 w-3.5" />
+            </button>
+            <div className="mx-1 h-4 w-px shrink-0 bg-border" />
             <button type="button" className={toolBtn} title="Heading" onClick={() => applyLinePrefix("## ", /^##\s/)}>
               <Heading2 className="h-3.5 w-3.5" />
             </button>
@@ -854,40 +1119,30 @@ export function NoteEditor() {
             <button type="button" className={toolBtn} title="Checklist" onClick={() => applyLinePrefix("- [ ] ", /^[-*]\s\[[ xX]\]\s/)}>
               <CheckSquare className="h-3.5 w-3.5" />
             </button>
-            <button type="button" className={toolBtn} title="Code" onClick={() => wrapSelection("`", "`")}>
-              <Code className="h-3.5 w-3.5" />
-            </button>
             <button type="button" className={toolBtn} title="Quote" onClick={() => applyLinePrefix("> ", /^>\s/)}>
               <Quote className="h-3.5 w-3.5" />
             </button>
-            <button
-              type="button"
-              className={cn(toolBtn, notePickerOpen && "bg-accent text-foreground")}
-              title="Insert note"
-              onClick={() => setNotePickerOpen((v) => !v)}
-            >
-              <FileText className="h-3.5 w-3.5" />
+            <button type="button" className={toolBtn} title="Horizontal rule" onClick={() => insertAtCursor("\n\n---\n\n")}>
+              <Minus className="h-3.5 w-3.5" />
             </button>
+            <div className="mx-1 h-4 w-px shrink-0 bg-border" />
             <button
+              ref={linkBtnRef}
               type="button"
-              className={cn(toolBtn, colorPanel === "highlight" && "bg-accent text-foreground")}
-              title="Highlight"
-              onClick={() => setColorPanel((v) => (v === "highlight" ? "none" : "highlight"))}
+              className={cn(toolBtn, linkOpen && "bg-accent text-foreground")}
+              title="Link"
+              onClick={() => {
+                setLinkOpen((v) => !v);
+                setColorPanel("none");
+                setNotePickerOpen(false);
+              }}
             >
-              <Highlighter className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              className={cn(toolBtn, colorPanel === "text" && "bg-accent text-foreground")}
-              title="Text color"
-              onClick={() => setColorPanel((v) => (v === "text" ? "none" : "text"))}
-            >
-              <Palette className="h-3.5 w-3.5" />
+              <Link2 className="h-3.5 w-3.5" />
             </button>
             <button
               type="button"
               className={toolBtn}
-              title="Add image"
+              title="Add image (or drag & drop)"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -897,72 +1152,46 @@ export function NoteEditor() {
                 <ImagePlus className="h-3.5 w-3.5" />
               )}
             </button>
-          </div>
-          </div>
-        )}
-
-        {/* Color swatches */}
-        {colorPanel !== "none" && (
-          <div className="mt-2 flex items-center gap-2 pb-1">
-            {(colorPanel === "highlight" ? HIGHLIGHT_COLORS : TEXT_COLORS).map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-label={colorPanel === "highlight" ? `Highlight ${c}` : `Text color ${c}`}
-                onClick={() => wrapColor(colorPanel, c)}
-                className="h-6 w-6 rounded-full border border-border transition-transform hover:scale-110"
-                style={
-                  colorPanel === "highlight"
-                    ? { backgroundColor: c }
-                    : { backgroundColor: c }
-                }
-              />
-            ))}
             <button
+              ref={noteBtnRef}
               type="button"
-              onClick={() => setColorPanel("none")}
-              className="ml-1 text-[11px] text-muted-foreground hover:text-foreground"
+              className={cn(toolBtn, notePickerOpen && "bg-accent text-foreground")}
+              title="Insert note"
+              onClick={() => {
+                setNotePickerOpen((v) => !v);
+                setColorPanel("none");
+                setLinkOpen(false);
+              }}
             >
-              Done
+              <FileText className="h-3.5 w-3.5" />
+            </button>
+            <button
+              ref={hlBtnRef}
+              type="button"
+              className={cn(toolBtn, colorPanel === "highlight" && "bg-accent text-foreground")}
+              title="Highlight"
+              onClick={() => {
+                setColorPanel((v) => (v === "highlight" ? "none" : "highlight"));
+                setNotePickerOpen(false);
+                setLinkOpen(false);
+              }}
+            >
+              <Highlighter className="h-3.5 w-3.5" />
+            </button>
+            <button
+              ref={paletteBtnRef}
+              type="button"
+              className={cn(toolBtn, colorPanel === "text" && "bg-accent text-foreground")}
+              title="Text color"
+              onClick={() => {
+                setColorPanel((v) => (v === "text" ? "none" : "text"));
+                setNotePickerOpen(false);
+                setLinkOpen(false);
+              }}
+            >
+              <Palette className="h-3.5 w-3.5" />
             </button>
           </div>
-        )}
-
-        {/* Insert-note picker */}
-        {notePickerOpen && (
-          <div className="mt-2 w-full max-w-sm rounded-xl border border-border bg-card p-2 shadow-sm">
-            <input
-              autoFocus
-              value={notePickerSearch}
-              onChange={(e) => setNotePickerSearch(e.target.value)}
-              placeholder="Search notes…"
-              className="mb-2 h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none"
-            />
-            <div className="max-h-48 overflow-y-auto">
-              {pickerNotes.map((n) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  onClick={() => {
-                    insertAtCursor(`[[${n.title || "Untitled"}]]`);
-                    setNotePickerOpen(false);
-                    setNotePickerSearch("");
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-accent"
-                >
-                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{n.title || "Untitled"}</span>
-                </button>
-              ))}
-              {pickerNotes.length === 0 && (
-                <p className="px-2 py-1.5 text-xs text-muted-foreground">
-                  No matching notes
-                </p>
-              )}
-            </div>
-            <p className="mt-1.5 border-t border-border/60 px-1 pt-1.5 text-[11px] text-muted-foreground">
-              Link: [[Title]] · Full embed (own line): ![[Title]]
-            </p>
           </div>
         )}
 
@@ -1148,6 +1377,115 @@ export function NoteEditor() {
         )}
       </AnchoredPopover>
 
+      {/* Link popover */}
+      <AnchoredPopover
+        anchorRef={linkBtnRef}
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
+      >
+        <div className="w-64 p-2">
+          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Insert link
+          </p>
+          <div className="flex items-center gap-1.5">
+            <input
+              autoFocus
+              placeholder="https://…"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && linkUrl.trim()) {
+                  applyLink(linkUrl.trim());
+                  setLinkUrl("");
+                  setLinkOpen(false);
+                }
+              }}
+              className="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              disabled={!linkUrl.trim()}
+              onClick={() => {
+                applyLink(linkUrl.trim());
+                setLinkUrl("");
+                setLinkOpen(false);
+              }}
+              className="h-8 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              Add
+            </button>
+          </div>
+          <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
+            Selected text becomes the link label.
+          </p>
+        </div>
+      </AnchoredPopover>
+
+      {/* Color swatches popover */}
+      <AnchoredPopover
+        anchorRef={colorPanel === "highlight" ? hlBtnRef : paletteBtnRef}
+        open={colorPanel !== "none"}
+        onClose={() => setColorPanel("none")}
+      >
+        <div className="flex items-center gap-2 p-2.5">
+          {(colorPanel === "highlight" ? HIGHLIGHT_COLORS : TEXT_COLORS).map((c) => (
+            <button
+              key={c}
+              type="button"
+              aria-label={colorPanel === "highlight" ? `Highlight ${c}` : `Text color ${c}`}
+              onClick={() => {
+                if (colorPanel === "none") return;
+                wrapColor(colorPanel, c);
+              }}
+              className="h-6 w-6 rounded-full border border-border transition-transform hover:scale-110"
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </AnchoredPopover>
+
+      {/* Insert-note picker popover */}
+      <AnchoredPopover
+        anchorRef={noteBtnRef}
+        open={notePickerOpen}
+        onClose={() => setNotePickerOpen(false)}
+      >
+        <div className="w-72 p-2">
+          <input
+            autoFocus
+            value={notePickerSearch}
+            onChange={(e) => setNotePickerSearch(e.target.value)}
+            placeholder="Search notes…"
+            className="mb-2 h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none"
+          />
+          <div className="max-h-48 overflow-y-auto">
+            {pickerNotes.map((n) => (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => {
+                  insertAtCursor(`[[${n.title || "Untitled"}]]`);
+                  setNotePickerOpen(false);
+                  setNotePickerSearch("");
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-accent"
+              >
+                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate">{n.title || "Untitled"}</span>
+              </button>
+            ))}
+            {pickerNotes.length === 0 && (
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                No matching notes
+              </p>
+            )}
+          </div>
+          <p className="mt-1.5 border-t border-border/60 px-1 pt-1.5 text-[11px] text-muted-foreground">
+            Link: [[Title]] · Full embed (own line): ![[Title]]
+          </p>
+        </div>
+      </AnchoredPopover>
+
       {/* Writing surface / preview (same container so the sticky toolbar can pin) */}
         {viewMode === "view" ? (
           <div className="min-w-0">
@@ -1180,8 +1518,30 @@ export function NoteEditor() {
                 onChange={(e) => setContent(e.target.value)}
                 onKeyDown={handleBodyKeyDown}
                 onPaste={handlePaste}
+                onSelect={updateSelRect}
+                onBlur={(e) => {
+                  const rt = e.relatedTarget as HTMLElement | null;
+                  if (rt?.closest("[data-sel-toolbar]")) return;
+                  setSelRect(null);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  const f = Array.from(e.dataTransfer.files).find((x) =>
+                    x.type.startsWith("image/")
+                  );
+                  if (f) void uploadImage(f);
+                }}
                 placeholder="Start writing…"
-                className="mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
+                className={cn(
+                  "mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                  dragging && "rounded-xl ring-2 ring-primary/40"
+                )}
                 spellCheck={false}
                 rows={1}
               />
@@ -1216,9 +1576,31 @@ export function NoteEditor() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onKeyDown={handleBodyKeyDown}
-                onPaste={handlePaste}
+              onPaste={handlePaste}
+              onSelect={updateSelRect}
+              onBlur={(e) => {
+                  const rt = e.relatedTarget as HTMLElement | null;
+                  if (rt?.closest("[data-sel-toolbar]")) return;
+                  setSelRect(null);
+                }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                const f = Array.from(e.dataTransfer.files).find((x) =>
+                  x.type.startsWith("image/")
+                );
+                if (f) void uploadImage(f);
+              }}
               placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
-              className="mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25"
+              className={cn(
+                "mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                dragging && "rounded-xl ring-2 ring-primary/40"
+              )}
               spellCheck={false}
               rows={1}
             />
@@ -1234,6 +1616,18 @@ export function NoteEditor() {
           </div>
         )}
       </div>
+
+      {/* Floating selection toolbar */}
+      {selRect && viewMode !== "view" && (
+        <SelectionToolbar
+          rect={selRect}
+          onBold={() => wrapSelection("**", "**")}
+          onItalic={() => wrapSelection("*", "*")}
+          onStrike={() => wrapSelection("~~", "~~")}
+          onHighlight={() => wrapColor("highlight", "#FEF08A")}
+          onLink={(url) => applyLink(url)}
+        />
+      )}
     </div>
   );
 }
