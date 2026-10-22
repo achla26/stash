@@ -62,6 +62,7 @@ export function LinksContent() {
       <div className="mx-auto max-w-6xl space-y-6 my-4">
         <PageHeader
           title="Links"
+          description="Every article, video and resource you've stashed."
           actionLabel="Save Link"
           onAction={() => setIsCreateOpen(true)}
         />

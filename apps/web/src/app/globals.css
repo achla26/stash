@@ -442,3 +442,14 @@
     animation: fade-up 0.35s ease-out both;
   }
 }
+
+/* Loomii-style soft pastel wash + floating card helpers */
+.app-wash {
+  background:
+    radial-gradient(1100px 480px at 88% -12%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 62%),
+    radial-gradient(850px 420px at -8% 28%, color-mix(in srgb, #af52de 6%, transparent), transparent 60%),
+    radial-gradient(720px 360px at 55% 112%, color-mix(in srgb, #ff9500 5%, transparent), transparent 62%);
+}
+.tilt-l { transform: rotate(-2.5deg); }
+.tilt-r { transform: rotate(2.5deg); }
+.soft-shadow { box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.22); }

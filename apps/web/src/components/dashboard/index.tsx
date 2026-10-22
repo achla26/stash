@@ -6,7 +6,6 @@ import {
   Link2,
   BookOpen,
   FileCode,
-  Plus,
   ArrowRight,
   Loader2,
 } from "lucide-react";
@@ -14,6 +13,7 @@ import {
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useAuth } from "@/hooks/use-auth";
 import { timeAgo } from "@/utils";
+import { cn } from "@/lib/utils";
 import type { RecentItem } from "@repo/contracts/types";
 
 const ITEM_ICONS: Record<string, React.ElementType> = {
@@ -54,14 +54,85 @@ export function DashboardContent() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* Welcome */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-          {greeting}, {user?.name ?? "there"}.
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Here&apos;s what&apos;s happening in your workspace
-        </p>
+      {/* Welcome — loomii-style hero */}
+      <div className="flex flex-wrap items-start justify-between gap-8">
+        <div className="max-w-xl">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            Your study space
+          </span>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-foreground">
+            {greeting}, {user?.name ?? "there"}.
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Everything you save — notes, links, words and pads — organised
+            and waiting on every device.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              onClick={() => router.push("/notes")}
+              className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+            >
+              Write a note
+            </button>
+            <button
+              onClick={() => router.push("/links")}
+              className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Save a link
+            </button>
+            <button
+              onClick={() => router.push("/words")}
+              className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Add a word
+            </button>
+            <button
+              onClick={() => router.push("/pad")}
+              className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Open a pad
+            </button>
+          </div>
+        </div>
+
+        {recentItems.length > 0 && (
+          <div className="relative hidden h-44 w-[21rem] shrink-0 lg:block" aria-hidden>
+            {recentItems.slice(0, 3).map((item, i) => {
+              const Icon = ITEM_ICONS[item.type] ?? FileText;
+              const color = ITEM_COLORS[item.type] ?? "var(--muted-foreground)";
+              return (
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className={cn(
+                    "soft-shadow absolute w-60 rounded-2xl border border-border bg-card p-3",
+                    i === 0 && "tilt-l left-0 top-8",
+                    i === 1 && "left-10 top-0 z-10",
+                    i === 2 && "tilt-r left-20 top-16"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                      style={{
+                        backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
+                      }}
+                    >
+                      <Icon className="h-4 w-4" style={{ color }} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {item.title || "Untitled"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {timeAgo(item.updatedAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* First-run onboarding */}
@@ -96,68 +167,44 @@ export function DashboardContent() {
           </div>
         )}
 
-      {/* Stats */}
+      {/* Quick Actions */}
       {stats && (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard
-            label="Notes"
-            count={stats.totalNotes}
-            icon={FileText}
-            color="var(--accent-note)"
-            onClick={() => router.push("/notes")}
-          />
-          <StatCard
-            label="Links"
-            count={stats.totalLinks}
-            icon={Link2}
-            color="var(--accent-link)"
-            onClick={() => router.push("/links")}
-          />
-          <StatCard
-            label="Notebooks"
-            count={stats.totalNotebooks}
-            icon={BookOpen}
-            color="var(--accent-notebook)"
-            onClick={() => router.push("/notebooks")}
-          />
-          <StatCard
-            label="Pads"
-            count={stats.totalPads}
-            icon={FileCode}
-            color="var(--accent-page)"
-            onClick={() => router.push("/pad")}
-          />
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            Your stash at a glance
+          </h3>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <StatCard
+              label="Notes"
+              count={stats.totalNotes}
+              icon={FileText}
+              color="var(--accent-note)"
+              onClick={() => router.push("/notes")}
+            />
+            <StatCard
+              label="Links"
+              count={stats.totalLinks}
+              icon={Link2}
+              color="var(--accent-link)"
+              onClick={() => router.push("/links")}
+            />
+            <StatCard
+              label="Notebooks"
+              count={stats.totalNotebooks}
+              icon={BookOpen}
+              color="var(--accent-notebook)"
+              onClick={() => router.push("/notebooks")}
+            />
+            <StatCard
+              label="Pads"
+              count={stats.totalPads}
+              icon={FileCode}
+              color="var(--accent-page)"
+              onClick={() => router.push("/pad")}
+            />
+          </div>
         </div>
       )}
-
-      {/* Quick Actions */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <QuickAction
-            label="New Note"
-            icon={FileText}
-            onClick={() => router.push("/notes")}
-          />
-          <QuickAction
-            label="Save Link"
-            icon={Link2}
-            onClick={() => router.push("/links")}
-          />
-          <QuickAction
-            label="New Notebook"
-            icon={BookOpen}
-            onClick={() => router.push("/notebooks")}
-          />
-          <QuickAction
-            label="New Pad"
-            icon={FileCode}
-            onClick={() => router.push("/pad")}
-          />
-        </div>
-      </div>
 
       {/* Recent Activity */}
       <div className="space-y-3">
@@ -198,7 +245,7 @@ function StatCard({
   return (
     <button
       onClick={onClick}
-      className="card-lift group rounded-xl border border-border bg-card p-4 text-left"
+      className="card-lift soft-shadow group rounded-2xl border border-border bg-card p-4 text-left"
     >
       <div className="flex items-center justify-between">
         <div
@@ -213,26 +260,6 @@ function StatCard({
       </div>
       <p className="mt-3 text-2xl font-bold text-foreground">{count}</p>
       <p className="text-sm text-muted-foreground">{label}</p>
-    </button>
-  );
-}
-
-function QuickAction({
-  label,
-  icon: Icon,
-  onClick,
-}: {
-  label: string;
-  icon: React.ElementType;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-3 rounded-lg border border-dashed border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <Plus className="h-4 w-4" />
-      {label}
     </button>
   );
 }

@@ -20,6 +20,17 @@ export function SidebarNavItem({
   onClose,
 }: SidebarNavItemProps) {
   const Icon = item.icon;
+  const TINT: Record<string, string> = {
+    "/dashboard": "#007AFF",
+    "/notebooks": "#AF52DE",
+    "/notes": "#34C759",
+    "/links": "#0A84FF",
+    "/words": "#FF9500",
+    "/pad": "#FF3B30",
+    "/chat": "#5856D6",
+    "/settings": "#8E8E93",
+  };
+  const tint = TINT[item.href] ?? "#007AFF";
 
   if (item.comingSoon) {
     return (
@@ -46,7 +57,19 @@ export function SidebarNavItem({
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
-      <Icon className="h-5 w-5" />
+      <span
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+        style={
+          isActive
+            ? { backgroundColor: "rgb(255 255 255 / 0.18)" }
+            : { backgroundColor: `color-mix(in srgb, ${tint} 14%, transparent)` }
+        }
+      >
+        <Icon
+          className="h-4 w-4"
+          style={isActive ? undefined : { color: tint }}
+        />
+      </span>
       <span>{item.label}</span>
     </Link>
   );

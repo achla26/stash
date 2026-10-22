@@ -132,6 +132,7 @@ export function NotesContent() {
       {/* Header */}
       <PageHeader
         title="Notes"
+        description="Your ideas, summaries and markdown — all in one place."
         actionLabel="New Note"
         onAction={handleCreateNote}
         isActionPending={createNoteMutation.isPending}
