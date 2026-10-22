@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NotebooksPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useRouter } from "next/navigation";
 import { BookOpen } from "lucide-react";
 
@@ -78,9 +79,7 @@ export function NotebooksContent() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl py-12 text-center">
-        <p className="text-muted-foreground">Loading notebooks...</p>
-      </div>
+      <NotebooksPageSkeleton />
     );
   }
 

@@ -22,7 +22,7 @@ export function PageHeader({
     <div
       className={cn(
         "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-        className,
+        className
       )}
     >
       <div className="min-w-0">

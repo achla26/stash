@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { WordsPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BookOpen,
@@ -267,15 +268,7 @@ export function WordsDashboard() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-5">
-        <div className="h-32 animate-pulse rounded-2xl border border-border bg-card" />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl border border-border bg-card" />
-          ))}
-        </div>
-        <div className="h-72 animate-pulse rounded-2xl border border-border bg-card" />
-      </div>
+      <WordsPageSkeleton />
     );
   }
 

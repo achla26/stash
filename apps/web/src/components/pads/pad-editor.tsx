@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { EditorSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useParams, useRouter } from "next/navigation";
 import {
   Copy,
@@ -426,10 +427,7 @@ export function PadEditor() {
 function PadLoadingState() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading pad...</p>
-      </div>
+      <EditorSkeleton />
     </div>
   );
 }

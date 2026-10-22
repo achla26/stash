@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NotesPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import {
   Folder,
   Calendar,
@@ -108,9 +109,7 @@ export function NotesContent() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-5xl py-12 text-center">
-        <p className="text-muted-foreground">Loading notes...</p>
-      </div>
+      <NotesPageSkeleton />
     );
   }
 

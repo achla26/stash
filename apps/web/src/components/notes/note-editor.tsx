@@ -7,6 +7,7 @@ import {
   useState,
   useCallback,
 } from "react";
+import { EditorSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -1002,9 +1003,7 @@ export function NoteEditor() {
   /* ---------- Early states ---------- */
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
+      <EditorSkeleton />
     );
   }
 

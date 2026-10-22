@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { DashboardSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import {
   FileText,
   Link2,
   BookOpen,
   FileCode,
   ArrowRight,
-  Loader2,
 } from "lucide-react";
 
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -39,9 +39,7 @@ export function DashboardContent() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <DashboardSkeleton />
     );
   }
 

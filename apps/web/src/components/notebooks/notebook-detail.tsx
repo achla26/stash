@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DetailSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -124,9 +125,7 @@ export function NotebookDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <DetailSkeleton />
     );
   }
 

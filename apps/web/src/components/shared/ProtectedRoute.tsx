@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
+import { AppShellSkeleton } from "@/components/shared/skeletons/page-skeleton";
 
 export default function ProtectedRoute({
   children,
@@ -11,11 +12,7 @@ export default function ProtectedRoute({
 
   // Jab tak check ho raha hai
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
+    return <AppShellSkeleton />;
   }
 
   // Agar authenticated nahi hai

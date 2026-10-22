@@ -182,3 +182,94 @@ export function TasksPageSkeleton() {
     </div>
   );
 }
+export function AppShellSkeleton() {
+  return (
+    <div className="flex h-screen bg-background">
+      <div className="hidden w-64 shrink-0 flex-col gap-3 border-r border-border p-4 sm:flex">
+        <div className="h-9 w-32 animate-pulse rounded-lg bg-accent" />
+        <div className="mt-4 h-14 animate-pulse rounded-xl bg-accent" />
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="h-10 animate-pulse rounded-xl bg-accent" />
+        ))}
+      </div>
+      <div className="flex-1 space-y-5 p-6">
+        <div className="h-8 w-56 animate-pulse rounded-lg bg-accent" />
+        <div className="h-4 w-80 animate-pulse rounded-lg bg-accent" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-2xl border border-border bg-card" />
+          ))}
+        </div>
+        <div className="h-64 animate-pulse rounded-2xl border border-border bg-card" />
+      </div>
+    </div>
+  );
+}
+
+export function NotebooksPageSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl space-y-5">
+      <div className="h-8 w-44 animate-pulse rounded-lg bg-accent" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-36 animate-pulse rounded-2xl border border-border bg-card" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function WordsPageSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl space-y-5">
+      <div className="h-32 animate-pulse rounded-2xl border border-border bg-card" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl border border-border bg-card" />
+        ))}
+      </div>
+      <div className="grid gap-3 lg:grid-cols-[1.7fr_1fr]">
+        <div className="h-72 animate-pulse rounded-2xl border border-border bg-card" />
+        <div className="h-72 animate-pulse rounded-2xl border border-border bg-card" />
+      </div>
+    </div>
+  );
+}
+
+export function EditorSkeleton() {
+  return (
+    <div className="mx-auto max-w-4xl space-y-4 p-6">
+      <div className="h-9 w-2/3 animate-pulse rounded-lg bg-accent" />
+      <div className="flex gap-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-8 w-8 animate-pulse rounded-lg bg-accent" />
+        ))}
+      </div>
+      <div className="space-y-2.5 pt-2">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-4 animate-pulse rounded bg-accent"
+            style={{ width: `${[92, 78, 85, 64, 88, 71, 55, 82, 40][i]}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function DetailSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl space-y-5 p-6">
+      <div className="h-8 w-48 animate-pulse rounded-lg bg-accent" />
+      <div className="grid gap-3 lg:grid-cols-[1.7fr_1fr]">
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 animate-pulse rounded-2xl border border-border bg-card" />
+          ))}
+        </div>
+        <div className="h-64 animate-pulse rounded-2xl border border-border bg-card" />
+      </div>
+    </div>
+  );
+}
