@@ -378,6 +378,7 @@ export function NoteEditor() {
   const syncLock = useRef<"" | "l" | "r">("");
   const progL = useRef(false);
   const progR = useRef(false);
+  const userIntent = useRef({ l: 0, r: 0 });
 
   /* ---------- Split-view scroll sync (wrap-accurate, both directions) ---------- */
   const lineMapRef = useRef<HTMLDivElement | null>(null);
@@ -500,6 +501,8 @@ export function NoteEditor() {
       progR.current = false;
       return;
     }
+    // sirf user-driven scroll sync kare — programmatic events se jump nahi
+    if (Date.now() - userIntent.current[src] > 400) return;
     if (syncLock.current && syncLock.current !== src) return;
     syncLock.current = src;
     if (src === "l") {
@@ -616,12 +619,18 @@ export function NoteEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [note, noteId, title, content]);
 
-  /* ---------- Auto-grow textarea ---------- */
+  /* ---------- Auto-grow textarea (scroll position preserve karo) ---------- */
   const resizeBody = useCallback(() => {
     const el = bodyRef.current;
     if (!el) return;
+    let scroller: HTMLElement | null = el.parentElement;
+    while (scroller && scroller.scrollHeight <= scroller.clientHeight + 4) {
+      scroller = scroller.parentElement;
+    }
+    const prev = scroller?.scrollTop ?? 0;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
+    if (scroller) scroller.scrollTop = prev;
   }, []);
 
   useEffect(() => {
@@ -900,6 +909,7 @@ export function NoteEditor() {
 
   /* ---------- Smart textarea keys: lists continue, Tab indents ---------- */
   const handleBodyKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    userIntent.current.l = Date.now();
     if (e.key === "Tab") {
       e.preventDefault();
       const el = e.currentTarget;
@@ -1502,6 +1512,8 @@ export function NoteEditor() {
             <div
               ref={leftScrollRef}
               onScroll={() => syncScroll("l")}
+              onWheel={() => (userIntent.current.l = Date.now())}
+              onTouchStart={() => (userIntent.current.l = Date.now())}
               className="relative hidden md:block md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-4"
             >
               <input
@@ -1550,6 +1562,8 @@ export function NoteEditor() {
             <div
               ref={rightScrollRef}
               onScroll={() => syncScroll("r")}
+              onWheel={() => (userIntent.current.r = Date.now())}
+              onTouchStart={() => (userIntent.current.r = Date.now())}
               className="relative min-w-0 md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-2"
             >
               <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
