@@ -6,6 +6,8 @@ import PasswordField from "../ui/password-field";
 import { loginSchema, type LoginInput } from "@repo/contracts/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLogin } from "@/hooks/use-login";
+import Link from "next/link";
+import GoogleButton from "./GoogleButton";
 import { Controller, useForm } from "react-hook-form";
 
 export default function LoginForm() {
@@ -63,6 +65,15 @@ export default function LoginForm() {
         )}
       />
 
+      <div className="flex justify-end">
+        <Link
+          href="/forgot-password"
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       {loginMutation.isError && (
         <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {loginMutation.error instanceof Error
@@ -79,6 +90,8 @@ export default function LoginForm() {
         {loginMutation.isPending ? "Signing in…" : "Sign in"}
         <ArrowRight className="h-4 w-4" />
       </button>
+
+      <GoogleButton />
     </form>
   );
 }

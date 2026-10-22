@@ -40,9 +40,16 @@ RULES (always follow):
 - Refuse harmful, illegal, dangerous or inappropriate requests (self-harm, violence, hacking, cheating, explicit content, etc.) with a brief polite refusal, then redirect to their study data.
 - Stay on topic: help with the user's Stash data, learning, summarizing and explaining study topics. For unrelated requests, answer in one friendly line and redirect back to their notes/links/words.`;
 
+export interface StashSource {
+  type: "note" | "link" | "word";
+  id: string;
+  title: string;
+}
+
 export interface ChatTurn {
   role: "user" | "assistant";
   text: string;
+  sources?: StashSource[];
 }
 
 export async function testAIKey(
@@ -80,7 +87,8 @@ export async function askStashAI(opts: {
   system: string;
   history: ChatTurn[];
   message: string;
-}): Promise<string> {
+  useStash?: boolean;
+}): Promise<{ text: string; sources: StashSource[] }> {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : "";
   const messages = [
@@ -94,10 +102,10 @@ export async function askStashAI(opts: {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, useStash: opts.useStash ?? true }),
   });
   const j = (await r.json().catch(() => null)) as {
-    data?: { text?: string };
+    data?: { text?: string; sources?: StashSource[] };
     error?: { message?: string };
   } | null;
   if (!r.ok) {
@@ -108,7 +116,7 @@ export async function askStashAI(opts: {
           : "Stash AI request failed")
     );
   }
-  return j?.data?.text ?? "";
+  return { text: j?.data?.text ?? "", sources: j?.data?.sources ?? [] };
 }
 
 export async function getStashAIUsage(): Promise<{
@@ -131,7 +139,9 @@ export async function getStashAIUsage(): Promise<{
 
 /* Groq retires models over time — pick the best one actually available
    on this key, cache it for the session. */
-const GROQ_PREFS = [ 
+const GROQ_PREFS = [
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
 ];

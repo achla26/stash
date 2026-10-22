@@ -41,7 +41,7 @@ export function buildSnapshot(opts: {
 
   const ls = [...links]
     .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
-    .slice(0, 30);
+    .slice(0, 20);
   parts.push(
     "LINKS (newest first):\n" +
       (ls.length
@@ -58,13 +58,13 @@ export function buildSnapshot(opts: {
         ? ns
             .map(
               (n) =>
-                `- ${n.title || "Untitled"} (${d(n.createdAt)}): ${(n.content ?? "").slice(0, 500).replace(/\s+/g, " ")}`
+                `- ${n.title || "Untitled"} (${d(n.createdAt)}): ${(n.content ?? "").slice(0, 220).replace(/\s+/g, " ")}`
             )
             .join("\n")
         : "(none)")
   );
 
-  const ws = words.slice(0, 200);
+  const ws = words.slice(0, 60);
   parts.push(
     "NOTEBOOKS:\n" +
       (notebooks.length
@@ -94,6 +94,6 @@ export function buildSnapshot(opts: {
   );
 
   let snap = parts.join("\n\n");
-  if (snap.length > 14000) snap = snap.slice(0, 14000) + "\n…(truncated)";
+  if (snap.length > 6000) snap = snap.slice(0, 6000) + "\n…(truncated)";
   return snap;
 }

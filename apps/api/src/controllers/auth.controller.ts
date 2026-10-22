@@ -78,4 +78,35 @@ export class AuthController {
     await AuthService.changePassword(user.id, currentPassword, newPassword);
     return ApiResponse.success(c, null, "Password changed successfully");
   }
+
+  static async forgotPassword(c: Context) {
+    const body = await c.req.json();
+    const email = typeof body?.email === "string" ? body.email : "";
+    if (!email || !email.includes("@")) {
+      throw ApiError.badRequest("A valid email is required");
+    }
+    const result = await AuthService.forgotPassword(email);
+    return ApiResponse.success(c, result, "If that email exists, a reset link is on its way");
+  }
+
+  static async resetPassword(c: Context) {
+    const body = await c.req.json();
+    const token = typeof body?.token === "string" ? body.token : "";
+    const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";
+    if (!token || !newPassword) {
+      throw ApiError.badRequest("token and newPassword are required");
+    }
+    await AuthService.resetPassword(token, newPassword);
+    return ApiResponse.success(c, null, "Password reset successful");
+  }
+
+  static async google(c: Context) {
+    const body = await c.req.json();
+    const idToken = typeof body?.idToken === "string" ? body.idToken : "";
+    if (!idToken) {
+      throw ApiError.badRequest("idToken is required");
+    }
+    const result = await AuthService.googleLogin(idToken);
+    return ApiResponse.success(c, result, "Login successful");
+  }
 }
