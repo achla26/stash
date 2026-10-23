@@ -26,6 +26,29 @@ export const exportService = {
   },
 };
 
+export const trashService = {
+  async notes(): Promise<any[]> {
+    const r = (await apiClient.get(`/api/notes/trash`)) as any;
+    return r?.data ?? [];
+  },
+  async restoreNote(id: string): Promise<unknown> {
+    return apiClient.patch(`/api/notes/${id}/restore`) as any;
+  },
+  async deleteNoteForever(id: string): Promise<unknown> {
+    return apiClient.delete(`/api/notes/${id}/permanent`) as any;
+  },
+  async links(): Promise<any[]> {
+    const r = (await apiClient.get(`/api/links/trash`)) as any;
+    return r?.data ?? [];
+  },
+  async restoreLink(id: string): Promise<unknown> {
+    return apiClient.post(`/api/links/${id}/restore`) as any;
+  },
+  async deleteLinkForever(id: string): Promise<unknown> {
+    return apiClient.delete(`/api/links/${id}/permanent`) as any;
+  },
+};
+
 export const bulkService = {
   async notesToTrash(ids: string[]): Promise<unknown> {
     return apiClient.post(`/api/notes/bulk/soft-delete`, { ids }) as any;
@@ -35,6 +58,12 @@ export const bulkService = {
   },
   async linksToTrash(ids: string[]): Promise<unknown> {
     return apiClient.post(`/api/links/bulk/soft-delete`, { ids }) as any;
+  },
+  async notesPermanent(ids: string[]): Promise<unknown> {
+    return apiClient.post(`/api/notes/bulk/permanent-delete`, { ids }) as any;
+  },
+  async linksPermanent(ids: string[]): Promise<unknown> {
+    return apiClient.post(`/api/links/bulk/permanent-delete`, { ids }) as any;
   },
 };
 

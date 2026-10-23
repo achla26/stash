@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { bulkService } from "@/lib/services";
 import { BulkBar } from "@/components/shared/bulk-bar";
+import { LinksTrash } from "./links-trash";
 import {
   Check,  Link2,
   Copy,
@@ -93,6 +94,7 @@ function Favicon({ link }: { link: Link }) {
 export function LinksDashboard() {
   const queryClient = useQueryClient();
   const [selectMode, setSelectMode] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => bulkService.linksToTrash(ids),
@@ -310,6 +312,14 @@ export function LinksDashboard() {
 
   const card = "rounded-2xl border border-border bg-card";
 
+  if (showTrash) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-5">
+        <LinksTrash onBack={() => setShowTrash(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       {/* ---------- stats ---------- */}
@@ -452,8 +462,16 @@ export function LinksDashboard() {
             </div>
           ) : (
             <>
-            {filtered.length > 0 && !selectMode && (
-              <div className="flex justify-end">
+            {!selectMode && (
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTrash(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Trash
+                </button>
                 <button
                   type="button"
                   onClick={() => setSelectMode(true)}

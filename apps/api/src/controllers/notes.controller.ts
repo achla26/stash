@@ -70,6 +70,13 @@ export class NotesController {
     return ApiResponse.success(c, null, `${ids.length} notes moved to trash`);
   }
 
+  static async bulkPermanentDelete(c: Context) {
+    const userId = c.get("user").id as string;
+    const { ids } = await c.req.json<{ ids: string[] }>();
+    await notesService.bulkPermanentDelete(ids, userId);
+    return ApiResponse.success(c, null, `${ids.length} notes deleted permanently`);
+  }
+
   static async restore(c: Context) {
     const userId = c.get("user").id as string;
     const id = c.req.param("id") as string;

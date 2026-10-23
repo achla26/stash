@@ -25,6 +25,7 @@ import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { bulkService, notesAI } from "@/lib/services";
 import { BulkBar } from "@/components/shared/bulk-bar";
+import { NotesTrash } from "./notes-trash";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SearchBar } from "../shared/search-bar";
 import { FilterChip } from "../shared/filter-chips";
@@ -57,6 +58,7 @@ export function NotesContent() {
   const [visible, setVisible] = useState(12);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const uncategorizedCount = notes.filter(
     (n) =>
@@ -212,6 +214,14 @@ export function NotesContent() {
   const hasAnyNotes = notes.length > 0;
   const isSearching = searchQuery.trim().length > 0;
 
+  if (showTrash) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <NotesTrash onBack={() => setShowTrash(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Header */}
@@ -246,8 +256,16 @@ export function NotesContent() {
       />
 
       {/* Bulk select */}
-      {notes.length > 0 && !selectMode && (
-        <div className="flex justify-end">
+      {!selectMode && (
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Trash2 className="h-3 w-3" />
+            Trash
+          </button>
           <button
             type="button"
             onClick={() => setSelectMode(true)}

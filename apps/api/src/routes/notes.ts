@@ -24,6 +24,7 @@ notes.post("/organize", async (c: Context) => {
 });
 
 notes.post("/bulk/soft-delete", (c) => NotesController.bulkSoftDelete(c));
+notes.post("/bulk/permanent-delete", (c) => NotesController.bulkPermanentDelete(c));
 
 notes.get("/:id", NotesController.getById);
 notes.patch("/:id", NotesController.update);
