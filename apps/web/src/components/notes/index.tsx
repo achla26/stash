@@ -11,6 +11,7 @@ import {
   Check,
   X,
   SearchX,
+  Tag as TagIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,6 +54,7 @@ export function NotesContent() {
   const queryClient = useQueryClient();
   const [organizing, setOrganizing] = useState(false);
   const [visible, setVisible] = useState(12);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const uncategorizedCount = notes.filter(
     (n) =>
       !(n.tags ?? []).length &&
@@ -71,12 +73,25 @@ export function NotesContent() {
         toast.success(
           `Tagged: ${tagged.slice(0, 3).join(", ")}${
             tagged.length > 3 ? ` +${tagged.length - 3} more` : ""
-          }`
+          }${r?.left ? ` · ${r.left} left — click again` : ""}`
         );
       } else {
-        toast.info(
-          "No tags added — notes too short or daily limit (30) reached"
-        );
+        const reasons =
+          (r as { reasons?: Record<string, number> })?.reasons ?? {};
+        const msg = reasons["no-key"]
+          ? "Add GROQ_API_KEY in API env vars (Vercel → Environment Variables)"
+          : reasons["ai-error"]
+          ? "AI tagging failed — Groq request error (check key/quota)"
+          : reasons["ai-empty"]
+          ? "AI replied without usable tags — try again"
+          : reasons["quota"]
+          ? "Daily limit (30 AI tags) reached — try again tomorrow"
+          : reasons["too-small"]
+          ? "These notes are too short to tag (min 40 characters)"
+          : reasons["cooldown"]
+          ? "Wait a minute, then try again"
+          : "AI found no new tags for these notes";
+        toast.info(msg);
       }
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     } catch (e) {
@@ -122,9 +137,11 @@ export function NotesContent() {
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         preview.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchesFolder && matchesSearch;
+      const matchesTag = !activeTag || (note.tags ?? []).includes(activeTag);
+
+      return matchesFolder && matchesSearch && matchesTag;
     });
-  }, [notes, activeFolder, searchQuery, folders, notebooks]);
+  }, [notes, activeFolder, searchQuery, folders, notebooks, activeTag]);
 
   const handleCreateNote = () => {
     createNoteMutation.mutate(
@@ -217,6 +234,23 @@ export function NotesContent() {
         </div>
       )}
 
+      {activeTag && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTag(null)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"
+          >
+            <TagIcon className="h-3 w-3" />
+            {activeTag}
+            <X className="h-3 w-3" />
+          </button>
+          <span className="text-xs text-muted-foreground">
+            filter by tag — tap to clear
+          </span>
+        </div>
+      )}
+
       {/* Notes grid */}
       {filteredNotes.length === 0 ? (
         isSearching || activeFolder !== "All Notes" ? (
@@ -255,6 +289,10 @@ export function NotesContent() {
               key={note.id}
               note={note}
               placement={placementFor(note)}
+              onTagClick={(t) => {
+                setActiveTag(t);
+                setVisible(12);
+              }}
               isConfirmingDelete={pendingDeleteId === note.id}
               onRequestDelete={() => setPendingDeleteId(note.id)}
               onCancelDelete={() => setPendingDeleteId(null)}
@@ -287,6 +325,7 @@ export function NotesContent() {
 interface NoteCardProps {
   note: Note;
   placement: Placement;
+  onTagClick: (tag: string) => void;
   isConfirmingDelete: boolean;
   onRequestDelete: () => void;
   onCancelDelete: () => void;
@@ -297,6 +336,7 @@ interface NoteCardProps {
 function NoteCard({
   note,
   placement,
+  onTagClick,
   isConfirmingDelete,
   onRequestDelete,
   onCancelDelete,
@@ -377,6 +417,31 @@ function NoteCard({
         </h3>
         <p className="line-clamp-2 text-sm text-muted-foreground">{preview}</p>
       </Link>
+
+      {/* Tags */}
+      {(note.tags ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {(note.tags ?? []).slice(0, 3).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onTagClick(t);
+              }}
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              <TagIcon className="h-3 w-3" />
+              {t}
+            </button>
+          ))}
+          {(note.tags ?? []).length > 3 && (
+            <span className="text-[11px] text-muted-foreground">
+              +{(note.tags ?? []).length - 3}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">

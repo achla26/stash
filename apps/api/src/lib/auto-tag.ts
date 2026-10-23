@@ -2,13 +2,25 @@ import { eq, and, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { noteText } from "./stash-context";
 
-const TAG_PREFS = ["openai/gpt-oss-20b", "llama-3.1-8b-instant"];
+const TAG_PREFS = [
+  "openai/gpt-oss-20b",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+];
 
 export interface AutoTagResult {
   applied: string[];
   known: string[];
   fresh: string[];
-  skipped?: "too-small" | "cooldown" | "quota" | "ai-error" | "none-new";
+  sample?: string;
+  skipped?:
+    | "too-small"
+    | "cooldown"
+    | "quota"
+    | "ai-error"
+    | "ai-empty"
+    | "no-key"
+    | "none-new";
 }
 
 async function tagLimit(userId: string): Promise<number> {
@@ -100,10 +112,13 @@ export async function autoTagNote(
   const base = process.env.GROQ_BASE_URL ?? "https://api.groq.com/openai/v1";
   const vocabList = [...vocab].slice(0, 40).join(", ") || "(none yet)";
   let tags: string[] = [];
+  let sample = "";
+  let outcome: "nokey" | "http" | "parse" | "done" = key ? "http" : "nokey";
   if (key) {
     for (const model of TAG_PREFS) {
       try {
-        const r = await fetch(`${base}/chat/completions`, {
+        const call = () =>
+          fetch(`${base}/chat/completions`, {
           method: "POST",
           headers: {
             "content-type": "application/json",
@@ -112,7 +127,8 @@ export async function autoTagNote(
           body: JSON.stringify({
             model,
             temperature: 0.2,
-            max_tokens: 120,
+            max_tokens: 250,
+            ...(model.includes("gpt-oss") ? { reasoning_effort: "low" } : {}),
             messages: [
               {
                 role: "system",
@@ -125,23 +141,67 @@ export async function autoTagNote(
               { role: "user", content: `Title: ${note.title}\n\n${text.slice(0, 1500)}` },
             ],
           }),
-        });
+          });
+        let r = await call();
+        if (r.status === 429) {
+          // Groq free-tier rate limit — thoda ruk ke retry
+          await new Promise((res) => setTimeout(res, 1200));
+          r = await call();
+        }
         if (!r.ok) continue;
+        outcome = "parse";
         const j = (await r.json()) as {
           choices?: { message?: { content?: string } }[];
         };
-        const raw = j.choices?.[0]?.message?.content ?? "";
-        const m = raw.match(/\{[\s\S]*\}/);
+        const raw = (j.choices?.[0]?.message?.content ?? "")
+          .replace(/```[a-z]*\n?/gi, "")
+          .trim();
+        const m = raw.match(/\{[\s\S]*\}/) ?? raw.match(/\[[\s\S]*\]/);
         if (m) {
-          const parsed = JSON.parse(m[0]) as { tags?: unknown };
-          if (Array.isArray(parsed.tags)) {
-            tags = parsed.tags
+          try {
+            const parsed = JSON.parse(m[0]) as { tags?: unknown };
+            const arr = Array.isArray(parsed)
+              ? parsed
+              : Array.isArray(parsed.tags)
+              ? parsed.tags
+              : [];
+            tags = arr
               .filter((t): t is string => typeof t === "string")
               .map(normalizeTag)
               .filter(Boolean);
+          } catch {
+            tags = [];
           }
         }
-        if (tags.length) break;
+        if (!tags.length) {
+          // JSON nahi mila to quoted strings / short lines try karo
+          const quoted = raw.match(/"([^"\n]{2,24})"/g);
+          if (quoted) {
+            tags = quoted
+              .map((q) => normalizeTag(q.slice(1, -1)))
+              .filter(Boolean);
+          }
+          if (!tags.length && raw.length < 300) {
+            const lines = raw
+              .split(/[\n,]/)
+              .map((x) => x.trim())
+              .filter(
+                (x) =>
+                  x &&
+                  x.length <= 24 &&
+                  !x.endsWith(".") &&
+                  !/\s{2,}/.test(x)
+              );
+            if (lines.length && lines.length <= 6) {
+              tags = lines.map(normalizeTag).filter(Boolean);
+            }
+          }
+          if (!tags.length && !sample) sample = raw.slice(0, 140);
+        }
+        if (tags.length) {
+          outcome = "done";
+          break;
+        }
       } catch {
         /* try next model */
       }
@@ -164,7 +224,16 @@ export async function autoTagNote(
     applied,
     known,
     fresh,
-    skipped: applied.length ? undefined : "none-new",
+    sample: sample || undefined,
+    skipped: applied.length
+      ? undefined
+      : outcome === "nokey"
+      ? "no-key"
+      : outcome === "http"
+      ? "ai-error"
+      : outcome === "parse"
+      ? "ai-empty"
+      : "none-new",
   };
 }
 
@@ -202,19 +271,36 @@ export async function organizeStash(userId: string) {
   const remaining = Math.max(0, limit - (used?.count ?? 0));
 
   const batch = eligible.slice(0, Math.min(6, remaining));
-  const results = await Promise.all(
-    batch.map((n) =>
-      autoTagNote(userId, n.id, { batch: true }).then((r) => ({
-        r,
-        title: n.title,
-      }))
-    )
-  );
-  const tagged = results.filter((x) => x.r.applied.length).map((x) => x.title);
+  // Groq free-tier parallel limit se bachne ke liye 2-2 karke bhejo
+  const results: { r: AutoTagResult; title: string; content: string | null }[] =
+    [];
+  for (let i = 0; i < batch.length; i += 2) {
+    const chunk = batch.slice(i, i + 2);
+    const rs = await Promise.all(
+      chunk.map((n) =>
+        autoTagNote(userId, n.id, { batch: true }).then((r) => ({
+          r,
+          title: n.title,
+          content: n.content as string | null,
+        }))
+      )
+    );
+    results.push(...rs);
+  }
+  const tagged = results
+    .filter((x) => x.r.applied.length)
+    .map((x) => x.title || noteText(x.content).slice(0, 30) || "Untitled");
+  const reasons: Record<string, number> = {};
+  for (const x of results) {
+    if (x.r.skipped) reasons[x.r.skipped] = (reasons[x.r.skipped] ?? 0) + 1;
+  }
+  const sample = results.find((x) => x.r.sample)?.r.sample;
   return {
     updated: tagged.length,
     skipped: batch.length - tagged.length,
     tagged,
     left: eligible.length - batch.length,
+    reasons,
+    sample,
   };
 }

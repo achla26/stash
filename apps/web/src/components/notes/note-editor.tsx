@@ -55,6 +55,17 @@ import { MarkdownPreview } from "./markdown-preview";
    Helpers
    ============================================================ */
 
+/* Khali title ho to content ke pehle shabdon se title bana do */
+function deriveTitle(text: string): string {
+  const clean = text
+    .replace(/[#>*_`\-\[\]()!]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!clean) return "";
+  const words = clean.split(" ").slice(0, 8).join(" ");
+  return words.length > 60 ? `${words.slice(0, 57).trimEnd()}...` : words;
+}
+
 function getTextContent(content: string | null | undefined): string {
   if (!content) return "";
   return content;
@@ -614,9 +625,14 @@ export function NoteEditor() {
     setTitle(loadedTitle);
     setContent(loadedContent);
 
-    if (!loadedTitle && !loadedContent) {
-      setTimeout(() => titleRef.current?.focus(), 100);
-    }
+    // Cursor hamesha note body me kholo, title pe nahi
+    setTimeout(() => {
+      const el = bodyRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
+    }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [note, noteId, title, content]);
 
@@ -720,10 +736,16 @@ export function NoteEditor() {
       if (!noteId) return;
       setSaveStatus("saving");
       updateNoteMutation.mutate(
-        { id: noteId, title: t.trim() || "Untitled", content: c },
+        {
+          id: noteId,
+          title: t.trim() || deriveTitle(c) || "Untitled",
+          content: c,
+        },
         {
           onSuccess: () => {
-            lastSyncedRef.current = { title: t, content: c };
+            const finalTitle = t.trim() || deriveTitle(c) || "Untitled";
+            if (!t.trim()) setTitle(finalTitle);
+            lastSyncedRef.current = { title: finalTitle, content: c };
             setSaveStatus("saved");
             if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
             savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
@@ -1519,7 +1541,7 @@ export function NoteEditor() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Untitled"
+                placeholder="Title"
                 className="w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
                 spellCheck={false}
               />
@@ -1580,7 +1602,7 @@ export function NoteEditor() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Untitled"
+              placeholder="Title"
               className="w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
               spellCheck={false}
             />
