@@ -26,6 +26,18 @@ export const exportService = {
   },
 };
 
+export const bulkService = {
+  async notesToTrash(ids: string[]): Promise<unknown> {
+    return apiClient.post(`/api/notes/bulk/soft-delete`, { ids }) as any;
+  },
+  async wordsDelete(ids: string[]): Promise<unknown> {
+    return apiClient.post(`/api/words/bulk/permanent-delete`, { ids }) as any;
+  },
+  async linksToTrash(ids: string[]): Promise<unknown> {
+    return apiClient.post(`/api/links/bulk/soft-delete`, { ids }) as any;
+  },
+};
+
 export const notesAI = {
   async autoTag(id: string): Promise<{
     data?: { applied: string[]; known: string[]; fresh: string[]; skipped?: string };

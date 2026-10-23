@@ -23,8 +23,9 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "../shared/page-header";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { notesAI } from "@/lib/services";
-import { useQueryClient } from "@tanstack/react-query";
+import { bulkService, notesAI } from "@/lib/services";
+import { BulkBar } from "@/components/shared/bulk-bar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SearchBar } from "../shared/search-bar";
 import { FilterChip } from "../shared/filter-chips";
 import { EmptyState } from "../shared/empty-state";
@@ -55,6 +56,8 @@ export function NotesContent() {
   const [organizing, setOrganizing] = useState(false);
   const [visible, setVisible] = useState(12);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const uncategorizedCount = notes.filter(
     (n) =>
       !(n.tags ?? []).length &&
@@ -143,6 +146,28 @@ export function NotesContent() {
     });
   }, [notes, activeFolder, searchQuery, folders, notebooks, activeTag]);
 
+  const tagRail = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const n of notes) for (const t of n.tags ?? []) counts.set(t, (counts.get(t) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  }, [notes]);
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => bulkService.notesToTrash(ids),
+    onSuccess: (_r, ids) => {
+      toast.success(`${ids.length} note${ids.length > 1 ? "s" : ""} moved to trash`);
+      setSelectMode(false);
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+    onError: () => toast.error("Bulk delete failed"),
+  });
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
   const handleCreateNote = () => {
     createNoteMutation.mutate(
       {
@@ -220,6 +245,55 @@ export function NotesContent() {
         placeholder="Search notes..."
       />
 
+      {/* Bulk select */}
+      {notes.length > 0 && !selectMode && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setSelectMode(true)}
+            className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Select
+          </button>
+        </div>
+      )}
+      {selectMode && (
+        <BulkBar
+          selected={selectedIds.length}
+          isDeleting={bulkDeleteMutation.isPending}
+          onDelete={() => bulkDeleteMutation.mutate(selectedIds)}
+          onCancel={() => {
+            setSelectMode(false);
+            setSelectedIds([]);
+          }}
+        />
+      )}
+
+      {/* Tag rail */}
+      {tagRail.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {tagRail.map(([t, n]) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setActiveTag(activeTag === t ? null : t);
+                setVisible(12);
+              }}
+              className={
+                activeTag === t
+                  ? "inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-white"
+                  : "inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              }
+            >
+              <TagIcon className="h-3 w-3" />
+              {t}
+              <span className="opacity-60">{n}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Folder chips — driven by real folders */}
       {folderFilters.length > 1 && (
         <div className="flex flex-wrap gap-2">
@@ -293,6 +367,9 @@ export function NotesContent() {
                 setActiveTag(t);
                 setVisible(12);
               }}
+              selectMode={selectMode}
+              isSelected={selectedIds.includes(note.id)}
+              onToggleSelect={() => toggleSelect(note.id)}
               isConfirmingDelete={pendingDeleteId === note.id}
               onRequestDelete={() => setPendingDeleteId(note.id)}
               onCancelDelete={() => setPendingDeleteId(null)}
@@ -327,6 +404,9 @@ interface NoteCardProps {
   placement: Placement;
   onTagClick: (tag: string) => void;
   isConfirmingDelete: boolean;
+  selectMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: () => void;
   onRequestDelete: () => void;
   onCancelDelete: () => void;
   onConfirmDelete: () => void;
@@ -342,6 +422,9 @@ function NoteCard({
   onCancelDelete,
   onConfirmDelete,
   isDeleting,
+  selectMode,
+  isSelected,
+  onToggleSelect,
 }: NoteCardProps) {
   const preview = getPreview(note.content);
 
@@ -356,9 +439,19 @@ function NoteCard({
 
   return (
     <div
+      onClick={
+        selectMode
+          ? (e) => {
+              e.preventDefault();
+              onToggleSelect();
+            }
+          : undefined
+      }
       className={cn(
         "note-card group relative flex flex-col gap-3 p-4",
         "focus-within:ring-2 focus-within:ring-ring/40",
+        selectMode && "cursor-pointer",
+        isSelected && "ring-2 ring-primary",
       )}
     >
       {/* Top row: icon tile + actions */}
@@ -371,6 +464,18 @@ function NoteCard({
         >
           <FileText className="h-5 w-5" style={{ color: accent }} />
         </div>
+
+      {selectMode && (
+        <span
+          className={
+            isSelected
+              ? "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
+              : "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-card"
+          }
+        >
+          {isSelected && <Check className="h-3 w-3" />}
+        </span>
+      )}
 
         {/* Actions — always visible on mobile, hover/focus on desktop */}
         <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">

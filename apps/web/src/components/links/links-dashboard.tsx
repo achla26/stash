@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { bulkService } from "@/lib/services";
+import { BulkBar } from "@/components/shared/bulk-bar";
 import {
-  Link2,
+  Check,  Link2,
   Copy,
   ExternalLink,
   Pin,
@@ -88,6 +91,23 @@ function Favicon({ link }: { link: Link }) {
 
 /* ---------- main ---------- */
 export function LinksDashboard() {
+  const queryClient = useQueryClient();
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => bulkService.linksToTrash(ids),
+    onSuccess: (_r, ids) => {
+      toast.success(`${ids.length} link${ids.length > 1 ? "s" : ""} moved to trash`);
+      setSelectMode(false);
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ["links"] });
+    },
+    onError: () => toast.error("Bulk delete failed"),
+  });
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   /* list controls */
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -431,11 +451,58 @@ export function LinksDashboard() {
               )}
             </div>
           ) : (
+            <>
+            {filtered.length > 0 && !selectMode && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectMode(true)}
+                  className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Select
+                </button>
+              </div>
+            )}
+            {selectMode && (
+              <BulkBar
+                selected={selectedIds.length}
+                isDeleting={bulkDeleteMutation.isPending}
+                onDelete={() => bulkDeleteMutation.mutate(selectedIds)}
+                onCancel={() => {
+                  setSelectMode(false);
+                  setSelectedIds([]);
+                }}
+              />
+            )}
             <div className="mt-1 divide-y divide-border">
               {filtered.slice(0, visible).map((link) => {
                 const folder = folders.find((f) => f.id === link.folderId);
                 return (
-                  <div key={link.id} className="relative flex items-center gap-3 py-3">
+                  <div
+                    key={link.id}
+                    onClick={
+                      selectMode ? () => toggleSelect(link.id) : undefined
+                    }
+                    className={cn(
+                      "relative flex items-center gap-3 py-3",
+                      selectMode && "cursor-pointer",
+                      selectedIds.includes(link.id) &&
+                        "rounded-lg bg-primary/5 ring-2 ring-primary"
+                    )}
+                  >
+                    {selectMode && (
+                      <span
+                        className={
+                          selectedIds.includes(link.id)
+                            ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+                            : "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border"
+                        }
+                      >
+                        {selectedIds.includes(link.id) && (
+                          <Check className="h-3 w-3" />
+                        )}
+                      </span>
+                    )}
                     <Favicon link={link} />
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-1.5">
@@ -564,6 +631,7 @@ export function LinksDashboard() {
                 );
               })}
             </div>
+            </>
           )}
 
       {filtered.length > visible && (

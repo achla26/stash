@@ -6,6 +6,8 @@ const words = new Hono();
 words.get("/", WordsController.getAll);
 words.post("/", WordsController.create);
 
+words.post("/bulk/permanent-delete", (c) => WordsController.bulkPermanentDelete(c));
+
 words.get("/:id", WordsController.getById);
 words.patch("/:id", WordsController.update);
 words.delete("/:id", WordsController.remove);

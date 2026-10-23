@@ -60,4 +60,11 @@ export class WordsController {
     await wordsService.permanentDelete(id, userId);
     return ApiResponse.success(c, { id });
   }
+
+  static async bulkPermanentDelete(c: Context) {
+    const userId = c.get("user").id as string;
+    const { ids } = await c.req.json<{ ids: string[] }>();
+    await wordsService.bulkPermanentDelete(ids, userId);
+    return ApiResponse.success(c, null, `${ids.length} words deleted`);
+  }
 }

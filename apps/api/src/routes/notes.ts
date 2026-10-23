@@ -23,6 +23,8 @@ notes.post("/organize", async (c: Context) => {
   return ApiResponse.success(c, result);
 });
 
+notes.post("/bulk/soft-delete", (c) => NotesController.bulkSoftDelete(c));
+
 notes.get("/:id", NotesController.getById);
 notes.patch("/:id", NotesController.update);
 notes.delete("/:id", NotesController.softDelete);

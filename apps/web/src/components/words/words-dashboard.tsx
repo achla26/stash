@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { bulkService } from "@/lib/services";
+import { BulkBar } from "@/components/shared/bulk-bar";
 import { WordsPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -55,6 +58,23 @@ function hueOf(s: string) {
 
 
 export function WordsDashboard() {
+  const queryClient = useQueryClient();
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => bulkService.wordsDelete(ids),
+    onSuccess: (_r, ids) => {
+      toast.success(`${ids.length} word${ids.length > 1 ? "s" : ""} deleted`);
+      setSelectMode(false);
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ["words"] });
+    },
+    onError: () => toast.error("Bulk delete failed"),
+  });
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   const [newWord, setNewWord] = useState("");
   const [visible, setVisible] = useState(12);
   const [adding, setAdding] = useState(false);
@@ -545,11 +565,58 @@ export function WordsDashboard() {
             />
           </div>
         ) : (
+          <>
+          {filtered.length > 0 && !selectMode && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectMode(true)}
+                className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Select
+              </button>
+            </div>
+          )}
+          {selectMode && (
+            <BulkBar
+              selected={selectedIds.length}
+              isDeleting={bulkDeleteMutation.isPending}
+              deleteLabel="deleted permanently"
+              onDelete={() => bulkDeleteMutation.mutate(selectedIds)}
+              onCancel={() => {
+                setSelectMode(false);
+                setSelectedIds([]);
+              }}
+            />
+          )}
           <div className="mt-1 divide-y divide-border">
             {filtered.slice(0, visible).map((w) => {
               const hue = hueOf(w.word);
               return (
-                <div key={w.id} className="relative flex items-start gap-3 py-3">
+                <div
+                  key={w.id}
+                  onClick={
+                    selectMode
+                      ? () => toggleSelect(w.id)
+                      : undefined
+                  }
+                  className={cn(
+                    "relative flex items-start gap-3 py-3",
+                    selectMode && "cursor-pointer",
+                    selectedIds.includes(w.id) && "rounded-lg bg-primary/5 ring-2 ring-primary"
+                  )}
+                >
+                  {selectMode && (
+                    <span
+                      className={
+                        selectedIds.includes(w.id)
+                          ? "mt-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+                          : "mt-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border"
+                      }
+                    >
+                      {selectedIds.includes(w.id) && <Check className="h-3 w-3" />}
+                    </span>
+                  )}
                   <div
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base font-extrabold uppercase"
                     style={{
@@ -671,6 +738,7 @@ export function WordsDashboard() {
               );
             })}
           </div>
+          </>
         )}
 
       {filtered.length > visible && (
