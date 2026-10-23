@@ -21,6 +21,7 @@ import { toast } from "sonner";
 export function NotebooksContent() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [visible, setVisible] = useState(12);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const {
@@ -122,7 +123,7 @@ export function NotebooksContent() {
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sortedNotebooks.map((notebook) => (
+          {sortedNotebooks.slice(0, visible).map((notebook) => (
             <NotebookCard
               key={notebook.id}
               notebook={notebook}
@@ -134,6 +135,18 @@ export function NotebooksContent() {
               isPinning={updateMutation.isPending}
             />
           ))}
+        </div>
+      )}
+
+      {sortedNotebooks.length > visible && (
+        <div className="flex justify-center pt-3">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + 12)}
+            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Show more ({visible} of {sortedNotebooks.length})
+          </button>
         </div>
       )}
 

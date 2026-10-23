@@ -31,7 +31,7 @@ export function extractKeywords(q: string): string[] {
 }
 
 /* jsonb editor content → plain text */
-function noteText(content: unknown): string {
+export function noteText(content: unknown): string {
   const out: string[] = [];
   const walk = (n: unknown): void => {
     if (typeof n === "string") {

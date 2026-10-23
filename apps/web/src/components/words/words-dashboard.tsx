@@ -56,6 +56,7 @@ function hueOf(s: string) {
 
 export function WordsDashboard() {
   const [newWord, setNewWord] = useState("");
+  const [visible, setVisible] = useState(12);
   const [adding, setAdding] = useState(false);
   const [addErr, setAddErr] = useState("");
   const [lastSaved, setLastSaved] = useState<Word | null>(null);
@@ -545,7 +546,7 @@ export function WordsDashboard() {
           </div>
         ) : (
           <div className="mt-1 divide-y divide-border">
-            {filtered.map((w) => {
+            {filtered.slice(0, visible).map((w) => {
               const hue = hueOf(w.word);
               return (
                 <div key={w.id} className="relative flex items-start gap-3 py-3">
@@ -671,6 +672,18 @@ export function WordsDashboard() {
             })}
           </div>
         )}
+
+      {filtered.length > visible && (
+        <div className="flex justify-center pt-3">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + 12)}
+            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Show more ({visible} of {filtered.length})
+          </button>
+        </div>
+      )}
       </div>
 
       <WordEditDialog

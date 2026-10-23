@@ -25,3 +25,14 @@ export const exportService = {
     return (res as { data: unknown }).data;
   },
 };
+
+export const notesAI = {
+  async autoTag(id: string): Promise<{
+    data?: { applied: string[]; known: string[]; fresh: string[]; skipped?: string };
+  }> {
+    return (await apiClient.post(`/api/notes/${id}/auto-tag`)) as any;
+  },
+  async organize(): Promise<{ data?: { updated: number; skipped: number } }> {
+    return (await apiClient.post("/api/notes/organize")) as any;
+  },
+};

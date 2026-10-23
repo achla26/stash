@@ -29,5 +29,6 @@ export const notes = pgTable("notes", {
   isPublic: boolean("is_public").default(false).notNull(),
   publicSlug: text("public_slug").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  aiLastRun: timestamp("ai_last_run", { withTimezone: true }),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

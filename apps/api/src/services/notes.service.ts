@@ -36,13 +36,11 @@ export class NotesService extends BaseService<Note, NoteRow> {
   }
 
   async create(userId: string, dto: CreateNoteInput): Promise<Note> {
-    if (!dto.title?.trim()) {
-      throw ApiError.badRequest("Title is required");
-    }
+    const title = dto.title?.trim() ?? "";
 
     // camelCase input → snake_case for DB
     const dbData: Record<string, unknown> = {
-      title: dto.title.trim(),
+      title,
       content: dto.content ?? null,
       folder_id: dto.folderId ?? null,
       notebook_id: dto.notebookId ?? null,

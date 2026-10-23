@@ -19,3 +19,12 @@ CREATE TABLE IF NOT EXISTS password_resets (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS password_resets_hash_idx ON password_resets(token_hash);
+
+-- 4) AI auto-organize
+ALTER TABLE notes ADD COLUMN IF NOT EXISTS ai_last_run timestamptz;
+CREATE TABLE IF NOT EXISTS ai_tag_usage (
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day     date NOT NULL,
+  count   integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, day)
+);

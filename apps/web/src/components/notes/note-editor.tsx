@@ -45,7 +45,7 @@ import {
   useNotes,
   useUpdateNote,
 } from "@/hooks/use-notes";
-import { useFolders } from "@/hooks/use-folder";
+import { useTypeFolders } from "@/hooks/use-folder";
 import { useNotebooks } from "@/hooks/use-notebooks";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
@@ -312,7 +312,7 @@ export function NoteEditor() {
   const { data: note, isLoading, isError, error } = useNote(noteId);
   const updateNoteMutation = useUpdateNote();
   const deleteNoteMutation = useDeleteNote();
-  const { data: folders = [] } = useFolders();
+  const { data: folders = [] } = useTypeFolders("note");
   const { data: notebooks = [] } = useNotebooks();
   const { data: allNotes = [] } = useNotes();
 

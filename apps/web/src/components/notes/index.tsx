@@ -16,10 +16,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useCreateNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
-import { useFolders } from "@/hooks/use-folder";
+import { useTypeFolders } from "@/hooks/use-folder";
 import { useNotebooks } from "@/hooks/use-notebooks";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "../shared/page-header";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { notesAI } from "@/lib/services";
+import { useQueryClient } from "@tanstack/react-query";
 import { SearchBar } from "../shared/search-bar";
 import { FilterChip } from "../shared/filter-chips";
 import { EmptyState } from "../shared/empty-state";
@@ -46,7 +50,41 @@ export function NotesContent() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: notes = [], isLoading, isError, error } = useNotes();
-  const { data: folders = [] } = useFolders();
+  const queryClient = useQueryClient();
+  const [organizing, setOrganizing] = useState(false);
+  const [visible, setVisible] = useState(12);
+  const uncategorizedCount = notes.filter(
+    (n) =>
+      !(n.tags ?? []).length &&
+      JSON.stringify(n.content ?? "").length >= 60
+  ).length;
+
+  const handleOrganize = async () => {
+    setOrganizing(true);
+    try {
+      const res = await notesAI.organize();
+      const r = (res as {
+        data?: { updated: number; skipped: number; tagged: string[]; left: number };
+      })?.data;
+      const tagged = (r as { tagged?: string[] })?.tagged ?? [];
+      if (r?.updated) {
+        toast.success(
+          `Tagged: ${tagged.slice(0, 3).join(", ")}${
+            tagged.length > 3 ? ` +${tagged.length - 3} more` : ""
+          }`
+        );
+      } else {
+        toast.info(
+          "No tags added — notes too short or daily limit (30) reached"
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    } catch (e) {
+      toast.error((e as Error).message || "Organize failed");
+    }
+    setOrganizing(false);
+  };
+  const { data: folders = [] } = useTypeFolders("note");
   const { data: notebooks = [] } = useNotebooks();
   const createNoteMutation = useCreateNote();
   const deleteNoteMutation = useDeleteNote();
@@ -91,13 +129,19 @@ export function NotesContent() {
   const handleCreateNote = () => {
     createNoteMutation.mutate(
       {
-        title: "Untitled",
+        title: "",
         content: null,
         folderId: null,
       },
       {
         // open the editor straight away instead of just showing the card
         onSuccess: (note) => router.push(`/notes/${note.id}`),
+        onError: (err) =>
+          toast.error(
+            `Couldn't create note — ${
+              (err as { message?: string })?.message ?? "please try again"
+            }`
+          ),
       },
     );
   };
@@ -136,6 +180,21 @@ export function NotesContent() {
         onAction={handleCreateNote}
         isActionPending={createNoteMutation.isPending}
       />
+
+      {/* AI organize */}
+      {uncategorizedCount > 0 && (
+        <button
+          type="button"
+          onClick={handleOrganize}
+          disabled={organizing}
+          className="inline-flex items-center gap-2 self-start rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-50"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {organizing
+            ? "Organizing…"
+            : `Organize my stash (${uncategorizedCount} untagged)`}
+        </button>
+      )}
 
       {/* Search */}
       <SearchBar
@@ -191,7 +250,7 @@ export function NotesContent() {
         )
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredNotes.map((note) => (
+          {filteredNotes.slice(0, visible).map((note) => (
             <NoteCard
               key={note.id}
               note={note}
@@ -205,6 +264,18 @@ export function NotesContent() {
               }
             />
           ))}
+        </div>
+      )}
+
+      {filteredNotes.length > visible && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + 12)}
+            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Show more ({visible} of {filteredNotes.length})
+          </button>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import {
   Download,
   Moon,
@@ -31,6 +32,9 @@ export default function SettingsPage() {
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const [aiCfg, setAiCfg] = useState(() => getAIConfig());
+  const [aiOrg, setAiOrg] = useState(
+    () => (localStorage.getItem("stash_ai_organize") ?? "1") === "1"
+  );
   const [aiProvider, setAiProvider] = useState<AIProvider>(
     aiCfg?.provider ?? "groq"
   );
@@ -234,6 +238,38 @@ export default function SettingsPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Account and data controls.
         </p>
+      </div>
+
+      {/* AI auto-organize */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Sparkles className="h-4 w-4 text-primary" /> AI auto-organize
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          When you save a note, AI quietly tags it using your existing
+          vocabulary. New tags arrive with an Undo toast.
+        </p>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={aiOrg}
+          onClick={() => {
+            const next = !aiOrg;
+            setAiOrg(next);
+            localStorage.setItem("stash_ai_organize", next ? "1" : "0");
+          }}
+          className={cn(
+            "mt-4 flex h-6 w-11 items-center rounded-full p-0.5 transition-colors",
+            aiOrg ? "bg-primary" : "bg-muted-foreground/40"
+          )}
+        >
+          <span
+            className={cn(
+              "h-5 w-5 rounded-full bg-white transition-transform",
+              aiOrg && "translate-x-5"
+            )}
+          />
+        </button>
       </div>
 
       {/* Appearance */}

@@ -9,3 +9,13 @@ export const aiUsage = pgTable(
   },
   (t) => ({ pk: primaryKey({ columns: [t.userId, t.day] }) })
 );
+
+export const aiTagUsage = pgTable(
+  "ai_tag_usage",
+  {
+    userId: uuid("user_id").notNull(),
+    day: date("day").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.userId, t.day] }) })
+);
