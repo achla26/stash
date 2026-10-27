@@ -8,6 +8,9 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 #    DATABASE_URL me apna Supabase connection string dalo (?sslmode=require ke saath)
 #    Supabase.com -> project -> Settings -> Database -> connection string
+#    Google login optional: set the same GOOGLE_CLIENT_ID in both env files
+#    (apps/web/.env uses NEXT_PUBLIC_GOOGLE_CLIENT_ID). Add http://localhost:3000
+#    as an Authorized JavaScript origin for that OAuth client in Google Cloud.
 
 # 2. install + run
 pnpm install

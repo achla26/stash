@@ -3,6 +3,7 @@
 import { Mail, User } from "lucide-react";
 import FormField from "../ui/form-field";
 import PasswordField from "../ui/password-field";
+import GoogleButton from "./GoogleButton";
 import { signupSchema, type SignupInput } from "@repo/contracts/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignup } from "@/hooks/use-signup";
@@ -98,6 +99,8 @@ export default function RegisterForm() {
       >
         {signupMutation.isPending ? "Creating account…" : "Create Account"}
       </button>
+
+      <GoogleButton />
     </form>
   );
 }

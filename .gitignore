@@ -41,3 +41,4 @@ migrations
 0data
 mobile1
 .vscode
+*.com.json

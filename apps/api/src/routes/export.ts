@@ -67,7 +67,10 @@ exportRouter.get("/", async (c) => {
     links,
     notes,
     notebooks,
-    pads,
+    // Strip password hashes + owner tokens from pad exports
+    pads: pads.map(
+      ({ password: _password, ownerToken: _ownerToken, ...rest }) => rest
+    ),
     words,
   });
 });

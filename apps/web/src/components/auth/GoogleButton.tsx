@@ -18,6 +18,7 @@ export default function GoogleButton() {
       const g = (window as unknown as { google?: any }).google;
       if (!g?.accounts) return;
       g.accounts.id.initialize({
+        client_id: clientId,
         callback: (resp: { credential?: string }) => {
           if (resp.credential) mutation.mutate(resp.credential);
         },

@@ -98,12 +98,12 @@ export class BaseService<T, R = T> {
   }
 
   private mapErr(e: unknown): ApiError {
+    // Never leak internal DB errors to clients — log server-side, return generic message
     const err = e as { message?: string; code?: string; detail?: string };
-    return ApiError.fromSupabaseError({
-      message: err?.message ?? "Database error",
-      code: err?.code,
-      details: err?.detail,
-    });
+    console.error("[base.service] DB error:", err?.message, err?.code, err?.detail);
+    return ApiError.internal(
+      "Something went wrong. Please try again."
+    );
   }
 
   private ownWhere(userId: string, trashed: boolean | null = false) {

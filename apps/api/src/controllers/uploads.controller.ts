@@ -23,8 +23,12 @@ export class UploadsController {
   static async get(c: Context) {
     const id = c.req.param("id") as string;
     const img = await uploadsService.get(id);
+    // Content-Type comes from the validated upload path, never user input
     c.header("Content-Type", img.mime);
-    c.header("Cache-Control", "public, max-age=31536000, immutable");
+    // Images are user content — never cache across users
+    c.header("Cache-Control", "private, max-age=3600");
+    c.header("X-Content-Type-Options", "nosniff");
+    c.header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'");
     return c.body(new Uint8Array(img.data));
   }
 }

@@ -40,7 +40,7 @@ app.use(
           .map((x) => x.trim())
           .filter(Boolean),
       ];
-      if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
+      if (allowed.includes(origin)) {
         return origin;
       }
       return null;
