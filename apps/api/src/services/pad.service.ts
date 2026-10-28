@@ -10,7 +10,7 @@ export class PadService {
   /* ===== Helpers ===== */
 
   private static generateSlug(): string {
-    return crypto.randomBytes(4).toString("hex");
+    return crypto.randomBytes(6).toString("hex");
   }
 
   /* ===== Password hashing (salted scrypt) ===== */

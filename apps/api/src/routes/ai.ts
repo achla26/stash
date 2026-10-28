@@ -13,6 +13,9 @@ const GROQ_PREFS = [
   "llama-3.1-8b-instant",
 ];
 
+// Whitelist — user-supplied model must match exactly; anything else rejected
+const ALLOWED_MODELS = new Set(GROQ_PREFS);
+
 ai.get("/usage", async (c: Context) => {
   const uid = c.get("user").id as string;
   return ApiResponse.success(c, await getAiUsage(uid));
@@ -59,7 +62,9 @@ ai.post("/chat", async (c: Context) => {
   const base = process.env.GROQ_BASE_URL ?? "https://api.groq.com/openai/v1";
   const override = process.env.GROQ_MODEL?.trim();
   const models = body.model
-    ? [body.model]
+    ? ALLOWED_MODELS.has(body.model)
+      ? [body.model]
+      : []
     : override
       ? [override, ...GROQ_PREFS.filter((m) => m !== override)]
       : GROQ_PREFS;
