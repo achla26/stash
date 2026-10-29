@@ -240,6 +240,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      <div className="proto-settings-columns"><div className="proto-settings-column">
       {/* AI auto-organize */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -357,6 +358,24 @@ export default function SettingsPage() {
         </form>
       </div>
 
+      {/* Data backup */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h2 className="text-sm font-medium text-foreground">Data backup</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Download all your links, notes, notebooks, folders and pads as a
+          JSON file.
+        </p>
+        <button
+          onClick={downloadBackup}
+          disabled={busy}
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {busy ? "Exporting..." : "Export JSON"}
+        </button>
+        {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
+      </div>
+      </div><div className="proto-settings-column">
       {/* Plan & export */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -468,23 +487,8 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Data backup */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-medium text-foreground">Data backup</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Download all your links, notes, notebooks, folders and pads as a
-          JSON file.
-        </p>
-        <button
-          onClick={downloadBackup}
-          disabled={busy}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" />
-          {busy ? "Exporting..." : "Export JSON"}
-        </button>
-        {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
-      </div>
+
+      </div></div>
     </div>
   );
 }

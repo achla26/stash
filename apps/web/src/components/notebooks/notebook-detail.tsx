@@ -143,13 +143,14 @@ export function NotebookDetail() {
 
   return (
     <div className="proto-notebook-detail mx-auto max-w-[1080px] min-w-0">
+      <button className="proto-link-button mb-4" onClick={() => router.push("/notebooks")}><ArrowLeft size={16}/> All notebooks</button>
       {/* ---------- Header ---------- */}
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="proto-notebook-detail-head mb-5 flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={() => router.push("/notebooks")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="hidden"
             aria-label="Back to notebooks"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -249,8 +250,9 @@ export function NotebookDetail() {
         </div>
       </div>
 
-      {/* ---------- Actions ---------- */}
-      <div className="mb-8 flex gap-2">
+      <div className="proto-glance proto-notebooks-glance"><div><strong>{folders.length}</strong><span>Folders</span></div><div><strong>{notes.length}</strong><span>Notes</span></div></div>
+            {/* ---------- Actions ---------- */}
+      <div className="mb-5 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={handleCreateNote}
@@ -280,7 +282,7 @@ export function NotebookDetail() {
         Folders · {folders.length}
       </h2>
       {folders.length === 0 ? (
-        <p className="mb-8 text-sm text-muted-foreground">
+        <p className="proto-notebook-empty mb-8 text-sm text-muted-foreground">
           No folders yet — folders inside a notebook work like sections.
         </p>
       ) : (
@@ -322,7 +324,7 @@ export function NotebookDetail() {
         Notes · {notes.length}
       </h2>
       {notes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="proto-notebook-empty text-sm text-muted-foreground">
           No notes in this notebook yet.
         </p>
       ) : (
@@ -331,7 +333,7 @@ export function NotebookDetail() {
             <Link
               key={n.id}
               href={`/notes/${n.id}`}
-              className="card-lift flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left focus-visible:outline-none"
+              className="proto-notebook-note flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left focus-visible:outline-none"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <FileText className="h-4 w-4" />

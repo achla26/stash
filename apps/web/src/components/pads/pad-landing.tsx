@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, ArrowRight, Shuffle, Loader2, Sparkles, Zap, Lock, Clock, Link2, Infinity as InfinityIcon, LayoutDashboard } from "lucide-react";
+import { FileText, Shuffle, Zap, Lock, Clock, Link2, LayoutDashboard, Users, Utensils, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useCreatePad, useUserPads } from "@/hooks/use-pads";
 import { useAuth } from "@/hooks/use-auth";
 import { timeAgo } from "@/utils";
-import { Button } from "@/components/ui/button";
 import { generateRandomSlug, sanitizeSlug } from "@/utils";
 
 /* ===== Constants ===== */
@@ -52,9 +51,9 @@ export function PadLanding() {
   };
 
   // Create pad with random slug (backend generates it)
-  const handleCreateRandom = () => {
+  const handleCreateRandom = (content?: string) => {
     createPadMutation.mutate(
-      { allowEdit: false },
+      { allowEdit: false, content },
       {
         onSuccess: (pad) => {
           if (pad.ownerToken) {
@@ -79,6 +78,7 @@ export function PadLanding() {
       <button className="proto-link-button primary proto-pad-go" disabled={createPadMutation.isPending || (!!displaySlug && !isSlugValid)} onClick={() => displaySlug.trim() ? handleGoToSlug() : handleCreateRandom()}><Zap size={16}/>{createPadMutation.isPending ? "Creating…" : "Open pad"}</button>
       {createPadMutation.isError && <p role="alert" className="proto-pad-error">{(createPadMutation.error as Error)?.message ?? "Failed to create pad"}</p>}
       <div className="proto-pad-features">{FEATURES.map(({icon: Icon,text}) => <div key={text}><span><Icon size={16}/></span>{text}</div>)}</div>
+      <section className="proto-pad-templates"><h2>Start from a template</h2><div><button className="proto-link-button" disabled={createPadMutation.isPending} onClick={() => handleCreateRandom("# Meeting notes\n\nDate: \nAttendees: \n\n## Agenda\n\n## Notes\n\n## Action items\n")}><Users size={15}/> Meeting notes</button><button className="proto-link-button" disabled={createPadMutation.isPending} onClick={() => handleCreateRandom("# Recipe\n\n## Ingredients\n\n## Method\n")}><Utensils size={15}/> Recipe</button><button className="proto-link-button" disabled={createPadMutation.isPending} onClick={() => handleCreateRandom("# Book club\n\nBook: \n\n## Thoughts\n\n## Discussion questions\n")}><BookOpen size={15}/> Book club</button></div></section>
       {isAuthenticated && <section className="proto-pad-mine"><h2>Your pads</h2>{padsLoading ? <p>Loading pads…</p> : myPads.length === 0 ? <p>No pads yet — create one above.</p> : myPads.map(p => <button key={p.id} onClick={() => router.push(`/pad/${p.slug}`)}><FileText size={16}/><span>/pad/{p.slug}<small>Updated {timeAgo(p.updatedAt)}</small></span><span className="ml-auto">{p.visibility}</span></button>)}</section>}
       </div></main>
     </div>
