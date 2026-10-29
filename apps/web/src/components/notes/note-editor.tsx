@@ -332,19 +332,8 @@ export function NoteEditor() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [viewMode, setViewMode] = useState<"split" | "view" | "edit">("edit");
   const [isDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
-  const didInitPreview = useRef(false);
   const preview = viewMode !== "edit";
 
-  /* Desktop: notes open in split view. Mobile: existing notes open in
-     single view, new/empty notes in edit.
-     Icon cycle — desktop: split → single view → edit → split;
-     mobile: view ↔ edit. */
-  useEffect(() => {
-    if (didInitPreview.current || !note) return;
-    didInitPreview.current = true;
-    const hasContent = !!getTextContent(note.content).trim();
-    setViewMode(!hasContent ? "edit" : isDesktop ? "split" : "view");
-  }, [note, isDesktop]);
 
 
   const [overflowOpen, setOverflowOpen] = useState(false);
@@ -1053,14 +1042,16 @@ export function NoteEditor() {
     "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Toolbar */}
-      <div className={cn("mx-auto w-full px-6 pb-12 pt-6 sm:px-8", viewMode === "split" ? "max-w-none lg:px-10" : "max-w-2xl md:max-w-3xl")}>
+    <div className="proto-editor-page mx-auto w-full max-w-[1080px] min-w-0">
+      <button type="button" onClick={() => router.push("/notes")} className="proto-link-button mb-4"><ArrowLeft className="h-4 w-4" /> All notes</button>
+      <div className={cn("proto-editor-layout", viewMode === "split" && "proto-editor-split")}>
+      {/* Existing editor and autosave logic are retained. */}
+      <div className="proto-editor-surface min-w-0">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => router.push("/notes")}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="hidden"
             aria-label="Back to notes"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -1123,7 +1114,7 @@ export function NoteEditor() {
 
         {/* Formatting toolbar (edit mode only) */}
         {viewMode !== "view" && (
-          <div className="sticky top-0 z-20 -mx-2 bg-background/95 px-2 pt-2 backdrop-blur">
+          <div className="proto-editor-tools sticky top-0 z-20 bg-card/95 pt-2 backdrop-blur">
           <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2">
             <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />
@@ -1542,7 +1533,7 @@ export function NoteEditor() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Title"
-                className="w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
+                className="proto-editor-title w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
                 spellCheck={false}
               />
               <textarea
@@ -1572,7 +1563,7 @@ export function NoteEditor() {
                 }}
                 placeholder="Start writing…"
                 className={cn(
-                  "mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                  "proto-editor-body mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
                   dragging && "rounded-xl ring-2 ring-primary/40"
                 )}
                 spellCheck={false}
@@ -1603,7 +1594,7 @@ export function NoteEditor() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Title"
-              className="w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
+              className="proto-editor-title w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
               spellCheck={false}
             />
             <textarea
@@ -1633,7 +1624,7 @@ export function NoteEditor() {
               }}
               placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
               className={cn(
-                "mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                "proto-editor-body mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
                 dragging && "rounded-xl ring-2 ring-primary/40"
               )}
               spellCheck={false}
@@ -1650,6 +1641,24 @@ export function NoteEditor() {
             {wordCount > 0 && <> · ~{readMins} min read</>}
           </div>
         )}
+      </div>
+      <aside className="proto-editor-sidebar" aria-label="Note options">
+        <section className="proto-editor-panel">
+          <h2>Organise</h2>
+          <label htmlFor="note-placement">Collection</label>
+          <select id="note-placement" value={placement.kind === "folder" ? placement.id : ""} onChange={(e) => { const folder = folders.find(f => f.id === e.target.value); handleMove(folder ? { kind: "folder", id: folder.id, name: folder.name } : { kind: "loose" }); }}>
+            <option value="">None</option>{folders.filter(f => !f.isTrashed).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+          <label htmlFor="note-notebook">Notebook</label>
+          <select id="note-notebook" value={placement.kind === "notebook" ? placement.id : ""} onChange={(e) => { const notebook = notebooks.find(n => n.id === e.target.value); handleMove(notebook ? { kind: "notebook", id: notebook.id, name: notebook.name } : { kind: "loose" }); }}>
+            <option value="">None</option>{notebooks.filter(n => !n.isTrashed).map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
+          </select>
+          <p className="proto-editor-label">Tags</p><div className="proto-editor-tags">{note.tags?.length ? note.tags.map(tag => <span key={tag}>#{tag}</span>) : <span className="proto-editor-no-tags">No tags</span>}</div>
+          {updateNoteMutation.isError && <p role="alert" className="proto-editor-error">Update failed. Please try again.</p>}
+        </section>
+        <section className="proto-editor-panel"><h2>Share</h2><p className="proto-editor-help">{note.isPublic ? "This note is public. Manage your sharing settings." : "This note is private until you choose to share it."}</p><button type="button" className="proto-link-button w-full" onClick={() => { setSharePanel(true); setShowFolderPicker(false); setConfirmingDelete(false); setOverflowOpen(true); }}> <Globe className="h-4 w-4" /> Manage sharing</button></section>
+        <section className="proto-editor-panel"><h2>Danger zone</h2><button type="button" className="proto-link-button w-full text-destructive" disabled={deleteNoteMutation.isPending} onClick={() => { if (window.confirm("Move this note to trash?")) handleDelete(); }}><Trash2 className="h-4 w-4" /> {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}</button>{deleteNoteMutation.isError && <p role="alert" className="proto-editor-error">Could not move note to trash.</p>}</section>
+      </aside>
       </div>
 
       {/* Floating selection toolbar */}

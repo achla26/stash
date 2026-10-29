@@ -533,3 +533,22 @@
 .proto-note-body strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:700; line-height:1.35; }
 .proto-note-body > span { display:-webkit-box; overflow:hidden; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin-top:3px; color:var(--muted-foreground); font-size:12.5px; overflow-wrap:anywhere; }
 .proto-note-row time { flex-shrink:0; padding-top:3px; color:var(--muted-foreground); font:11px ui-monospace,monospace; white-space:nowrap; }
+
+/* Note editor: prototype's writing surface and right-side options. */
+.proto-editor-layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start; }
+.proto-editor-layout.proto-editor-split { grid-template-columns:minmax(0,1fr); }
+.proto-editor-surface { overflow:visible; padding:16px 22px 22px; border:1px solid var(--border); border-radius:14px; background:var(--card); }
+.proto-editor-tools { margin:0 -6px 20px; padding-left:6px; padding-right:6px; }
+.proto-editor-title { padding:12px 0; font-size:21px !important; }
+.proto-editor-body { min-height:360px; padding:8px 4px 24px; font-size:15.5px !important; line-height:1.75; }
+.proto-editor-sidebar { display:flex; min-width:0; flex-direction:column; gap:16px; }
+.proto-editor-panel { padding:18px; border:1px solid var(--border); border-radius:10px; background:var(--card); }
+.proto-editor-panel h2 { margin-bottom:10px; font-size:13px; font-weight:800; }
+.proto-editor-panel label,.proto-editor-label { display:block; margin:12px 0 5px; color:var(--muted-foreground); font-size:12px; font-weight:700; }
+.proto-editor-panel select { width:100%; min-height:38px; padding:8px; border:1px solid #d6d6da; border-radius:8px; background:var(--card); color:var(--foreground); font-size:13px; }
+.proto-editor-tags { display:flex; flex-wrap:wrap; gap:6px; min-height:38px; padding:7px; border:1px solid var(--border); border-radius:9px; }
+.proto-editor-tags span { padding:3px 9px; border-radius:20px; background:color-mix(in srgb,var(--primary) 12%,var(--card)); color:var(--primary); font-size:12px; font-weight:600; }
+.proto-editor-tags .proto-editor-no-tags { color:var(--muted-foreground); background:transparent; font-weight:400; }
+.proto-editor-help { margin-bottom:12px; color:var(--muted-foreground); font-size:13px; line-height:1.55; }
+.proto-editor-error { margin-top:8px; color:var(--destructive); font-size:12px; }
+@media(max-width:1024px) { .proto-editor-layout { grid-template-columns:minmax(0,1fr); } }
