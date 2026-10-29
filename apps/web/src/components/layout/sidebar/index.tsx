@@ -1,77 +1,14 @@
 "use client";
-
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
-
+import { LogOut, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/config/nav-items";
 import { SidebarLogo } from "./sidebar-logo";
 import { SidebarProfile } from "./sidebar-profile";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import { useAuth } from "@/hooks/use-auth";
-
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function Sidebar({ isOpen, onClose, hidden = false }: SidebarProps & { hidden?: boolean }) {
-  const pathname = usePathname();
-    const { logout } = useAuth();
-  
-
-  // const handleLogout = () => {
-  //   localStorage.removeItem("access_token");
-  //   localStorage.removeItem("refresh_token");
-  //   localStorage.removeItem("user");
-  //   window.location.href = "/login";
-  // };
-
-  return (
-    <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col",
-          "border-r border-border bg-background",
-          "transition-transform duration-300 ease-in-out",
-          "md:static md:translate-x-0",
-          hidden && "md:hidden",
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <SidebarLogo />
-        <SidebarProfile />
-
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4 app-scrollbar">
-          {navItems.map((item) => (
-            <SidebarNavItem
-              key={item.href}
-              item={item}
-              isActive={pathname === item.href}
-              onClose={onClose}
-            />
-          ))}
-        </nav>
-
-        <div className="border-t border-border p-4">
-          <button
-            onClick={logout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
-    </>
-  );
+export function Sidebar({ isOpen, onClose, hidden = false }: { isOpen: boolean; onClose: () => void; hidden?: boolean }) {
+  const pathname = usePathname(); const { logout } = useAuth();
+  const group = (title: string, paths: string[]) => <><p className="px-2.5 pb-1.5 pt-4 text-[10.5px] font-extrabold uppercase tracking-[.1em] text-muted-foreground">{title}</p>{navItems.filter(item => paths.includes(item.href)).map(item => <SidebarNavItem key={item.href} item={item} isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"))} onClose={onClose} />)}</>;
+  return <>{isOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={onClose} />}<aside className={cn("fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-border bg-card transition-transform duration-300 md:static md:translate-x-0", hidden && "md:hidden", isOpen ? "translate-x-0" : "-translate-x-full")}><SidebarLogo /><button onClick={() => { onClose(); window.dispatchEvent(new Event("stash:capture")); }} className="mx-3.5 flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground hover:bg-primary-hover"><Plus size={17} /> Capture</button><button onClick={() => { onClose(); window.dispatchEvent(new Event("stash:search")); }} className="mx-3.5 mt-2 flex min-h-10 items-center gap-2 rounded-lg bg-accent px-3 text-left text-[13px] text-muted-foreground hover:text-foreground"><Search size={16} /> Find anything… <kbd className="ml-auto rounded border border-border px-1.5 text-[10px]">⌘K</kbd></button><nav aria-label="Primary" className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">{group("Workspace", ["/dashboard", "/links", "/notes", "/notebooks", "/words", "/pad"])}{group("Assistant", ["/chat"])}{group("Manage", ["/settings"])}</nav><div className="flex items-center border-t border-border py-2"><div className="min-w-0 flex-1"><SidebarProfile /></div><button onClick={logout} className="mr-4 rounded-lg p-2 text-muted-foreground hover:bg-accent" aria-label="Sign out"><LogOut size={17} /></button></div></aside></>;
 }

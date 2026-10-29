@@ -41,4 +41,4 @@ migrations
 0data
 mobile1
 .vscode
-*.com.json
+/client_secret.apps.googleusercontent.com.json

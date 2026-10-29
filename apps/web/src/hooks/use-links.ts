@@ -33,6 +33,7 @@ export function useCreateLink() {
       linkService.createLink(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linkKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

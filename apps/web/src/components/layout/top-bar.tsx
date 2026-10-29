@@ -1,54 +1,13 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { Search, Command, Menu } from "lucide-react";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { usePathname } from "next/navigation";
+import { Search, Menu, Plus } from "lucide-react";
 import { SearchDialog } from "@/components/search/search-dialog";
-
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { navItems } from "@/config/nav-items";
 export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void } = {}) {
-  const [searchOpen, setSearchOpen] = useState(false);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setSearchOpen((o) => !o);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  return (
-    <>
-    <header className="hidden h-16 shrink-0 items-center justify-between border-b border-border bg-background px-6 md:flex">
-      <button
-        onClick={onToggleSidebar}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        aria-label="Toggle sidebar"
-        title="Hide/show sidebar"
-      >
-        <Menu className="h-4 w-4" />
-      </button>
-
-      <div className="flex items-center gap-3">
-        <ThemeToggle />
-
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2 text-muted-foreground transition-colors hover:border-primary"
-        >
-          <Search className="h-4 w-4" />
-          <span className="text-sm">Search...</span>
-          <kbd className="ml-8 flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs text-muted-foreground">
-            <Command className="h-3 w-3" />
-            <span>K</span>
-          </kbd>
-        </button>
-      </div>
-
-    </header>
-    <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
-    </>
-  );
+  const [searchOpen, setSearchOpen] = useState(false); const pathname = usePathname();
+  useEffect(() => { const key = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(o => !o); } }; const open = () => setSearchOpen(true); window.addEventListener("keydown", key); window.addEventListener("stash:search", open); return () => { window.removeEventListener("keydown", key); window.removeEventListener("stash:search", open); }; }, []);
+  const title = pathname.startsWith("/dashboard") ? "Dashboard" : navItems.find(item => pathname === item.href || pathname.startsWith(item.href + "/"))?.label || "Stash";
+  return <><header className="hidden h-[60px] shrink-0 items-center gap-3 border-b border-border bg-background px-[22px] md:flex"><button onClick={onToggleSidebar} aria-label="Toggle sidebar" className="rounded-lg p-2 text-muted-foreground hover:bg-accent"><Menu size={17}/></button><h2 className="text-base font-bold">{title}</h2><div className="flex-1"/><ThemeToggle /><button onClick={() => setSearchOpen(true)} className="flex min-h-[38px] items-center gap-2 rounded-lg border border-border bg-card px-3 text-[13px] font-semibold text-muted-foreground hover:bg-accent"><Search size={16}/> Find… <kbd className="ml-2 rounded border border-border px-1.5 text-[10px]">⌘K</kbd></button><button onClick={() => window.dispatchEvent(new Event("stash:capture"))} className="flex min-h-[38px] items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-bold text-primary-foreground hover:bg-primary-hover"><Plus size={16}/> Capture</button></header><SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} /></>;
 }

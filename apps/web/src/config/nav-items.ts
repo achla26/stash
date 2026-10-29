@@ -10,10 +10,10 @@ import {
 } from "lucide-react";
 
 export const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { href: "/notebooks", label: "Notebooks", icon: BookOpen },
-  { href: "/notes", label: "Notes", icon: FileText },
+  { href: "/dashboard", label: "Home", icon: LayoutGrid },
   { href: "/links", label: "Links", icon: Link2 },
+  { href: "/notes", label: "Notes", icon: FileText },
+  { href: "/notebooks", label: "Notebooks", icon: BookOpen },
   { href: "/words", label: "Words", icon: SpellCheck },
   { href: "/pad", label: "Pads", icon: NotebookPen },
   { href: "/chat", label: "AI Chat", icon: Sparkles },

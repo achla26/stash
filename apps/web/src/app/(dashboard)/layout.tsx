@@ -7,6 +7,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { MobileTabBar } from "@/components/layout/mobile-tabbar";
 import { QuickAddButton } from "@/components/layout/quick-add-button";
+import { CreateLinkDialog } from "@/components/links/create-link-dialog";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardLayout({
@@ -16,6 +17,8 @@ export default function DashboardLayout({
 }) {
   const { isLoading, isAuthenticated } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
+  useEffect(() => { const open = () => setCaptureOpen(true); window.addEventListener("stash:capture", open); return () => window.removeEventListener("stash:capture", open); }, []);
   const [sidebarHidden, setSidebarHidden] = useState(false);
 
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function DashboardLayout({
         </div>
       </main>
 
+      <CreateLinkDialog isOpen={captureOpen} onClose={() => setCaptureOpen(false)} />
       {/* Quick Add FAB */}
       <QuickAddButton />
 

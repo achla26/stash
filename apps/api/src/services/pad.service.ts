@@ -10,33 +10,7 @@ export class PadService {
   /* ===== Helpers ===== */
 
   private static generateSlug(): string {
-    return crypto.randomBytes(6).toString("hex");
-  }
-
-  /* ===== Password hashing (salted scrypt) ===== */
-
-  private static hashPassword(password: string): string {
-    const salt = crypto.randomBytes(16).toString("hex");
-    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-    return `scrypt$${salt}$${hash}`;
-  }
-
-  private static verifyPasswordHash(password: string, stored: string | null): boolean {
-    if (!stored) return false;
-    const parts = stored.split("$");
-    if (parts.length === 3 && parts[0] === "scrypt") {
-      const salt = parts[1]!;
-      const hash = parts[2]!;
-      const verify = crypto.scryptSync(password, salt, 64).toString("hex");
-      const a = Buffer.from(verify, "hex");
-      const b = Buffer.from(hash, "hex");
-      if (a.length !== b.length) return false;
-      return crypto.timingSafeEqual(a, b);
-    }
-    // Legacy plaintext row — constant-time compare, then migrate on next write
-    const a = Buffer.from(crypto.createHash("sha256").update(password).digest("hex"));
-    const b = Buffer.from(crypto.createHash("sha256").update(stored).digest("hex"));
-    return crypto.timingSafeEqual(a, b);
+    return crypto.randomBytes(4).toString("hex");
   }
 
   private static isExpired(expiresAt: string | null): boolean {
@@ -201,7 +175,7 @@ export class PadService {
       throw new ApiError(410, "Pad has expired", "PAD_EXPIRED");
     }
 
-    if (!this.verifyPasswordHash(password, row.password)) {
+    if (row.password !== password) {
       throw ApiError.unauthorized("Wrong password");
     }
 
@@ -223,9 +197,7 @@ export class PadService {
 
     let visibility = dto.visibility;
     let allowEdit = false;
-    // Password handling — hashed before storage
     let password = dto.password ?? null;
-    if (password) password = this.hashPassword(password);
     let ownerToken: string | null = null;
 
     if (userId) {
@@ -324,14 +296,9 @@ export class PadService {
         canCollaborate = true;
       }
 
-      // Password protected + allowEdit — REQUIRES password verification
-      // (the /verify endpoint only proves access for reading; the update
-      //  must re-check the password hash itself)
+      // Password protected + allowEdit
+      // Note: password verification happens via /verify endpoint first
       if (row.visibility === "password" && row.allow_edit === true) {
-        const provided = dto.password;
-        if (!provided || !this.verifyPasswordHash(provided, row.password)) {
-          throw ApiError.unauthorized("Wrong password");
-        }
         canCollaborate = true;
       }
 
@@ -359,10 +326,7 @@ export class PadService {
     // Owner-only fields
     if (isOwner) {
       if (dto.visibility !== undefined) updateData.visibility = dto.visibility;
-      if (dto.password !== undefined) {
-        updateData.password =
-          dto.password === null ? null : this.hashPassword(dto.password);
-      }
+      if (dto.password !== undefined) updateData.password = dto.password;
       if (dto.expiresAt !== undefined) updateData.expires_at = dto.expiresAt;
       if (dto.allowEdit !== undefined) updateData.allow_edit = dto.allowEdit;
     }

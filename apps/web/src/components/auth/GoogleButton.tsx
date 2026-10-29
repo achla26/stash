@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useGoogleLogin } from "@/hooks/use-auth-extras";
-import { Loader2, AlertCircle } from "lucide-react";
 
 /* Google Identity Services — sirf button render + ID token verify server pe */
 export default function GoogleButton() {
   const ref = useRef<HTMLDivElement>(null);
   const mutation = useGoogleLogin();
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!clientId || !ref.current) return;
@@ -21,23 +18,8 @@ export default function GoogleButton() {
       const g = (window as unknown as { google?: any }).google;
       if (!g?.accounts) return;
       g.accounts.id.initialize({
-        client_id: clientId,
-        callback: (resp: { credential?: string; error?: string }) => {
-          if (resp.error) {
-            setError("Google sign-in cancelled or failed — try again");
-            return;
-          }
-          if (resp.credential) {
-            setError(null);
-            setLoading(true);
-            mutation.mutate(resp.credential, {
-              onError: () => {
-                setLoading(false);
-                setError("Google sign-in failed. Please try again.");
-              },
-              onSettled: () => setLoading(false),
-            });
-          }
+        callback: (resp: { credential?: string }) => {
+          if (resp.credential) mutation.mutate(resp.credential);
         },
       });
       if (ref.current) {
@@ -79,25 +61,9 @@ export default function GoogleButton() {
         <span className="text-xs text-muted-foreground">or</span>
         <span className="h-px flex-1 bg-border" />
       </div>
-
-      {loading ? (
-        <div className="flex w-full items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Connecting to Google…
-        </div>
-      ) : error ? (
-        <button
-          onClick={() => setError(null)}
-          className="flex w-full items-center justify-center gap-2 py-2 text-sm text-destructive"
-        >
-          <AlertCircle className="h-4 w-4" />
-          {error} — click to retry
-        </button>
-      ) : (
-        <div className="flex w-full justify-center">
-          <div ref={ref} />
-        </div>
-      )}
+      <div className="flex w-full justify-center">
+        <div ref={ref} />
+      </div>
     </div>
   );
 }

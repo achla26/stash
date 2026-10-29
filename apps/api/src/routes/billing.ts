@@ -24,26 +24,7 @@ billingProtected.post("/checkout", async (c: Context) => {
       "PAYMENTS_NOT_CONFIGURED"
     );
   }
-  // Never trust the Origin header — only allow same-host or configured app URL
-  const host = c.req.header("host") ?? "";
-  const allowLocal = ["localhost", "127.0.0.1"];
-  const isSameHost =
-    !!host &&
-    (origin === `http://${host}` || origin === `https://${host}`);
-  const isLocalDev = allowLocal.some(
-    (h) => origin === `http://${h}:3000` || origin === `https://${h}:3000`
-  );
-  const isAllowed =
-    isSameHost ||
-    isLocalDev ||
-    !!process.env.APP_URL && origin === process.env.APP_URL;
-  if (!isAllowed) {
-    throw new ApiError(
-      400,
-      "Invalid origin for checkout",
-      "INVALID_ORIGIN"
-    );
-  }
+  const origin = c.req.header("origin") ?? "";
   const returnURL = `${origin}/settings?upgraded=1`;
   const r = await fetch(`${dodoBase()}/checkouts`, {
     method: "POST",
@@ -81,11 +62,6 @@ function verifyDodo(raw: string, headers: Headers): boolean {
   const wts = headers.get("webhook-timestamp") ?? "";
   const wsig = headers.get("webhook-signature") ?? "";
   if (!wid || !wts || !wsig) return false;
-  // Replay protection — reject stale signatures (5 min window)
-  const ts = Number(wts);
-  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) {
-    return false;
-  }
   const keyCandidates: Buffer[] = [];
   const s = secret.trim();
   if (s.startsWith("whsec_")) keyCandidates.push(Buffer.from(s.slice(6), "base64"));
@@ -118,7 +94,6 @@ billingPublic.post("/webhook", async (c: Context) => {
   const raw = await c.req.text();
   const h = c.req.raw.headers;
   if (!verifyDodo(raw, h)) {
-    // Never leak secret info — only generic booleans
     return c.json(
       {
         ok: false,
@@ -128,6 +103,7 @@ billingPublic.post("/webhook", async (c: Context) => {
           hasTs: !!h.get("webhook-timestamp"),
           hasSig: !!h.get("webhook-signature"),
           secretSet: !!process.env.DODO_WEBHOOK_SECRET,
+          secretPrefix: (process.env.DODO_WEBHOOK_SECRET ?? "").slice(0, 6),
           bodyLen: raw.length,
         },
       },

@@ -19,10 +19,10 @@
   --border-glow: rgba(0, 0, 0, 0.05);
 
   /* Primary Colors */
-  --primary: #007AFF;
+  --primary: #4F3DE8;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #0062CC;
-  --primary-glow: rgba(0, 122, 255, 0.18);
+  --primary-hover: #3F2FCC;
+  --primary-glow: rgba(79, 61, 232, 0.18);
 
   /* Secondary Colors */
   --secondary: #5856D6;
@@ -31,7 +31,7 @@
   /* Text Colors */
   --foreground: #1A1A1E;
   --muted: #6C6C70;
-  --muted-foreground: #8E8E93;
+  --muted-foreground: #60616B;
 
   /* Status Colors */
   --success: #34C759;
@@ -44,7 +44,7 @@
   /* Accent & Highlights */
   --accent: #F2F2F7;
   --accent-foreground: #1A1A1E;
-  --ring: #007AFF;
+  --ring: #4F3DE8;
 
   /* Popover & Dialog */
   --popover: #FFFFFF;
@@ -454,3 +454,43 @@
 .tilt-r { transform: rotate(2.5deg); }
 .soft-shadow { box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.22); }
 
+
+/* Visible keyboard focus across the application. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+
+/* Dashboard and shell follow the shared Stash HTML prototype. */
+.app-wash { background: var(--background-secondary); }
+.prototype-dashboard { color: var(--foreground); font-size: 14px; }
+.proto-hero { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin:2px 0 22px; }
+.proto-hero h1 { font-family:Georgia,serif; font-size:clamp(25px,3.4vw,32px); font-weight:700; letter-spacing:-.01em; line-height:1.25; }
+.proto-hero p { color:var(--muted-foreground); margin-top:7px; font-size:14.5px; }
+.proto-date { text-align:right; flex-shrink:0; padding-top:6px; }
+.proto-date strong { display:block; font-size:13.5px; }
+.proto-date span { display:block; margin-top:3px; font-size:9.5px; font-weight:800; letter-spacing:.14em; color:var(--muted-foreground); }
+.proto-capture { display:flex; align-items:center; gap:10px; background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:7px 7px 7px 16px; margin-bottom:8px; color:var(--muted-foreground); }
+.proto-capture:focus-within { border-color:var(--primary); }
+.proto-capture input { flex:1; min-width:0; background:transparent; border:0; outline:0; font-size:15px; padding:9px 0; color:var(--foreground); }
+.proto-capture kbd,.proto-hint kbd { border:1px solid var(--border); border-bottom-width:2px; background:var(--accent); border-radius:5px; padding:1px 6px; font-size:10.5px; white-space:nowrap; }
+.proto-capture button,.proto-button { display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:10px 17px; border-radius:9px; background:var(--primary); color:var(--primary-foreground); font-size:13.5px; font-weight:700; }
+.proto-capture button:disabled { opacity:.6; }
+.proto-hint { color:var(--muted-foreground); font-size:12px; margin-bottom:22px; padding:0 4px; }
+.proto-glance { display:flex; overflow:hidden; background:var(--card); border:1px solid var(--border); border-radius:10px; margin-bottom:20px; }
+.proto-glance a { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; padding:15px 18px 14px; border-right:1px solid var(--border); }
+.proto-glance a:last-child { border-right:0; }
+.proto-glance a:hover,.proto-activity-row:hover { background:var(--accent); }
+.proto-glance strong { font-size:23px; font-weight:800; letter-spacing:-.03em; line-height:1.1; }
+.proto-glance span { font-size:10.5px; font-weight:800; letter-spacing:.1em; color:var(--muted-foreground); text-transform:uppercase; }
+.proto-grid { display:grid; grid-template-columns:1.7fr 1fr; gap:18px; align-items:start; }
+.proto-card { background:var(--card); border:1px solid var(--border); border-radius:10px; }
+.proto-activity { padding:10px 10px 4px; }
+.proto-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 8px 2px; margin-bottom:14px; }
+.proto-card-head h2 { font-size:15px; font-weight:800; }
+.proto-card-head button,.proto-empty button { font-size:12.5px; font-weight:700; color:var(--primary); }
+.proto-activity-row { display:flex; align-items:center; gap:13px; min-height:56px; padding:11px 8px; border-bottom:1px solid var(--border); border-radius:8px; }
+.proto-activity-row:last-child { border-bottom:0; }
+.proto-item-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:9px; flex-shrink:0; color:#4f3de8; background:#ece9fd; }
+.proto-link { background:#e2f4ec; color:#0b7a55; }.proto-note { background:#fbf0dc; color:#945e16; }
+.proto-activity-row strong,.proto-activity-row small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.proto-activity-row strong { font-size:13.5px; }.proto-activity-row small { font-size:12px; color:var(--muted-foreground); }.proto-activity-row time { white-space:nowrap; font:11px ui-monospace,monospace; color:var(--muted-foreground); }
+.proto-empty { color:var(--muted-foreground); text-align:center; padding:30px 12px; font-size:13px; }
+.proto-stack { display:flex; flex-direction:column; gap:16px; }.proto-words,.proto-tip { padding:20px; }.proto-words { background:linear-gradient(160deg,color-mix(in srgb,var(--primary) 12%,var(--card)),var(--card) 65%); border-color:color-mix(in srgb,var(--primary) 20%,var(--border)); }.proto-pill { display:inline-flex; border-radius:20px; background:color-mix(in srgb,var(--primary) 12%,var(--card)); color:var(--primary); padding:3px 9px; font-size:10px; font-weight:800; }.proto-words h2 { font:700 24px Georgia,serif; margin:8px 0 4px; }.proto-words p,.proto-tip p { color:var(--muted-foreground); font-size:13px; line-height:1.55; margin-bottom:14px; }.proto-tip-icon { display:grid; place-items:center; width:34px; height:34px; border-radius:9px; background:color-mix(in srgb,var(--primary) 12%,var(--card)); color:var(--primary); margin-bottom:10px; }.proto-tip h2 { font-size:14px; font-weight:800; margin-bottom:4px; }.proto-outline { display:inline-flex; border:1px solid var(--border); border-radius:8px; padding:6px 11px; font-size:12.5px; font-weight:700; }
+@media (max-width: 767px) { .proto-grid { grid-template-columns:1fr; }.proto-date { display:none; }.proto-capture kbd { display:none; }.proto-capture button { font-size:0; gap:0; }.proto-capture button svg { width:18px; height:18px; }.proto-glance a { padding:12px 9px; }.proto-glance span { font-size:9px; letter-spacing:.03em; }.proto-activity-row time { font-size:10px; } }

@@ -33,6 +33,7 @@ export function useCreateNote() {
       notesService.createNote(payload!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

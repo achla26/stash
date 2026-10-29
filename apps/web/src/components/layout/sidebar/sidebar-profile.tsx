@@ -1,57 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface StoredUser {
-  name?: string | null;
-  email?: string;
-  avatar?: string | null;
-}
-
+import Link from "next/link";
 export function SidebarProfile() {
-  const [user, setUser] = useState<StoredUser | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) setUser(JSON.parse(raw) as StoredUser);
-    } catch {
-      // corrupt storage — ignore
-    }
-  }, []);
-
+  const [user, setUser] = useState<{name?: string; email?: string} | null>(null);
+  useEffect(() => { try { const raw = localStorage.getItem("user"); if (raw) setUser(JSON.parse(raw)); } catch {} }, []);
   const name = user?.name || user?.email?.split("@")[0] || "You";
-  const initials = name
-    .split(/\s+/)
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return (
-    <div className="mx-3 rounded-lg bg-accent p-3">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Avatar className="h-10 w-10">
-            {user?.avatar ? (
-              <AvatarImage src={user.avatar} alt="User avatar" />
-            ) : null}
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-success" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">
-            {name}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {user?.email ?? ""}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  return <Link href="/settings" className="mx-3 flex min-w-0 items-center gap-2.5 rounded-lg p-1.5 hover:bg-accent"><span className="flex h-[33px] w-[33px] shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">{name.slice(0,1).toUpperCase()}</span><span className="min-w-0"><span className="block truncate text-[13px] font-bold">{name}</span><span className="block truncate text-[11px] text-muted-foreground">{user?.email || "Account settings"}</span></span></Link>;
 }
