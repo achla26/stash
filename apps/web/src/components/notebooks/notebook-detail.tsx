@@ -142,7 +142,7 @@ export function NotebookDetail() {
   const coverColor = notebook.coverColor || "var(--primary)";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 md:px-8">
+    <div className="proto-notebook-detail mx-auto max-w-[1080px] min-w-0">
       {/* ---------- Header ---------- */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
@@ -165,7 +165,7 @@ export function NotebookDetail() {
           </span>
 
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="truncate text-xl font-bold tracking-tight text-foreground">
               {notebook.name}
             </h1>
             {notebook.description && (

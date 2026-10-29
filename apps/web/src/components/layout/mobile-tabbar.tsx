@@ -1,60 +1,11 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutGrid,
-  FileText,
-  Link2,
-  NotebookPen,
-  Settings,
-  SpellCheck,
-} from "lucide-react";
-
-const tabs = [
-  { href: "/dashboard", label: "Home", icon: LayoutGrid },
-  { href: "/notes", label: "Notes", icon: FileText },
-  { href: "/links", label: "Links", icon: Link2 },
-  { href: "/words", label: "Words", icon: SpellCheck },
-  { href: "/pad", label: "Pads", icon: NotebookPen },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
+import { LayoutGrid, FileText, Link2, Plus, SpellCheck } from "lucide-react";
+const before = [{href:"/dashboard",label:"Home",icon:LayoutGrid},{href:"/links",label:"Links",icon:Link2}];
+const after = [{href:"/notes",label:"Notes",icon:FileText},{href:"/words",label:"Words",icon:SpellCheck}];
 export function MobileTabBar() {
   const pathname = usePathname();
-
-  return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-sidebar/95 backdrop-blur md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      <div className="grid grid-cols-6">
-        {tabs.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className="flex flex-col items-center gap-1 py-2.5"
-            >
-              <Icon
-                className="h-5 w-5"
-                style={{
-                  color: active ? "var(--primary)" : "var(--muted-foreground)",
-                }}
-              />
-              <span
-                className="text-[10px] font-medium"
-                style={{
-                  color: active ? "var(--primary)" : "var(--muted-foreground)",
-                }}
-              >
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
+  const item = ({href,label,icon:Icon}: typeof before[number]) => <Link key={href} href={href} aria-current={pathname.startsWith(href) ? "page" : undefined} className={`proto-mobile-item ${pathname.startsWith(href) ? "active" : ""}`}><Icon size={19}/>{label}</Link>;
+  return <nav aria-label="Mobile" className="proto-mobile-nav">{before.map(item)}<button className="proto-mobile-capture" onClick={() => window.dispatchEvent(new Event("stash:capture"))}><Plus size={19}/>Capture</button>{after.map(item)}</nav>;
 }

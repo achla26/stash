@@ -30,7 +30,7 @@ export function FormDialog({
 }: FormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className={`flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-lg ${className ?? ""}`}>
+      <DialogContent className={`proto-capture-dialog flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-lg ${className ?? ""}`}>
         {/* Fixed Header */}
         <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
           <DialogTitle>{title}</DialogTitle>

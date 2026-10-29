@@ -178,7 +178,7 @@ export function ChatDashboard() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-11rem)] max-w-3xl flex-col md:h-[calc(100vh-8rem)]">
+    <div className="proto-chat mx-auto flex h-[calc(100dvh-11rem)] max-w-3xl flex-col md:h-[calc(100vh-8rem)]">
       {/* Header */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -186,7 +186,7 @@ export function ChatDashboard() {
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm"
             style={{
               backgroundImage:
-                "linear-gradient(135deg, var(--primary), #af52de)",
+                "linear-gradient(135deg, var(--primary), var(--primary))",
             }}
           >
             <Sparkles className="h-5 w-5 text-white" />
@@ -260,7 +260,7 @@ export function ChatDashboard() {
       )}
 
       {/* Thread */}
-      <div className="soft-shadow flex-1 space-y-4 overflow-y-auto rounded-3xl border border-border bg-card p-4 sm:p-5">
+      <div className="proto-chat-log flex-1 space-y-4 overflow-y-auto rounded-xl border border-border bg-card p-4 sm:p-5">
         {messages.length === 0 && !pending && (
           <div className="flex h-full flex-col items-center justify-center gap-5 text-center">
             <span
@@ -300,7 +300,7 @@ export function ChatDashboard() {
                 className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md px-4 py-2.5 text-sm leading-relaxed text-white [overflow-wrap:anywhere]"
                 style={{
                   backgroundImage:
-                    "linear-gradient(135deg, var(--primary), #4da3ff)",
+                    "linear-gradient(135deg, var(--primary), var(--primary))",
                 }}
               >
                 {m.text}
@@ -312,7 +312,7 @@ export function ChatDashboard() {
                 className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
                 style={{
                   backgroundImage:
-                    "linear-gradient(135deg, var(--primary), #af52de)",
+                    "linear-gradient(135deg, var(--primary), var(--primary))",
                 }}
               >
                 <Sparkles className="h-3.5 w-3.5 text-white" />
@@ -335,7 +335,7 @@ export function ChatDashboard() {
               className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl"
               style={{
                 backgroundImage:
-                  "linear-gradient(135deg, var(--primary), #af52de)",
+                  "linear-gradient(135deg, var(--primary), var(--primary))",
               }}
             >
               <Sparkles className="h-3.5 w-3.5 text-white" />
@@ -362,7 +362,7 @@ export function ChatDashboard() {
           e.preventDefault();
           send(input);
         }}
-        className="soft-shadow mt-3 flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-5 pr-1.5"
+        className="proto-chat-bar mt-3 flex items-center gap-2 rounded-xl border border-border bg-card py-1.5 pl-5 pr-1.5"
       >
         <input
           value={input}
@@ -377,7 +377,7 @@ export function ChatDashboard() {
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-40"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, var(--primary), #4da3ff)",
+              "linear-gradient(135deg, var(--primary), var(--primary))",
           }}
         >
           <Send className="h-4 w-4" />

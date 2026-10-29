@@ -6,7 +6,6 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { MobileTabBar } from "@/components/layout/mobile-tabbar";
-import { QuickAddButton } from "@/components/layout/quick-add-button";
 import { CreateLinkDialog } from "@/components/links/create-link-dialog";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -64,8 +63,6 @@ export default function DashboardLayout({
       </main>
 
       <CreateLinkDialog isOpen={captureOpen} onClose={() => setCaptureOpen(false)} />
-      {/* Quick Add FAB */}
-      <QuickAddButton />
 
       {/* Mobile bottom tabs */}
       <MobileTabBar />

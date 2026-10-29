@@ -1,159 +1,39 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { NotebooksPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
-import { useRouter } from "next/navigation";
-import { BookOpen } from "lucide-react";
-
-import {
-  useNotebooks,
-  useDeleteNotebook,
-  useUpdateNotebook,
-} from "@/hooks/use-notebooks";
-import { CreateNotebookDialog } from "./create-notebook-dialog";
-import { NotebookCard } from "./notebook-card";
-import { PageHeader } from "@/components/shared/page-header";
-import { SearchBar } from "@/components/shared/search-bar";
-import { EmptyState } from "@/components/shared/empty-state";
-import { ErrorState } from "@/components/shared/error-state";
+import Link from "next/link";
+import { BookOpen, FileText, Folder, Pencil, Pin, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useNotebooks, useDeleteNotebook, useTogglePinNotebook } from "@/hooks/use-notebooks";
+import { NotebooksPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
+import { ErrorState } from "@/components/shared/error-state";
+import { CreateNotebookDialog } from "./create-notebook-dialog";
+import { EditNotebookDialog } from "./edit-notebook-dialog";
+import { timeAgo } from "@/utils";
+import type { NotebookWithCounts } from "@repo/contracts/types";
 
 export function NotebooksContent() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [visible, setVisible] = useState(12);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  const {
-    data: notebooks = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useNotebooks();
-  const deleteMutation = useDeleteNotebook();
-  const updateMutation = useUpdateNotebook();
-
-  const filteredNotebooks = useMemo(() => {
-    return notebooks.filter((nb) => {
-      const matchesSearch =
-        nb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (nb.description ?? "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    });
-  }, [notebooks, searchQuery]);
-
-  // Pinned first, then by updatedAt
-  const sortedNotebooks = useMemo(() => {
-    return [...filteredNotebooks].sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return (
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
-    });
-  }, [filteredNotebooks]);
-
-  const handleDelete = (id: string, name: string) => {
-    toast(`Delete "${name}"?`, {
-      description: "Sections and pages inside will also be trashed.",
-      action: {
-        label: "Delete",
-        onClick: () =>
-          deleteMutation.mutate(id, {
-            onSuccess: () => toast.success("Notebook moved to trash"),
-            onError: () => toast.error("Failed to delete notebook"),
-          }),
-      },
-      cancel: {
-        label: "Cancel",
-        onClick: () => {},
-      },
-    });
-  };
-
-  const handlePin = (id: string) => {
-    updateMutation.mutate({ id });
-  };
-
-  if (isLoading) {
-    return (
-      <NotebooksPageSkeleton />
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="mx-auto max-w-6xl">
-        <ErrorState
-          message={(error as Error)?.message ?? "Failed to load notebooks"}
-          onRetry={() => refetch()}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* Header */}
-      <PageHeader
-        title="Notebooks"
-        description={`${notebooks.length} notebooks`}
-        actionLabel="New Notebook"
-        onAction={() => setIsCreateOpen(true)}
-      />
-
-      {/* Search */}
-      <SearchBar
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Search notebooks..."
-      />
-
-      {/* Grid */}
-      {sortedNotebooks.length === 0 ? (
-        <EmptyState
-          icon={BookOpen}
-          title="No notebooks yet"
-          description="Create your first notebook to organize your notes."
-          actionLabel="New Notebook"
-          onAction={() => setIsCreateOpen(true)}
-        />
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sortedNotebooks.slice(0, visible).map((notebook) => (
-            <NotebookCard
-              key={notebook.id}
-              notebook={notebook}
-              onOpen={() => router.push(`/notebooks/${notebook.id}`)}
-              onDelete={() => handleDelete(notebook.id, notebook.name)}
-              onPin={() => handlePin(notebook.id)}
-              onEdit={() => router.push(`/notebooks/${notebook.id}`)}
-              isDeleting={deleteMutation.isPending}
-              isPinning={updateMutation.isPending}
-            />
-          ))}
-        </div>
-      )}
-
-      {sortedNotebooks.length > visible && (
-        <div className="flex justify-center pt-3">
-          <button
-            type="button"
-            onClick={() => setVisible((v) => v + 12)}
-            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Show more ({visible} of {sortedNotebooks.length})
-          </button>
-        </div>
-      )}
-
-      <CreateNotebookDialog
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-      />
-    </div>
-  );
+  const { data: notebooks = [], isLoading, isError, error, refetch } = useNotebooks();
+  const pin = useTogglePinNotebook(), remove = useDeleteNotebook();
+  const [query, setQuery] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<NotebookWithCounts | null>(null);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return notebooks.filter(n => !q || `${n.name} ${n.description ?? ""}`.toLowerCase().includes(q)).sort((a,b) => Number(b.isPinned) - Number(a.isPinned) || +new Date(b.updatedAt) - +new Date(a.updatedAt));
+  }, [notebooks, query]);
+  if (isLoading) return <NotebooksPageSkeleton />;
+  if (isError) return <div className="mx-auto max-w-[1080px]"><ErrorState message={(error as Error)?.message ?? "Failed to load notebooks"} onRetry={() => refetch()} /></div>;
+  const folderCount = notebooks.reduce((sum, n) => sum + (n.foldersCount ?? 0), 0);
+  const noteCount = notebooks.reduce((sum, n) => sum + (n.notesCount ?? 0), 0);
+  return <section className="proto-notebooks mx-auto max-w-[1080px]" aria-label="Notebooks">
+    <div className="proto-notebooks-head"><h1>Your notebooks</h1><button className="proto-link-button primary" onClick={() => setCreateOpen(true)}><Plus size={16}/> New notebook</button></div>
+    <div className="proto-glance proto-notebooks-glance"><div><strong>{notebooks.length}</strong><span>Notebooks</span></div><div><strong>{folderCount}</strong><span>Folders</span></div><div><strong>{noteCount}</strong><span>Notes inside</span></div></div>
+    <div className="proto-notes-search proto-notebooks-search"><Search size={16}/><label htmlFor="notebooks-search" className="sr-only">Search notebooks</label><input id="notebooks-search" placeholder="Search notebooks…" value={query} onChange={e => setQuery(e.target.value)}/></div>
+    {filtered.length === 0 ? <div className="proto-links-empty"><span><BookOpen size={22}/></span><h2>{query.trim() ? "No notebooks match" : "No notebooks yet"}</h2><p>{query.trim() ? "Try a different search." : "Create a notebook to organise your notes."}</p><button className="proto-link-button primary" onClick={query.trim() ? () => setQuery("") : () => setCreateOpen(true)}>{query.trim() ? "Clear search" : "New notebook"}</button></div> : <div className="proto-nb-grid">{filtered.map(nb => {
+      const color = /^#[0-9a-f]{6}$/i.test(nb.coverColor || "") ? nb.coverColor : "#4F3DE8";
+      return <article key={nb.id} className="proto-nb-card"><span className="proto-nb-bar" style={{backgroundColor:color}}/><div className="proto-nb-actions"><button aria-label={nb.isPinned ? `Unpin ${nb.name}` : `Pin ${nb.name}`} aria-pressed={nb.isPinned} onClick={() => pin.mutate(nb.id,{onError:()=>toast.error("Could not update pin")})}><Pin size={15} className={nb.isPinned ? "text-primary" : ""}/></button><button aria-label={`Edit ${nb.name}`} onClick={() => setEditing(nb)}><Pencil size={15}/></button><button aria-label={`Delete ${nb.name}`} onClick={() => { if (window.confirm(`Move “${nb.name}” and its contents to trash?`)) remove.mutate(nb.id,{onSuccess:()=>toast.success("Notebook moved to trash"),onError:()=>toast.error("Could not delete notebook")}); }}><Trash2 size={15}/></button></div><Link href={`/notebooks/${nb.id}`} className="proto-nb-open"><span className="proto-nb-icon" style={{backgroundColor:`${color}22`,color}}>{nb.icon || <BookOpen size={23}/>}</span><strong>{nb.name}</strong><span className="proto-nb-description">{nb.description || "No description yet."}</span><span className="proto-nb-meta"><span><Folder size={12}/> {nb.foldersCount ?? 0} folders</span><span><FileText size={12}/> {nb.notesCount ?? 0} notes</span></span><span className="proto-nb-foot"><span>{timeAgo(nb.updatedAt)}</span><span>Open →</span></span></Link></article>;
+    })}</div>}
+    <CreateNotebookDialog isOpen={createOpen} onClose={() => setCreateOpen(false)}/>{editing && <EditNotebookDialog notebook={editing} onClose={() => setEditing(null)}/>}
+  </section>;
 }

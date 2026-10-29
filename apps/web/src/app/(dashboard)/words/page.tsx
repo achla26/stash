@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { WordsDashboard } from "@/components/words/words-dashboard";
+import { ReviewDashboard } from "@/components/words/review-dashboard";
 
 export default function WordsPage() {
   return (
     <Suspense fallback={null}>
-      <WordsDashboard />
+      <ReviewDashboard />
     </Suspense>
   );
 }

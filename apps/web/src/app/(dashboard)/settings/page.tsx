@@ -33,7 +33,7 @@ export default function SettingsPage() {
 
   const [aiCfg, setAiCfg] = useState(() => getAIConfig());
   const [aiOrg, setAiOrg] = useState(
-    () => (localStorage.getItem("stash_ai_organize") ?? "1") === "1"
+    () => typeof window === "undefined" ? true : (localStorage.getItem("stash_ai_organize") ?? "1") === "1"
   );
   const [aiProvider, setAiProvider] = useState<AIProvider>(
     aiCfg?.provider ?? "groq"
@@ -232,7 +232,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="proto-settings mx-auto max-w-[1080px]">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">

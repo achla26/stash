@@ -1,7 +1,6 @@
 "use client";
 
-import { Menu, Infinity } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Menu } from "lucide-react";
 
 interface MobileHeaderProps {
   onMenuClick: () => void;
@@ -22,9 +21,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
       {/* Logo */}
       <div className="flex items-center gap-2">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-          <Infinity className="h-4 w-4 text-white" />
+          <svg viewBox="0 0 32 32" width="19" height="19" fill="currentColor" aria-hidden="true"><rect x="3" y="5" width="20" height="5" rx="2.5"/><rect x="7" y="13" width="20" height="5" rx="2.5" opacity=".8"/><rect x="11" y="21" width="16" height="5" rx="2.5" opacity=".6"/></svg>
         </div>
-        <span className="text-lg font-bold text-foreground">Stash</span>
+        <span className="font-serif text-lg font-bold text-foreground">Stash</span>
       </div>
 
       {/* Spacer for centering logo */}
