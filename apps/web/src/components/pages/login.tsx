@@ -1,5 +1,4 @@
 "use client"
-import AuthFooter from "@/components/auth/AuthFooter";
 import AuthFormWrapper from "../auth/AuthFormWrapper"; 
 import LoginForm from "../auth/LoginForm";
 
@@ -8,11 +7,11 @@ export default function LoginPage() {
     <>
       <AuthFormWrapper
         title="Welcome back"
-        subtitle="Sign in to continue to your dashboard"
+        subtitle="Sign in to open your stash."
          isLogin={true}
       > 
         <LoginForm />
-        <AuthFooter />
+
       </AuthFormWrapper> 
     </>
   );

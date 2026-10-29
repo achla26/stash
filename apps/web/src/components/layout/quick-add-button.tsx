@@ -61,7 +61,7 @@ export function QuickAddButton() {
 
   return (
     <>
-    <div ref={ref} className="fixed bottom-24 right-5 z-40 md:bottom-6 md:right-6">
+    <div ref={ref} className="fixed bottom-24 right-5 z-40 md:hidden">
       {/* Actions menu — opens above the button */}
       {open && (
         <div className="absolute bottom-[calc(100%+12px)] right-0 flex flex-col gap-2">

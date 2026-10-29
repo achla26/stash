@@ -1,63 +1,10 @@
 import Link from "next/link";
-import { Infinity } from "lucide-react";
+import { Folder, LockKeyhole, Search, ShieldCheck, Zap } from "lucide-react";
 
-interface AuthFormWrapperProps {
-  title: string;
-  subtitle: string;
-  isLogin: boolean;
-  children: React.ReactNode;
-}
-
-export default function AuthFormWrapper({
-  title,
-  subtitle,
-  isLogin = true,
-  children,
-}: AuthFormWrapperProps) {
-  return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      {/* Background glow */}
-      <div
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 50%)",
-        }}
-      />
-
-      {/* Logo */}
-      <Link
-        href="/"
-        className="relative z-10 mb-8 flex items-center gap-2"
-      >
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-          <Infinity className="h-6 w-6 text-primary-foreground" />
-        </div>
-        <span className="text-2xl font-bold text-foreground">Stash</span>
-      </Link>
-
-      {/* Auth Card */}
-      <div className="glass relative z-10 w-full max-w-md rounded-2xl border border-border p-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-2xl font-bold text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-
-        {/* Children */}
-        {children}
-
-        {/* Footer link */}
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <Link
-            href={isLogin ? "/signup" : "/login"}
-            className="font-medium text-primary transition-opacity hover:underline hover:opacity-80"
-          >
-            {isLogin ? "Sign Up" : "Sign In"}
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+interface AuthFormWrapperProps { title: string; subtitle: string; isLogin: boolean; children: React.ReactNode }
+export default function AuthFormWrapper({ title, subtitle, isLogin, children }: AuthFormWrapperProps) {
+  return <div className="proto-auth">
+    <aside className="proto-auth-art"><p className="proto-auth-quote">Stash is a <b>sharp little tool</b> for everything you learn — capture it once, find it instantly, on every device.</p><div className="proto-auth-features"><div><span><Zap size={17}/></span>Save useful pages, notes and ideas in one place</div><div><span><Search size={17}/></span>Find your saved items when you need them</div><div><span><Folder size={17}/></span>Collections that organise the way you think</div><div><span><LockKeyhole size={17}/></span>Keep your learning space your own</div></div><p className="proto-auth-proof"><ShieldCheck size={16}/> Free to get started · No card required</p></aside>
+    <main className="proto-auth-panel"><div className="proto-auth-card"><Link href="/" className="proto-auth-logo"><span className="proto-auth-mark"><svg viewBox="0 0 32 32" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="3" y="5" width="20" height="5" rx="2.5"/><rect x="7" y="13" width="20" height="5" rx="2.5" opacity=".8"/><rect x="11" y="21" width="16" height="5" rx="2.5" opacity=".6"/></svg></span><span><strong>Stash</strong><small>EVERYTHING YOU LEARN</small></span></Link><h1>{title}</h1><p className="proto-auth-sub">{subtitle}</p>{children}<p className="proto-auth-switch">{isLogin ? "New here? " : "Already have an account? "}<Link href={isLogin ? "/signup" : "/login"}>{isLogin ? "Create your stash — it’s free" : "Sign in"}</Link></p></div></main>
+  </div>;
 }

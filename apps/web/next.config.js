@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@repo/contracts'],
+  allowedDevOrigins: ['127.0.0.1', '*.e2b.app'],
 
   // Allow LAN + ngrok access in dev (for PWA testing on phone)
   // allowedDevOrigins: [

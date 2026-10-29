@@ -1,6 +1,5 @@
 "use client";
 
-import AuthFooter from "@/components/auth/AuthFooter";
 import AuthFormWrapper from "../auth/AuthFormWrapper";
 import RegisterForm from "../auth/RegisterForm";
 
@@ -12,7 +11,6 @@ export default function RegisterPage() {
       isLogin={false}
     >
       <RegisterForm />
-      <AuthFooter />
     </AuthFormWrapper>
   );
 }

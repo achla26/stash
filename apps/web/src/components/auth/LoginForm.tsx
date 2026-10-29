@@ -1,97 +1,19 @@
 "use client";
-
-import { ArrowRight, Mail } from "lucide-react";
-import FormField from "../ui/form-field";
-import PasswordField from "../ui/password-field";
+import { useState } from "react";
+import Link from "next/link";
 import { loginSchema, type LoginInput } from "@repo/contracts/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLogin } from "@/hooks/use-login";
-import Link from "next/link";
 import GoogleButton from "./GoogleButton";
-import { Controller, useForm } from "react-hook-form";
-
+import { useForm } from "react-hook-form";
 export default function LoginForm() {
-  const loginMutation = useLogin();
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = (values: LoginInput) => {
-    loginMutation.mutate(values);
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <Controller
-        name="email"
-        control={control}
-        render={({ field }) => (
-          <FormField
-            id="email"
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            icon={Mail}
-            value={field.value}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            name={field.name}
-            error={errors.email?.message}
-          />
-        )}
-      />
-
-      <Controller
-        name="password"
-        control={control}
-        render={({ field }) => (
-          <PasswordField
-            id="password"
-            value={field.value}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-            name={field.name}
-            error={errors.password?.message}
-          />
-        )}
-      />
-
-      <div className="flex justify-end">
-        <Link
-          href="/forgot-password"
-          className="text-xs font-medium text-primary hover:underline"
-        >
-          Forgot password?
-        </Link>
-      </div>
-
-      {loginMutation.isError && (
-        <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {loginMutation.error instanceof Error
-            ? loginMutation.error.message
-            : "Login failed"}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={loginMutation.isPending}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-      >
-        {loginMutation.isPending ? "Signing in…" : "Sign in"}
-        <ArrowRight className="h-4 w-4" />
-      </button>
-
-      <GoogleButton />
-    </form>
-  );
+  const login = useLogin(); const [show, setShow] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } });
+  return <form onSubmit={handleSubmit(values => login.mutate(values))} className="proto-auth-form" noValidate>
+    <div className="proto-auth-field"><label htmlFor="email">Email</label><input id="email" type="email" autoComplete="email" placeholder="you@example.com" aria-invalid={!!errors.email} {...register("email")} />{errors.email && <p role="alert">{errors.email.message}</p>}</div>
+    <div className="proto-auth-field"><label htmlFor="password">Password</label><div className="proto-auth-password"><input id="password" type={show ? "text" : "password"} autoComplete="current-password" placeholder="Your password" aria-invalid={!!errors.password} {...register("password")} /><button type="button" onClick={() => setShow(!show)} aria-pressed={show}>{show ? "Hide" : "Show"}</button></div>{errors.password && <p role="alert">{errors.password.message}</p>}</div>
+    <div className="proto-auth-forgot"><Link href="/forgot-password">Forgot password?</Link></div>
+    {login.isError && <p role="alert" className="proto-auth-error">{login.error instanceof Error ? login.error.message : "Login failed"}</p>}
+    <button type="submit" disabled={login.isPending} className="proto-auth-submit">{login.isPending ? "Signing in…" : "Sign in"}</button><GoogleButton />
+  </form>;
 }
