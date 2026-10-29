@@ -1,5 +1,7 @@
 "use client";
 
+import "./notebook-tree.css";
+
 import { useState } from "react";
 import { DetailSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useParams, useRouter } from "next/navigation";
@@ -15,6 +17,11 @@ import {
   MoreHorizontal,
   X,
   Check,
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+  FolderOpen,
+  PanelLeft,
 } from "lucide-react";
 import * as React from "react";
 
@@ -22,7 +29,9 @@ import { useNotebook, useDeleteNotebook } from "@/hooks/use-notebooks";
 import { useCreateFolder } from "@/hooks/use-folder";
 import { FolderMenu } from "@/components/folders/folder-menu";
 import { EditNotebookDialog } from "./edit-notebook-dialog";
-import { useCreateNote } from "@/hooks/use-notes";
+import { useCreateNote, useNotes } from "@/hooks/use-notes";
+import { MarkdownPreview } from "@/components/notes/markdown-preview";
+import type { Folder as FolderType, Note } from "@repo/contracts/types";
 import { timeAgo } from "@/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -75,6 +84,7 @@ export function NotebookDetail() {
   const { data: notebook, isLoading } = useNotebook(notebookId);
   const createFolder = useCreateFolder();
   const createNote = useCreateNote();
+  const { data: allNotes = [], isError: notesError } = useNotes();
   const deleteNotebook = useDeleteNotebook();
 
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
@@ -82,21 +92,27 @@ export function NotebookDetail() {
   const [folderName, setFolderName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [selected, setSelected] = useState<{ type: "root" | "folder" | "note"; id: string }>({ type: "root", id: "" });
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [treeOpen, setTreeOpen] = useState(true);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["notebook", notebookId] });
     queryClient.invalidateQueries({ queryKey: ["notebooks"] });
   };
 
+  const currentFolderId = selected.type === "folder" ? selected.id : selected.type === "note" ? allNotes.find(n => n.id === selected.id)?.folderId ?? notebook?.notes.find(n => n.id === selected.id)?.folderId ?? null : null;
+
   const handleCreateFolder = () => {
     if (!folderName.trim()) return;
     createFolder.mutate(
-      { name: folderName.trim(), type: "note", notebookId, icon: "📁" },
+      { name: folderName.trim(), type: "note", notebookId, parentId: currentFolderId, icon: "📁" },
       {
         onSuccess: () => {
           setFolderDialogOpen(false);
           setFolderName("");
           invalidate();
+          if (currentFolderId) setExpanded(prev => new Set(prev).add(currentFolderId));
           toast.success("Folder created");
         },
         onError: (e) => toast.error((e as Error).message),
@@ -106,7 +122,7 @@ export function NotebookDetail() {
 
   const handleCreateNote = () => {
     createNote.mutate(
-      { title: "Untitled", notebookId },
+      { title: "Untitled", notebookId, folderId: currentFolderId },
       {
         onSuccess: (note) => {
           invalidate();
@@ -138,7 +154,24 @@ export function NotebookDetail() {
   }
 
   const folders = notebook.folders ?? [];
-  const notes = notebook.notes ?? [];
+  const folderIds = new Set(folders.map(f => f.id));
+  const merged = new Map<string, Note>();
+  for (const note of [...(notebook.notes ?? []), ...allNotes]) {
+    if (note.notebookId === notebookId || (note.folderId && folderIds.has(note.folderId))) merged.set(note.id, note);
+  }
+  const notes = [...merged.values()];
+  const selectedNote = selected.type === "note" ? notes.find(n => n.id === selected.id) : undefined;
+  const selectedFolder = selected.type === "folder" ? folders.find(f => f.id === selected.id) : undefined;
+  const toggleFolder = (id: string) => setExpanded(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const folderTree = (parentId: string | null, depth: number, visited: Set<string>): React.ReactNode => {
+    const children = folders.filter(f => parentId === null ? !f.parentId || !folderIds.has(f.parentId) : f.parentId === parentId);
+    const childNotes = notes.filter(n => parentId === null ? !n.folderId || !folderIds.has(n.folderId) : n.folderId === parentId);
+    return <>{children.map((f: FolderType) => {
+      if (visited.has(f.id)) return null;
+      const open = expanded.has(f.id), next = new Set(visited).add(f.id);
+      return <div key={f.id}><div className={`nb-tree-folder ${selected.type === "folder" && selected.id === f.id ? "selected" : ""}`} style={{ paddingLeft: `${10 + depth * 16}px` }}><button type="button" aria-label={`${open ? "Collapse" : "Expand"} ${f.name}`} aria-expanded={open} className="nb-tree-chevron" onClick={() => toggleFolder(f.id)}>{open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</button><button type="button" className="nb-tree-label" onClick={() => { setSelected({ type: "folder", id: f.id }); setExpanded(prev => new Set(prev).add(f.id)); }}>{open ? <FolderOpen size={16} /> : <Folder size={16} />}<span>{f.name}</span></button><FolderMenu folderId={f.id} folderName={f.name} onDeleted={() => { setSelected({type:"root",id:""}); invalidate(); }} /></div>{open && folderTree(f.id, depth + 1, next)}</div>;
+    })}{childNotes.map(n => <button type="button" key={n.id} className={`nb-tree-note ${selected.type === "note" && selected.id === n.id ? "selected" : ""}`} style={{paddingLeft:`${32 + depth * 16}px`}} onClick={() => setSelected({type:"note",id:n.id})}><FileText size={15}/><span>{n.title || "Untitled"}</span></button>)}</>;
+  };
   const coverColor = notebook.coverColor || "var(--primary)";
 
   return (
@@ -250,106 +283,18 @@ export function NotebookDetail() {
         </div>
       </div>
 
-      <div className="proto-glance proto-notebooks-glance"><div><strong>{folders.length}</strong><span>Folders</span></div><div><strong>{notes.length}</strong><span>Notes</span></div></div>
-            {/* ---------- Actions ---------- */}
-      <div className="mb-5 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={handleCreateNote}
-          disabled={createNote.isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-        >
-          {createNote.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Plus className="h-4 w-4" />
-          )}
-          New Note
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFolderDialogOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Folder className="h-4 w-4" />
-          New Folder
-        </button>
+      <div className="nb-workspace">
+        <aside className={`nb-explorer ${treeOpen ? "" : "nb-explorer-hidden"}`} aria-label="Notebook explorer">
+          <div className="nb-explorer-head"><span>EXPLORER</span><div><button type="button" aria-label="New note" title="New note in selected folder" onClick={handleCreateNote} disabled={createNote.isPending}><FileText size={16}/></button><button type="button" aria-label="New folder" title="New folder in selected folder" onClick={() => setFolderDialogOpen(true)}><Plus size={17}/></button></div></div>
+          <button className={`nb-root ${selected.type === "root" ? "selected" : ""}`} onClick={() => setSelected({type:"root",id:""})}><ChevronDown size={15}/><BookOpen size={16}/><span>{notebook.name}</span></button>
+          <div className="nb-tree-list">{folderTree(null,0,new Set())}{folders.length === 0 && notes.length === 0 && <p className="nb-tree-empty">No notes or folders yet. Use + to get started.</p>}</div>
+          {notesError && <p role="alert" className="nb-tree-error">Some folder notes could not be loaded. Refresh to retry.</p>}
+        </aside>
+        <main className="nb-workspace-main">
+          <div className="nb-workspace-toolbar"><button className="nb-toggle" onClick={() => setTreeOpen(v => !v)} aria-label={treeOpen ? "Hide explorer" : "Show explorer"} aria-expanded={treeOpen}><PanelLeft size={17}/></button><span className="nb-crumb">{notebook.name}{selectedNote ? ` / ${selectedNote.title || "Untitled"}` : selectedFolder ? ` / ${selectedFolder.name}` : ""}</span><button className="proto-link-button" onClick={() => setFolderDialogOpen(true)}><Folder size={15}/> New folder</button><button className="proto-link-button primary" onClick={handleCreateNote} disabled={createNote.isPending}><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</button></div>
+          {selectedNote ? <article className="nb-preview"><div className="nb-preview-header"><div><span className="nb-preview-kicker">NOTE PREVIEW</span><h2>{selectedNote.title || "Untitled"}</h2><p>Updated {timeAgo(selectedNote.updatedAt)}</p></div><Link href={`/notes/${selectedNote.id}`} className="proto-link-button primary"><Pencil size={15}/> Open editor</Link></div><div className="nb-preview-content">{selectedNote.content ? <MarkdownPreview text={selectedNote.content}/> : <p className="nb-muted">This note is empty. Open the editor to start writing.</p>}</div></article> : <div className="nb-welcome"><span className="nb-welcome-icon">{selectedFolder ? <FolderOpen size={25}/> : <BookOpen size={25}/>}</span><h2>{selectedFolder ? selectedFolder.name : notebook.name}</h2><p>{selectedFolder ? "Select a note in the explorer, or create a new note inside this folder." : notebook.description || "Your ideas, organised in one place. Select a note from the explorer to preview it."}</p><div><span>{folders.length} folders</span><span>{notes.length} notes</span></div><button onClick={handleCreateNote} disabled={createNote.isPending} className="proto-link-button primary"><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</button></div>}
+        </main>
       </div>
-
-      {/* ---------- Folders ---------- */}
-      <h2 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Folders · {folders.length}
-      </h2>
-      {folders.length === 0 ? (
-        <p className="proto-notebook-empty mb-8 text-sm text-muted-foreground">
-          No folders yet — folders inside a notebook work like sections.
-        </p>
-      ) : (
-        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {folders.map((f) => {
-            const folderColor = f.color || "var(--primary)";
-            return (
-              <div
-                key={f.id}
-                data-folder-card
-                className="card-lift group relative flex items-center gap-2 rounded-xl border border-border bg-card p-4"
-              >
-                <Link
-                  href={`/folders/${f.id}`}
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none"
-                >
-                  <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${folderColor} 13%, transparent)`,
-                      color: folderColor,
-                    }}
-                  >
-                    <Folder className="h-4 w-4" />
-                  </span>
-                  <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-                    {f.name}
-                  </span>
-                </Link>
-                <FolderMenu folderId={f.id} folderName={f.name} />
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ---------- Notes ---------- */}
-      <h2 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Notes · {notes.length}
-      </h2>
-      {notes.length === 0 ? (
-        <p className="proto-notebook-empty text-sm text-muted-foreground">
-          No notes in this notebook yet.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {notes.map((n) => (
-            <Link
-              key={n.id}
-              href={`/notes/${n.id}`}
-              className="proto-notebook-note flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left focus-visible:outline-none"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <FileText className="h-4 w-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-foreground">
-                  {n.title}
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  Updated {timeAgo(n.updatedAt)}
-                </span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
 
       {/* ---------- New Folder dialog — sheet-style ---------- */}
       {folderDialogOpen && (
@@ -371,7 +316,7 @@ export function NotebookDetail() {
           <div className="relative w-full max-w-md rounded-t-3xl border border-border bg-card p-6 shadow-2xl sm:rounded-3xl">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                New folder
+                New folder{currentFolderId ? " inside selected folder" : ""}
               </span>
               <button
                 type="button"
