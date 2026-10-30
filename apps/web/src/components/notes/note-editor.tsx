@@ -1423,7 +1423,7 @@ export function NoteEditor() {
                   setLinkOpen(false);
                 }
               }}
-              className="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-primary"
+              className="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-muted-foreground"
             />
             <button
               type="button"

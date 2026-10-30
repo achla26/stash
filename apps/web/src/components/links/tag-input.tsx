@@ -56,7 +56,7 @@ export function TagInput({
     <div
       onClick={() => !disabled && inputRef.current?.focus()}
       className={cn(
-        "flex min-h-[44px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-sm transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40",
+        "flex min-h-[44px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-sm transition-all focus-within:border-muted-foreground focus-within:ring-2 focus-within:ring-ring/40",
         disabled && "cursor-not-allowed opacity-60",
         className,
       )}

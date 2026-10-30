@@ -319,7 +319,7 @@ export default function SettingsPage() {
             placeholder="Current password"
             value={pw.current}
             onChange={(e) => setPw({ ...pw, current: e.target.value })}
-            className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-primary"
+            className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <input
@@ -329,7 +329,7 @@ export default function SettingsPage() {
               placeholder="New password"
               value={pw.next}
               onChange={(e) => setPw({ ...pw, next: e.target.value })}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-primary"
+              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
             />
             <input
               type="password"
@@ -338,7 +338,7 @@ export default function SettingsPage() {
               placeholder="Confirm new password"
               value={pw.confirm}
               onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-primary"
+              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
             />
           </div>
           <button

@@ -19,7 +19,7 @@ export function SearchBar({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors focus-within:border-primary",
+        "flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors focus-within:border-muted-foreground",
         className
       )}
     >

@@ -317,7 +317,7 @@ export function PadSettings({
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
                 min={new Date().toISOString().slice(0, 16)}
-                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-ring [color-scheme:light] dark:[color-scheme:dark]"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-muted-foreground focus:ring-2 focus:ring-ring [color-scheme:light] dark:[color-scheme:dark]"
               />
             )}
           </div>

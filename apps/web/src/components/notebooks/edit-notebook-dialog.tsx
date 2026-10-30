@@ -10,7 +10,8 @@ import {
 } from "@repo/contracts/schemas";
 import { useUpdateNotebook } from "@/hooks/use-notebooks";
 import { toast } from "sonner";
-import { ItemIcon, NOTEBOOK_ICONS, normalizeItemIcon } from "@/components/shared/item-icon";
+import { ItemIcon } from "@/components/shared/item-icon";
+import { IconPicker } from "@/components/shared/icon-picker";
 import { cn } from "@/lib/utils";
 import type { Notebook } from "@repo/contracts/types";
 
@@ -30,7 +31,6 @@ const COLORS = [
   { name: "Yellow", value: "#eab308" },
 ];
 
-const ICONS = NOTEBOOK_ICONS;
 
 export function EditNotebookDialog({
   notebook,
@@ -210,25 +210,7 @@ export function EditNotebookDialog({
               name="icon"
               control={control}
               render={({ field }) => (
-                <div className="flex flex-wrap gap-2">
-                  {ICONS.map((ic) => (
-                    <button
-                      key={ic}
-                      type="button"
-                      onClick={() => field.onChange(ic)}
-                      className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-xl text-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        normalizeItemIcon(field.value, "book") === ic
-                          ? "bg-accent ring-2 ring-primary"
-                          : "bg-muted/40 hover:bg-accent",
-                      )}
-                      aria-label={`Icon ${ic}`}
-                      aria-pressed={normalizeItemIcon(field.value, "book") === ic}
-                    >
-                      <ItemIcon value={ic} fallback="book" size={20} />
-                    </button>
-                  ))}
-                </div>
+                <IconPicker value={field.value} onChange={field.onChange} />
               )}
             />
           </div>

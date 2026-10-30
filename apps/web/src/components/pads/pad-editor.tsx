@@ -505,7 +505,7 @@ function PadPasswordScreen({
           onChange={(e) => onPasswordChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onVerify()}
           placeholder="Enter password"
-          className="w-full rounded-xl border border-border bg-transparent px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
+          className="w-full rounded-xl border border-border bg-transparent px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-muted-foreground focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
         />
 
         {hasError && (

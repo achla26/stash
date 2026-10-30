@@ -456,5 +456,6 @@
 
 
 /* Visible keyboard focus across the application. */
-:where(a, button, input, textarea, select, [tabindex]):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+:where(a, button, [tabindex]):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+:where(input, textarea, select):focus-visible { outline: 2px solid var(--muted-foreground); outline-offset: 2px; }
 
