@@ -1,9 +1,22 @@
 "use client";
+import { Card } from "@/components/ui/card";
+import { Grid, Section } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Shuffle, Zap, Lock, Clock, Link2, LayoutDashboard, Users, Utensils, BookOpen } from "lucide-react";
+import {
+  FileText,
+  Shuffle,
+  Zap,
+  Lock,
+  Clock,
+  Link2,
+  LayoutDashboard,
+  Users,
+  Utensils,
+  BookOpen,
+} from "lucide-react";
 import Link from "next/link";
 import { useCreatePad, useUserPads } from "@/hooks/use-pads";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,7 +41,8 @@ export function PadLanding({ embedded = false }: { embedded?: boolean }) {
   const [displaySlug, setDisplaySlug] = useState("");
   const createPadMutation = useCreatePad();
   const { isAuthenticated } = useAuth({ redirect: false });
-  const { data: myPads = [], isLoading: padsLoading } = useUserPads(isAuthenticated);
+  const { data: myPads = [], isLoading: padsLoading } =
+    useUserPads(isAuthenticated);
 
   // Sanitized version of what user typed
   const sanitized = sanitizeSlug(displaySlug);
@@ -62,7 +76,7 @@ export function PadLanding({ embedded = false }: { embedded?: boolean }) {
           }
           router.push(`/pad/${pad.slug}`);
         },
-      }
+      },
     );
   };
   // Navigate to custom slug (creates if doesn't exist)
@@ -73,15 +87,191 @@ export function PadLanding({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className="min-h-screen bg-background">
-      {!embedded && <header className="flex h-[60px] items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-6"><Link href="/dashboard" className="flex items-center gap-2.5 font-serif text-xl font-bold [&_span]:grid [&_span]:h-[34px] [&_span]:w-[34px] [&_span]:place-items-center [&_span]:rounded-[9px] [&_span]:bg-primary [&_span]:text-primary-foreground"><span><FileText size={18}/></span><strong>Stash</strong></Link><Link href="/dashboard" className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg border border-border bg-card px-3 text-[13px] font-bold disabled:opacity-50"><LayoutDashboard size={16}/> Dashboard</Link></header>}
-      <main className={embedded ? "mx-auto max-w-[1080px]" : "mx-auto max-w-[1080px] px-4 pb-[90px] pt-7 sm:px-6"}><div className="mb-[18px] [&_h2]:text-[15px] [&_h2]:font-extrabold"><h2>Instant, shareable pages</h2></div><div className="flex flex-col items-center gap-5 px-4 py-11 text-center [&_h1]:text-[clamp(24px,3.6vw,31px)] [&_h1]:font-extrabold [&_h1]:tracking-[-.02em]"><span className="grid h-[70px] w-[70px] place-items-center rounded-[17px] bg-primary text-primary-foreground"><FileText size={26}/></span><h1>Instant notes, shareable by link</h1><p className="max-w-[480px] text-[14.5px] text-muted-foreground">A pad is a blank page you can share by link. Perfect for meeting notes, recipes or quick jots.</p><form className={`flex w-full ${embedded ? "max-w-none" : "max-w-[440px]"} min-w-0 items-center rounded-[10px] border-[1.5px] border-input bg-card py-[5px] pl-4 pr-[5px] text-muted-foreground [&>span]:font-mono [&>span]:text-sm [&>span]:font-bold [&_input]:min-w-0 [&_input]:flex-1 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-1.5 [&_input]:py-2.5 [&_input]:font-mono [&_input]:text-sm [&_input]:text-foreground [&_input]:outline-none [&_button]:flex [&_button]:min-h-9 [&_button]:items-center [&_button]:gap-[5px] [&_button]:rounded-lg [&_button]:bg-accent [&_button]:px-[11px] [&_button]:py-2 [&_button]:text-xs [&_button]:font-bold`} onSubmit={e => { e.preventDefault(); if (displaySlug.trim()) handleGoToSlug(); else handleCreateRandom(); }}><span>/pad/</span><label className="sr-only" htmlFor="pad-slug">Pad name</label><input id="pad-slug" value={displaySlug} onChange={e => handleSlugChange(e.target.value)} placeholder="my-notes" autoComplete="off"/><button type="button" onClick={handleGenerateRandom} aria-label="Generate random pad name"><Shuffle size={14}/> Random</button></form>
-      {displaySlug && !isSlugValid && <p className="mt-2 text-xs text-destructive">Pad name must be at least {MIN_SLUG_LENGTH} characters.</p>}{showSanitizedHint && isSlugValid && <p className="mt-2 text-xs text-muted-foreground">Will open as: /pad/{sanitized}</p>}
-      <Button size="hero" disabled={createPadMutation.isPending || (!!displaySlug && !isSlugValid)} onClick={() => displaySlug.trim() ? handleGoToSlug() : handleCreateRandom()}><Zap size={16}/>{createPadMutation.isPending ? "Creating…" : "Open pad"}</Button>
-      {createPadMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">{(createPadMutation.error as Error)?.message ?? "Failed to create pad"}</p>}
-      <div className={`grid w-full ${embedded ? "max-w-none" : "max-w-[680px]"} grid-cols-1 gap-2.5 min-[431px]:grid-cols-2 md:grid-cols-4 [&_div]:flex [&_div]:items-center [&_div]:gap-[7px] [&_div]:rounded-[9px] [&_div]:border [&_div]:border-border [&_div]:bg-card [&_div]:p-[13px] [&_div]:text-left [&_div]:text-[12.5px] [&_div]:font-semibold [&_div]:text-muted-foreground [&_span]:grid [&_span]:h-[30px] [&_span]:w-[30px] [&_span]:shrink-0 [&_span]:place-items-center [&_span]:rounded-lg [&_span]:bg-primary/10 [&_span]:text-primary`}>{FEATURES.map(({icon: Icon,text}) => <div key={text}><span><Icon size={16}/></span>{text}</div>)}</div>
-      <section className="w-full max-w-[680px] text-left [&_h2]:mb-2 [&_h2]:font-mono [&_h2]:text-[11px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-[.06em] [&_h2]:text-muted-foreground [&_div]:flex [&_div]:flex-wrap [&_div]:gap-2"><h2>Start from a template</h2><div><Button variant="outline"  disabled={createPadMutation.isPending} onClick={() => handleCreateRandom("# Meeting notes\n\nDate: \nAttendees: \n\n## Agenda\n\n## Notes\n\n## Action items\n")}><Users size={15}/> Meeting notes</Button><Button variant="outline"  disabled={createPadMutation.isPending} onClick={() => handleCreateRandom("# Recipe\n\n## Ingredients\n\n## Method\n")}><Utensils size={15}/> Recipe</Button><Button variant="outline"  disabled={createPadMutation.isPending} onClick={() => handleCreateRandom("# Book club\n\nBook: \n\n## Thoughts\n\n## Discussion questions\n")}><BookOpen size={15}/> Book club</Button></div></section>
-      {isAuthenticated && <section className="w-full max-w-[680px] text-left [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_p]:text-[13px] [&_p]:text-muted-foreground [&_button]:mt-2 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2.5 [&_button]:rounded-[9px] [&_button]:border [&_button]:border-border [&_button]:p-3 [&_button]:text-left [&_button]:text-[13px] [&_small]:block [&_small]:text-muted-foreground"><h2>Your pads</h2>{padsLoading ? <p>Loading pads…</p> : myPads.length === 0 ? <p>No pads yet — create one above.</p> : myPads.map(p => <button key={p.id} onClick={() => router.push(`/pad/${p.slug}`)}><FileText size={16}/><span>/pad/{p.slug}<small>Updated {timeAgo(p.updatedAt)}</small></span><span className="ml-auto">{p.visibility}</span></button>)}</section>}
-      </div></main>
+      {!embedded && (
+        <header className="flex h-[60px] items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-6">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2.5 font-serif text-xl font-bold"
+          >
+            <span className="grid h-[34px] w-[34px] place-items-center rounded-[9px] bg-primary text-primary-foreground">
+              <FileText size={18} />
+            </span>
+            <strong>Stash</strong>
+          </Link>
+          <Button asChild variant="outline">
+            <Link href="/dashboard">
+              <LayoutDashboard size={16} /> Dashboard
+            </Link>
+          </Button>
+        </header>
+      )}
+      <main
+        className={
+          embedded
+            ? "mx-auto max-w-[1080px]"
+            : "mx-auto max-w-[1080px] px-4 pb-[90px] pt-7 sm:px-6"
+        }
+      >
+        <h2 className="mb-[18px] text-[15px] font-extrabold">
+          Instant, shareable pages
+        </h2>
+        <div className="flex flex-col items-center gap-5 px-4 py-11 text-center">
+          <span className="grid h-[70px] w-[70px] place-items-center rounded-[17px] bg-primary text-primary-foreground">
+            <FileText size={26} />
+          </span>
+          <h1 className="text-[clamp(24px,3.6vw,31px)] font-extrabold tracking-[-.02em]">
+            Instant notes, shareable by link
+          </h1>
+          <p className="max-w-[480px] text-[14.5px] text-muted-foreground">
+            A pad is a blank page you can share by link. Perfect for meeting
+            notes, recipes or quick jots.
+          </p>
+          <form
+            className={`flex w-full ${embedded ? "max-w-none" : "max-w-[440px]"} min-w-0 items-center rounded-[var(--radius-card)] border-[1.5px] border-input bg-card py-[5px] pl-4 pr-[5px] text-muted-foreground`}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (displaySlug.trim()) handleGoToSlug();
+              else handleCreateRandom();
+            }}
+          >
+            <span className="font-mono text-sm font-bold">/pad/</span>
+            <label className="sr-only" htmlFor="pad-slug">
+              Pad name
+            </label>
+            <input
+              className="min-w-0 flex-1 border-0 bg-transparent px-1.5 py-2.5 font-mono text-sm text-foreground outline-none"
+              id="pad-slug"
+              value={displaySlug}
+              onChange={(e) => handleSlugChange(e.target.value)}
+              placeholder="my-notes"
+              autoComplete="off"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleGenerateRandom}
+              aria-label="Generate random pad name"
+            >
+              <Shuffle size={14} /> Random
+            </Button>
+          </form>
+          {displaySlug && !isSlugValid && (
+            <p className="mt-2 text-xs text-destructive">
+              Pad name must be at least {MIN_SLUG_LENGTH} characters.
+            </p>
+          )}
+          {showSanitizedHint && isSlugValid && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Will open as: /pad/{sanitized}
+            </p>
+          )}
+          <Button
+            size="hero"
+            disabled={
+              createPadMutation.isPending || (!!displaySlug && !isSlugValid)
+            }
+            onClick={() =>
+              displaySlug.trim() ? handleGoToSlug() : handleCreateRandom()
+            }
+          >
+            <Zap size={16} />
+            {createPadMutation.isPending ? "Creating…" : "Open pad"}
+          </Button>
+          {createPadMutation.isError && (
+            <p role="alert" className="mt-2 text-xs text-destructive">
+              {(createPadMutation.error as Error)?.message ??
+                "Failed to create pad"}
+            </p>
+          )}
+          <Grid
+            className={`w-full ${embedded ? "max-w-none" : "max-w-[680px]"} grid-cols-1 gap-2.5 min-[431px]:grid-cols-2 md:grid-cols-4`}
+          >
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <Card
+                key={text}
+                className="flex items-center gap-[7px] p-[13px] text-left text-[12.5px] font-semibold text-muted-foreground"
+              >
+                <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[var(--radius-control)] bg-primary/10 text-primary">
+                  <Icon size={16} />
+                </span>
+                {text}
+              </Card>
+            ))}
+          </Grid>
+          <Section className="w-full max-w-[680px] text-left">
+            <h2 className="mb-2 font-mono text-[11px] font-bold uppercase tracking-[.06em] text-muted-foreground">
+              Start from a template
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                disabled={createPadMutation.isPending}
+                onClick={() =>
+                  handleCreateRandom(
+                    "# Meeting notes\n\nDate: \nAttendees: \n\n## Agenda\n\n## Notes\n\n## Action items\n",
+                  )
+                }
+              >
+                <Users size={15} /> Meeting notes
+              </Button>
+              <Button
+                variant="outline"
+                disabled={createPadMutation.isPending}
+                onClick={() =>
+                  handleCreateRandom(
+                    "# Recipe\n\n## Ingredients\n\n## Method\n",
+                  )
+                }
+              >
+                <Utensils size={15} /> Recipe
+              </Button>
+              <Button
+                variant="outline"
+                disabled={createPadMutation.isPending}
+                onClick={() =>
+                  handleCreateRandom(
+                    "# Book club\n\nBook: \n\n## Thoughts\n\n## Discussion questions\n",
+                  )
+                }
+              >
+                <BookOpen size={15} /> Book club
+              </Button>
+            </div>
+          </Section>
+          {isAuthenticated && (
+            <Section className="w-full max-w-[680px] text-left">
+              <h2 className="mb-2.5 text-[13px] font-extrabold">Your pads</h2>
+              {padsLoading ? (
+                <p className="text-[13px] text-muted-foreground">
+                  Loading pads…
+                </p>
+              ) : myPads.length === 0 ? (
+                <p className="text-[13px] text-muted-foreground">
+                  No pads yet — create one above.
+                </p>
+              ) : (
+                myPads.map((pad) => (
+                  <button
+                    className="mt-2 flex w-full items-center gap-2.5 rounded-[var(--radius-control)] border border-border p-3 text-left text-[13px]"
+                    key={pad.id}
+                    onClick={() => router.push(`/pad/${pad.slug}`)}
+                  >
+                    <FileText size={16} />
+                    <span>
+                      /pad/{pad.slug}
+                      <small className="block text-muted-foreground">
+                        Updated {timeAgo(pad.updatedAt)}
+                      </small>
+                    </span>
+                    <span className="ml-auto">{pad.visibility}</span>
+                  </button>
+                ))
+              )}
+            </Section>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

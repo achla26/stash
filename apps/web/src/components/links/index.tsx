@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import { Page, Grid } from "@/components/ui/layout";
 import { LinkGridCard } from "./link-grid-card";
 import { Button } from "@/components/ui/button";
@@ -178,7 +179,7 @@ export function LinksContent() {
   return (
     <Page className="flex flex-col items-start gap-4 md:flex-row">
       <aside className="w-full shrink-0 md:sticky md:top-0 md:w-[216px]">
-        <div className="flex flex-wrap gap-[3px] rounded-[10px] border border-border bg-card p-2 md:block [&>button]:flex [&>button]:min-h-10 [&>button]:w-auto [&>button]:items-center [&>button]:gap-[9px] [&>button]:rounded-lg [&>button]:px-2.5 [&>button]:py-[9px] [&>button]:text-left [&>button]:text-[13px] [&>button]:font-semibold [&>button]:text-muted-foreground [&>button:hover]:bg-accent [&>button:hover]:text-foreground md:[&>button]:w-full [&_small]:ml-auto [&_small]:text-[11px]">
+        <div className="flex flex-wrap gap-[3px] rounded-[10px] border border-border bg-card p-2 md:block">
           {rails.map(({ id, label, icon: Icon, count }) => (
             <button
               key={id}
@@ -186,11 +187,14 @@ export function LinksContent() {
                 setFilter(id);
                 setTag("");
               }}
-              className={filter === id ? "!bg-foreground !text-background" : ""}
+              className={cn(
+                "flex min-h-10 w-auto items-center gap-[9px] rounded-[var(--radius-control)] px-2.5 py-[9px] text-left text-[13px] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground md:w-full",
+                filter === id && "bg-foreground text-background",
+              )}
             >
               <Icon size={16} />
               <span className="truncate">{label}</span>
-              <small>{count}</small>
+              <small className="ml-auto text-[11px]">{count}</small>
             </button>
           ))}
           <div className="mt-2 w-full border-t border-border px-2.5 pb-[5px] pt-3.5 text-[10.5px] font-extrabold uppercase tracking-[.09em] text-muted-foreground">
@@ -200,12 +204,15 @@ export function LinksContent() {
             tags.map(([name, count]) => (
               <button
                 key={name}
-                className={tag === name ? "!bg-primary/10 !text-primary" : ""}
+                className={cn(
+                  "flex min-h-10 w-auto items-center gap-[9px] rounded-[var(--radius-control)] px-2.5 py-[9px] text-left text-[13px] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground md:w-full",
+                  tag === name && "bg-primary/10 text-primary",
+                )}
                 onClick={() => setTag(tag === name ? "" : name)}
               >
                 <Tag size={15} />
                 <span className="truncate">{name}</span>
-                <small>{count}</small>
+                <small className="ml-auto text-[11px]">{count}</small>
               </button>
             ))
           ) : (
@@ -216,7 +223,7 @@ export function LinksContent() {
         </div>
       </aside>
       <main className="w-full min-w-0 flex-1">
-        <div className="mb-3.5 flex flex-wrap items-center gap-2 [&_select]:min-h-10 [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:px-2.5 [&_select]:text-[13px]">
+        <div className="mb-3.5 flex flex-wrap items-center gap-2">
           <SearchField
             label="Search links"
             placeholder="Search title, site or tag…"
@@ -228,6 +235,7 @@ export function LinksContent() {
             Sort links
           </label>
           <select
+            className="min-h-10 rounded-[var(--radius-control)] border border-input bg-card px-2.5 text-[13px]"
             id="links-sort"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -237,16 +245,17 @@ export function LinksContent() {
             <option value="az">A–Z</option>
           </select>
           <div
-            className="inline-flex gap-0.5 rounded-lg border border-input bg-card p-[3px] [&_button]:grid [&_button]:h-8 [&_button]:w-9 [&_button]:place-items-center [&_button]:rounded-md [&_button]:text-muted-foreground"
+            className="inline-flex gap-0.5 rounded-lg border border-input bg-card p-[3px]"
             role="group"
             aria-label="View"
           >
             <button
               aria-label="Grid view"
               aria-pressed={view === "grid"}
-              className={
-                view === "grid" ? "!bg-foreground !text-background" : ""
-              }
+              className={cn(
+                "grid h-8 w-9 place-items-center rounded-[var(--radius-control)] text-muted-foreground",
+                view === "grid" && "bg-foreground text-background",
+              )}
               onClick={() => setView("grid")}
             >
               <Grid2X2 size={16} />
@@ -254,9 +263,10 @@ export function LinksContent() {
             <button
               aria-label="List view"
               aria-pressed={view === "list"}
-              className={
-                view === "list" ? "!bg-foreground !text-background" : ""
-              }
+              className={cn(
+                "grid h-8 w-9 place-items-center rounded-[var(--radius-control)] text-muted-foreground",
+                view === "list" && "bg-foreground text-background",
+              )}
               onClick={() => setView("list")}
             >
               <List size={16} />
@@ -272,11 +282,13 @@ export function LinksContent() {
             <Plus size={16} /> New link
           </Button>
         </div>
-        <p className="mb-3 flex items-center gap-2 text-[12.5px] text-muted-foreground [&_button]:font-bold [&_button]:text-primary">
+        <p className="mb-3 flex items-center gap-2 text-[12.5px] text-muted-foreground">
           {filtered.length} {filtered.length === 1 ? "link" : "links"}
           {tag ? ` · #${tag}` : ""}
           {(tag || search || filter !== "all") && (
-            <button onClick={reset}>Clear filters</button>
+            <button className="font-bold text-primary" onClick={reset}>
+              Clear filters
+            </button>
           )}
         </p>
         {filtered.length === 0 ? (

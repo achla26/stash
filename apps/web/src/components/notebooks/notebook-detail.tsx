@@ -2,7 +2,6 @@
 import { Card } from "@/components/ui/card";
 import { ItemIcon } from "@/components/shared/item-icon";
 
-
 import { useState } from "react";
 import { DetailSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useParams, useRouter } from "next/navigation";
@@ -94,7 +93,10 @@ export function NotebookDetail() {
   const [folderName, setFolderName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [selected, setSelected] = useState<{ type: "root" | "folder" | "note"; id: string }>({ type: "root", id: "" });
+  const [selected, setSelected] = useState<{
+    type: "root" | "folder" | "note";
+    id: string;
+  }>({ type: "root", id: "" });
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [treeOpen, setTreeOpen] = useState(true);
 
@@ -103,18 +105,32 @@ export function NotebookDetail() {
     queryClient.invalidateQueries({ queryKey: ["notebooks"] });
   };
 
-  const currentFolderId = selected.type === "folder" ? selected.id : selected.type === "note" ? allNotes.find(n => n.id === selected.id)?.folderId ?? notebook?.notes.find(n => n.id === selected.id)?.folderId ?? null : null;
+  const currentFolderId =
+    selected.type === "folder"
+      ? selected.id
+      : selected.type === "note"
+        ? (allNotes.find((n) => n.id === selected.id)?.folderId ??
+          notebook?.notes.find((n) => n.id === selected.id)?.folderId ??
+          null)
+        : null;
 
   const handleCreateFolder = () => {
     if (!folderName.trim()) return;
     createFolder.mutate(
-      { name: folderName.trim(), type: "note", notebookId, parentId: currentFolderId, icon: "folder" },
+      {
+        name: folderName.trim(),
+        type: "note",
+        notebookId,
+        parentId: currentFolderId,
+        icon: "folder",
+      },
       {
         onSuccess: () => {
           setFolderDialogOpen(false);
           setFolderName("");
           invalidate();
-          if (currentFolderId) setExpanded(prev => new Set(prev).add(currentFolderId));
+          if (currentFolderId)
+            setExpanded((prev) => new Set(prev).add(currentFolderId));
           toast.success("Folder created");
         },
         onError: (e) => toast.error((e as Error).message),
@@ -142,9 +158,7 @@ export function NotebookDetail() {
   };
 
   if (isLoading) {
-    return (
-      <DetailSkeleton />
-    );
+    return <DetailSkeleton />;
   }
 
   if (!notebook) {
@@ -156,29 +170,131 @@ export function NotebookDetail() {
   }
 
   const folders = notebook.folders ?? [];
-  const folderIds = new Set(folders.map(f => f.id));
+  const folderIds = new Set(folders.map((f) => f.id));
   const merged = new Map<string, Note>();
   for (const note of [...(notebook.notes ?? []), ...allNotes]) {
-    if (note.notebookId === notebookId || (note.folderId && folderIds.has(note.folderId))) merged.set(note.id, note);
+    if (
+      note.notebookId === notebookId ||
+      (note.folderId && folderIds.has(note.folderId))
+    )
+      merged.set(note.id, note);
   }
   const notes = [...merged.values()];
-  const selectedNote = selected.type === "note" ? notes.find(n => n.id === selected.id) : undefined;
-  const selectedFolder = selected.type === "folder" ? folders.find(f => f.id === selected.id) : undefined;
-  const toggleFolder = (id: string) => setExpanded(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
-  const folderTree = (parentId: string | null, depth: number, visited: Set<string>): React.ReactNode => {
-    const children = folders.filter(f => parentId === null ? !f.parentId || !folderIds.has(f.parentId) : f.parentId === parentId);
-    const childNotes = notes.filter(n => parentId === null ? !n.folderId || !folderIds.has(n.folderId) : n.folderId === parentId);
-    return <>{children.map((f: FolderType) => {
-      if (visited.has(f.id)) return null;
-      const open = expanded.has(f.id), next = new Set(visited).add(f.id);
-      return <div key={f.id}><div className={cn("flex min-h-9 w-full min-w-0 items-center gap-1 px-2.5 py-1.5 text-left text-[13px] text-muted-foreground hover:bg-accent", selected.type === "folder" && selected.id === f.id && "bg-primary/10 text-primary")} style={{ paddingLeft: `${10 + depth * 16}px` }}><button type="button" aria-label={`${open ? "Collapse" : "Expand"} ${f.name}`} aria-expanded={open} className="grid h-6 w-5 shrink-0 place-items-center" onClick={() => toggleFolder(f.id)}>{open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}</button><button type="button" className="flex min-w-0 flex-1 items-center gap-[7px] text-left [&_span]:truncate [&_svg]:shrink-0" onClick={() => { setSelected({ type: "folder", id: f.id }); setExpanded(prev => new Set(prev).add(f.id)); }}>{open ? <FolderOpen size={16} /> : <Folder size={16} />}<span>{f.name}</span></button><FolderMenu folderId={f.id} folderName={f.name} onDeleted={() => { setSelected({type:"root",id:""}); invalidate(); }} /></div>{open && folderTree(f.id, depth + 1, next)}</div>;
-    })}{childNotes.map(n => <button type="button" key={n.id} className={cn("flex min-h-9 w-full min-w-0 items-center gap-1.5 px-2.5 py-1.5 text-left text-[13px] text-muted-foreground hover:bg-accent [&_span]:truncate [&_svg]:shrink-0", selected.type === "note" && selected.id === n.id && "bg-primary/10 text-primary")} style={{paddingLeft:`${32 + depth * 16}px`}} onClick={() => setSelected({type:"note",id:n.id})}><FileText size={15}/><span>{n.title || "Untitled"}</span></button>)}</>;
+  const selectedNote =
+    selected.type === "note"
+      ? notes.find((n) => n.id === selected.id)
+      : undefined;
+  const selectedFolder =
+    selected.type === "folder"
+      ? folders.find((f) => f.id === selected.id)
+      : undefined;
+  const toggleFolder = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const folderTree = (
+    parentId: string | null,
+    depth: number,
+    visited: Set<string>,
+  ): React.ReactNode => {
+    const children = folders.filter((f) =>
+      parentId === null
+        ? !f.parentId || !folderIds.has(f.parentId)
+        : f.parentId === parentId,
+    );
+    const childNotes = notes.filter((n) =>
+      parentId === null
+        ? !n.folderId || !folderIds.has(n.folderId)
+        : n.folderId === parentId,
+    );
+    return (
+      <>
+        {children.map((f: FolderType) => {
+          if (visited.has(f.id)) return null;
+          const open = expanded.has(f.id),
+            next = new Set(visited).add(f.id);
+          return (
+            <div key={f.id}>
+              <div
+                className={cn(
+                  "flex min-h-9 w-full min-w-0 items-center gap-1 px-2.5 py-1.5 text-left text-[13px] text-muted-foreground hover:bg-accent",
+                  selected.type === "folder" &&
+                    selected.id === f.id &&
+                    "bg-primary/10 text-primary",
+                )}
+                style={{ paddingLeft: `${10 + depth * 16}px` }}
+              >
+                <button
+                  type="button"
+                  aria-label={`${open ? "Collapse" : "Expand"} ${f.name}`}
+                  aria-expanded={open}
+                  className="grid h-6 w-5 shrink-0 place-items-center"
+                  onClick={() => toggleFolder(f.id)}
+                >
+                  {open ? (
+                    <ChevronDown size={15} />
+                  ) : (
+                    <ChevronRight size={15} />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="flex min-w-0 flex-1 items-center gap-[7px] text-left"
+                  onClick={() => {
+                    setSelected({ type: "folder", id: f.id });
+                    setExpanded((prev) => new Set(prev).add(f.id));
+                  }}
+                >
+                  {open ? <FolderOpen size={16} /> : <Folder size={16} />}
+                  <span className="truncate">{f.name}</span>
+                </button>
+                <FolderMenu
+                  folderId={f.id}
+                  folderName={f.name}
+                  onDeleted={() => {
+                    setSelected({ type: "root", id: "" });
+                    invalidate();
+                  }}
+                />
+              </div>
+              {open && folderTree(f.id, depth + 1, next)}
+            </div>
+          );
+        })}
+        {childNotes.map((n) => (
+          <button
+            type="button"
+            key={n.id}
+            className={cn(
+              "flex min-h-9 w-full min-w-0 items-center gap-1.5 px-2.5 py-1.5 text-left text-[13px] text-muted-foreground hover:bg-accent",
+              selected.type === "note" &&
+                selected.id === n.id &&
+                "bg-primary/10 text-primary",
+            )}
+            style={{ paddingLeft: `${32 + depth * 16}px` }}
+            onClick={() => setSelected({ type: "note", id: n.id })}
+          >
+            <FileText size={15} />
+            <span className="truncate">{n.title || "Untitled"}</span>
+          </button>
+        ))}
+      </>
+    );
   };
   const coverColor = notebook.coverColor || "var(--primary)";
 
   return (
     <div className="mx-auto min-w-0 max-w-[1080px]">
-      <Button variant="outline" className="mb-4" onClick={() => router.push("/notebooks")}><ArrowLeft size={16}/> All notebooks</Button>
+      <Button
+        variant="outline"
+        className="mb-4"
+        onClick={() => router.push("/notebooks")}
+      >
+        <ArrowLeft size={16} /> All notebooks
+      </Button>
       {/* ---------- Header ---------- */}
       <Card className="mb-5 flex items-start justify-between gap-4 p-[18px]">
         <div className="flex min-w-0 items-center gap-3">
@@ -286,15 +402,156 @@ export function NotebookDetail() {
       </Card>
 
       <div className="flex min-h-[560px] flex-col overflow-hidden rounded-xl border border-border bg-card md:flex-row">
-        <aside className={cn("min-w-0 border-b border-border bg-background-secondary md:w-[250px] md:flex-[0_0_250px] md:border-b-0 md:border-r", !treeOpen && "hidden")} aria-label="Notebook explorer">
-          <div className="flex items-center justify-between px-3 py-2.5 text-[10px] font-extrabold tracking-[.1em] text-muted-foreground [&>div]:flex [&>div]:gap-0.5 [&_button]:grid [&_button]:h-[30px] [&_button]:w-[30px] [&_button]:place-items-center [&_button]:rounded-md [&_button:hover]:bg-accent"><span>EXPLORER</span><div><button type="button" aria-label="New note" title="New note in selected folder" onClick={handleCreateNote} disabled={createNote.isPending}><FileText size={16}/></button><button type="button" aria-label="New folder" title="New folder in selected folder" onClick={() => setFolderDialogOpen(true)}><Plus size={17}/></button></div></div>
-          <button className={cn("flex min-h-9 w-full min-w-0 items-center gap-1.5 px-2.5 py-1.5 text-left text-[13px] font-bold text-foreground hover:bg-accent [&_span]:truncate", selected.type === "root" && "bg-primary/10 text-primary")} onClick={() => setSelected({type:"root",id:""})}><ChevronDown size={15}/><BookOpen size={16}/><span>{notebook.name}</span></button>
-          <div className="max-h-[230px] overflow-y-auto md:max-h-[65vh]">{folderTree(null,0,new Set())}{folders.length === 0 && notes.length === 0 && <p className="px-[15px] py-2.5 text-xs leading-relaxed text-muted-foreground">No notes or folders yet. Use + to get started.</p>}</div>
-          {notesError && <p role="alert" className="px-[15px] py-2.5 text-xs leading-relaxed text-destructive">Some folder notes could not be loaded. Refresh to retry.</p>}
+        <aside
+          className={cn(
+            "min-w-0 border-b border-border bg-background-secondary md:w-[250px] md:flex-[0_0_250px] md:border-b-0 md:border-r",
+            !treeOpen && "hidden",
+          )}
+          aria-label="Notebook explorer"
+        >
+          <div className="flex items-center justify-between px-3 py-2.5 text-[10px] font-extrabold tracking-[.1em] text-muted-foreground">
+            <span>EXPLORER</span>
+            <div className="flex gap-0.5">
+              <button
+                type="button"
+                aria-label="New note"
+                className="grid h-[30px] w-[30px] place-items-center rounded-[var(--radius-control)] hover:bg-accent"
+                title="New note in selected folder"
+                onClick={handleCreateNote}
+                disabled={createNote.isPending}
+              >
+                <FileText size={16} />
+              </button>
+              <button
+                type="button"
+                aria-label="New folder"
+                className="grid h-[30px] w-[30px] place-items-center rounded-[var(--radius-control)] hover:bg-accent"
+                title="New folder in selected folder"
+                onClick={() => setFolderDialogOpen(true)}
+              >
+                <Plus size={17} />
+              </button>
+            </div>
+          </div>
+          <button
+            className={cn(
+              "flex min-h-9 w-full min-w-0 items-center gap-1.5 px-2.5 py-1.5 text-left text-[13px] font-bold text-foreground hover:bg-accent",
+              selected.type === "root" && "bg-primary/10 text-primary",
+            )}
+            onClick={() => setSelected({ type: "root", id: "" })}
+          >
+            <ChevronDown size={15} />
+            <BookOpen size={16} />
+            <span className="truncate">{notebook.name}</span>
+          </button>
+          <div className="max-h-[230px] overflow-y-auto md:max-h-[65vh]">
+            {folderTree(null, 0, new Set())}
+            {folders.length === 0 && notes.length === 0 && (
+              <p className="px-[15px] py-2.5 text-xs leading-relaxed text-muted-foreground">
+                No notes or folders yet. Use + to get started.
+              </p>
+            )}
+          </div>
+          {notesError && (
+            <p
+              role="alert"
+              className="px-[15px] py-2.5 text-xs leading-relaxed text-destructive"
+            >
+              Some folder notes could not be loaded. Refresh to retry.
+            </p>
+          )}
         </aside>
         <main className="flex min-w-0 flex-1 flex-col">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-border px-3.5 py-2.5 md:flex-nowrap"><button className="grid h-[30px] w-[30px] place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setTreeOpen(v => !v)} aria-label={treeOpen ? "Hide explorer" : "Show explorer"} aria-expanded={treeOpen}><PanelLeft size={17}/></button><span className="min-w-[80px] flex-1 truncate text-xs text-muted-foreground">{notebook.name}{selectedNote ? ` / ${selectedNote.title || "Untitled"}` : selectedFolder ? ` / ${selectedFolder.name}` : ""}</span><Button variant="outline"  onClick={() => setFolderDialogOpen(true)}><Folder size={15}/> New folder</Button><Button  onClick={handleCreateNote} disabled={createNote.isPending}><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</Button></div>
-          {selectedNote ? <article className="min-w-0 p-5 md:p-7"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5 [&>div]:min-w-0 [&_h2]:break-words [&_h2]:text-[21px] [&_h2]:font-extrabold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><div><span className="text-[10px] font-extrabold tracking-[.1em] text-primary">NOTE PREVIEW</span><h2>{selectedNote.title || "Untitled"}</h2><p>Updated {timeAgo(selectedNote.updatedAt)}</p></div><Button asChild ><Link href={`/notes/${selectedNote.id}`}><Pencil size={15}/> Open editor</Link></Button></div><div className="min-w-0 break-words pt-[22px]">{selectedNote.content ? <MarkdownPreview text={selectedNote.content}/> : <p className="text-[13px] text-muted-foreground">This note is empty. Open the editor to start writing.</p>}</div></article> : <div className="flex min-h-[390px] flex-1 flex-col items-center justify-center p-8 text-center [&_h2]:break-words [&_h2]:text-[21px] [&_h2]:font-extrabold [&_p]:mb-4 [&_p]:mt-2 [&_p]:max-w-[420px] [&_p]:text-[13px] [&_p]:leading-relaxed [&_p]:text-muted-foreground [&>div]:mb-5 [&>div]:flex [&>div]:gap-2 [&>div]:text-xs [&>div]:text-muted-foreground [&>div>span]:rounded-full [&>div>span]:bg-accent [&>div>span]:px-2.5 [&>div>span]:py-1"><span className="mb-[15px] grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-primary/10 text-primary">{selectedFolder ? <FolderOpen size={25}/> : <BookOpen size={25}/>}</span><h2>{selectedFolder ? selectedFolder.name : notebook.name}</h2><p>{selectedFolder ? "Select a note in the explorer, or create a new note inside this folder." : notebook.description || "Your ideas, organised in one place. Select a note from the explorer to preview it."}</p><div><span>{folders.length} folders</span><span>{notes.length} notes</span></div><Button onClick={handleCreateNote} disabled={createNote.isPending} ><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</Button></div>}
+          <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-border px-3.5 py-2.5 md:flex-nowrap">
+            <button
+              className="grid h-[30px] w-[30px] place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => setTreeOpen((v) => !v)}
+              aria-label={treeOpen ? "Hide explorer" : "Show explorer"}
+              aria-expanded={treeOpen}
+            >
+              <PanelLeft size={17} />
+            </button>
+            <span className="min-w-[80px] flex-1 truncate text-xs text-muted-foreground">
+              {notebook.name}
+              {selectedNote
+                ? ` / ${selectedNote.title || "Untitled"}`
+                : selectedFolder
+                  ? ` / ${selectedFolder.name}`
+                  : ""}
+            </span>
+            <Button variant="outline" onClick={() => setFolderDialogOpen(true)}>
+              <Folder size={15} /> New folder
+            </Button>
+            <Button onClick={handleCreateNote} disabled={createNote.isPending}>
+              <Plus size={15} />{" "}
+              {createNote.isPending ? "Creating…" : "New note"}
+            </Button>
+          </div>
+          {selectedNote ? (
+            <article className="min-w-0 p-5 md:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+                <div className="min-w-0">
+                  <span className="text-[10px] font-extrabold tracking-[.1em] text-primary">
+                    NOTE PREVIEW
+                  </span>
+                  <h2 className="break-words text-[21px] font-extrabold">
+                    {selectedNote.title || "Untitled"}
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Updated {timeAgo(selectedNote.updatedAt)}
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link href={`/notes/${selectedNote.id}`}>
+                    <Pencil size={15} /> Open editor
+                  </Link>
+                </Button>
+              </div>
+              <div className="min-w-0 break-words pt-[22px]">
+                {selectedNote.content ? (
+                  <MarkdownPreview text={selectedNote.content} />
+                ) : (
+                  <p className="text-[13px] text-muted-foreground">
+                    This note is empty. Open the editor to start writing.
+                  </p>
+                )}
+              </div>
+            </article>
+          ) : (
+            <div className="flex min-h-[390px] flex-1 flex-col items-center justify-center p-8 text-center">
+              <span className="mb-[15px] grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-primary/10 text-primary">
+                {selectedFolder ? (
+                  <FolderOpen size={25} />
+                ) : (
+                  <BookOpen size={25} />
+                )}
+              </span>
+              <h2 className="break-words text-[21px] font-extrabold">
+                {selectedFolder ? selectedFolder.name : notebook.name}
+              </h2>
+              <p className="mb-4 mt-2 max-w-[420px] text-[13px] leading-relaxed text-muted-foreground">
+                {selectedFolder
+                  ? "Select a note in the explorer, or create a new note inside this folder."
+                  : notebook.description ||
+                    "Your ideas, organised in one place. Select a note from the explorer to preview it."}
+              </p>
+              <div className="mb-5 flex gap-2 text-xs text-muted-foreground">
+                <span className="rounded-full bg-accent px-2.5 py-1">
+                  {folders.length} folders
+                </span>
+                <span className="rounded-full bg-accent px-2.5 py-1">
+                  {notes.length} notes
+                </span>
+              </div>
+              <Button
+                onClick={handleCreateNote}
+                disabled={createNote.isPending}
+              >
+                <Plus size={15} />{" "}
+                {createNote.isPending ? "Creating…" : "New note"}
+              </Button>
+            </div>
+          )}
         </main>
       </div>
 

@@ -2,13 +2,7 @@
 import { EditorOptionPanel } from "./editor-option-panel";
 import { Button } from "@/components/ui/button";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { EditorSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -181,7 +175,7 @@ function PopoverItem({
         danger
           ? "text-destructive hover:bg-destructive/10"
           : "text-foreground hover:bg-accent",
-        active && "bg-accent"
+        active && "bg-accent",
       )}
     >
       {Icon && <Icon className="h-4 w-4 shrink-0 opacity-70" />}
@@ -228,10 +222,20 @@ function SelectionToolbar({
       <button type="button" className={btn} title="Italic" onClick={onItalic}>
         <Italic className="h-3.5 w-3.5" />
       </button>
-      <button type="button" className={btn} title="Strikethrough" onClick={onStrike}>
+      <button
+        type="button"
+        className={btn}
+        title="Strikethrough"
+        onClick={onStrike}
+      >
         <Strikethrough className="h-3.5 w-3.5" />
       </button>
-      <button type="button" className={btn} title="Highlight" onClick={onHighlight}>
+      <button
+        type="button"
+        className={btn}
+        title="Highlight"
+        onClick={onHighlight}
+      >
         <Highlighter className="h-3.5 w-3.5" />
       </button>
       <button
@@ -272,7 +276,13 @@ function SelectionToolbar({
    Save status
    ============================================================ */
 
-function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry?: () => void }) {
+function SaveIndicator({
+  status,
+  onRetry,
+}: {
+  status: SaveStatus;
+  onRetry?: () => void;
+}) {
   if (status === "error") {
     return (
       <button
@@ -333,15 +343,19 @@ export function NoteEditor() {
   const [content, setContent] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [viewMode, setViewMode] = useState<"split" | "view" | "edit">("edit");
-  const [isDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const [isDesktop] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches,
+  );
   const preview = viewMode !== "edit";
-
-
 
   const [overflowOpen, setOverflowOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
-  const [colorPanel, setColorPanel] = useState<"none" | "text" | "highlight">("none");
+  const [colorPanel, setColorPanel] = useState<"none" | "text" | "highlight">(
+    "none",
+  );
   const [sharePanel, setSharePanel] = useState(false);
   const [notePickerOpen, setNotePickerOpen] = useState(false);
   const [notePickerSearch, setNotePickerSearch] = useState("");
@@ -349,14 +363,16 @@ export function NoteEditor() {
     .filter(
       (n) =>
         n.id !== noteId &&
-        (n.title ?? "").toLowerCase().includes(notePickerSearch.toLowerCase())
+        (n.title ?? "").toLowerCase().includes(notePickerSearch.toLowerCase()),
     )
     .slice(0, 8);
   const [copied, setCopied] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [linkUrl, setLinkUrl] = useState("");
-  const [selRect, setSelRect] = useState<{ top: number; left: number } | null>(null);
+  const [selRect, setSelRect] = useState<{ top: number; left: number } | null>(
+    null,
+  );
   const [dragging, setDragging] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const mirrorRef = useRef<HTMLDivElement | null>(null);
@@ -461,7 +477,9 @@ export function NoteEditor() {
   const alignPreviewToLine = (topLine: number) => {
     const R = rightScrollRef.current;
     if (!R) return;
-    const blocks = Array.from(R.querySelectorAll("[data-line]")) as HTMLElement[];
+    const blocks = Array.from(
+      R.querySelectorAll("[data-line]"),
+    ) as HTMLElement[];
     let target: HTMLElement | null = null;
     for (const b of blocks) {
       const ln = parseInt(b.dataset.line ?? "0", 10);
@@ -478,7 +496,9 @@ export function NoteEditor() {
     const R = rightScrollRef.current;
     const L = leftScrollRef.current;
     if (!R || !L) return;
-    const blocks = Array.from(R.querySelectorAll("[data-line]")) as HTMLElement[];
+    const blocks = Array.from(
+      R.querySelectorAll("[data-line]"),
+    ) as HTMLElement[];
     let line = 0;
     for (const b of blocks) {
       if (b.offsetTop <= R.scrollTop + 16)
@@ -525,7 +545,8 @@ export function NoteEditor() {
     if (viewMode === "view") setViewMode("edit");
     const ls = content.split("\n");
     let idx = 0;
-    for (let n = 0; n < line && n < ls.length; n++) idx += (ls[n]?.length ?? 0) + 1;
+    for (let n = 0; n < line && n < ls.length; n++)
+      idx += (ls[n]?.length ?? 0) + 1;
     window.setTimeout(() => {
       const t = bodyRef.current;
       if (!t) return;
@@ -534,7 +555,7 @@ export function NoteEditor() {
     }, 40);
     const target = Math.max(
       0,
-      (bodyRef.current?.offsetTop ?? 60) + visualTopOf(line) - 90
+      (bodyRef.current?.offsetTop ?? 60) + visualTopOf(line) - 90,
     );
     const L = leftScrollRef.current;
     if (L && viewMode === "split") {
@@ -559,7 +580,9 @@ export function NoteEditor() {
   /* ---------- keepalive save — survives tab close / app switch / suspension ---------- */
   const keepaliveSave = useCallback((id: string, t: string, c: string) => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
     fetch(`/api/notes/${id}`, {
       method: "PATCH",
       keepalive: true,
@@ -599,11 +622,13 @@ export function NoteEditor() {
   /* ---------- Load note — NEVER overwrites unsaved user typing ---------- */
   useEffect(() => {
     if (!note || loadedRef.current) return;
-    if ((note as { id?: string }).id && (note as { id?: string }).id !== noteId) return;
+    if ((note as { id?: string }).id && (note as { id?: string }).id !== noteId)
+      return;
     loadedRef.current = true;
 
     const userAlreadyTyped =
-      title !== lastSyncedRef.current.title || content !== lastSyncedRef.current.content;
+      title !== lastSyncedRef.current.title ||
+      content !== lastSyncedRef.current.content;
     if (userAlreadyTyped) {
       // User typed before the note finished loading — keep their text,
       // autosave will push it to the server.
@@ -689,7 +714,7 @@ export function NoteEditor() {
     const top = elRect.top + (kRect.top - mBase.top) - 46;
     const left = Math.min(
       Math.max(elRect.left + (kRect.left - mBase.left) + kRect.width / 2, 90),
-      window.innerWidth - 90
+      window.innerWidth - 90,
     );
     setSelRect({ top, left });
   }, []);
@@ -739,20 +764,24 @@ export function NoteEditor() {
             lastSyncedRef.current = { title: finalTitle, content: c };
             setSaveStatus("saved");
             if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-            savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+            savedTimerRef.current = setTimeout(
+              () => setSaveStatus("idle"),
+              2000,
+            );
           },
           onError: () => setSaveStatus("error"),
-        }
+        },
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [noteId]
+    [noteId],
   );
 
   /* ---------- Autosave — 1.2s after typing stops, works even before load finishes ---------- */
   useEffect(() => {
     const dirty =
-      title !== lastSyncedRef.current.title || content !== lastSyncedRef.current.content;
+      title !== lastSyncedRef.current.title ||
+      content !== lastSyncedRef.current.content;
     if (!dirty || !noteId) return;
     setSaveStatus((s) => (s === "error" || s === "saving" ? s : "unsaved"));
     const timer = setTimeout(() => doSave(title, content), 1200);
@@ -799,11 +828,17 @@ export function NoteEditor() {
     setContent(next);
     requestAnimationFrame(() => {
       el.focus();
-      el.setSelectionRange(start + before.length, start + before.length + selected.length);
+      el.setSelectionRange(
+        start + before.length,
+        start + before.length + selected.length,
+      );
     });
   };
 
-  const applyLinePrefix = (prefix: string | ((i: number) => string), strip?: RegExp) => {
+  const applyLinePrefix = (
+    prefix: string | ((i: number) => string),
+    strip?: RegExp,
+  ) => {
     const el = bodyRef.current;
     if (!el) return;
     const start = el.selectionStart;
@@ -855,11 +890,7 @@ export function NoteEditor() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
-        canvas.toBlob(
-          (b) => resolve(b ?? file),
-          "image/jpeg",
-          0.85
-        );
+        canvas.toBlob((b) => resolve(b ?? file), "image/jpeg", 0.85);
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
@@ -878,7 +909,11 @@ export function NoteEditor() {
     try {
       const blob = await compressImage(file);
       const fd = new FormData();
-      fd.append("file", blob, blob.type === "image/png" ? "image.png" : "image.jpg");
+      fd.append(
+        "file",
+        blob,
+        blob.type === "image/png" ? "image.png" : "image.jpg",
+      );
       const token = localStorage.getItem("access_token");
       const res = await fetch("/api/uploads", {
         method: "POST",
@@ -928,7 +963,9 @@ export function NoteEditor() {
       e.preventDefault();
       const el = e.currentTarget;
       const start = el.selectionStart;
-      setContent(content.slice(0, start) + "  " + content.slice(el.selectionEnd));
+      setContent(
+        content.slice(0, start) + "  " + content.slice(el.selectionEnd),
+      );
       requestAnimationFrame(() => el.setSelectionRange(start + 2, start + 2));
       return;
     }
@@ -953,7 +990,9 @@ export function NoteEditor() {
       if (num) next = `${parseInt(num, 10) + 1}. `;
       else if (/\[[xX]\]/.test(marker)) next = "- [ ] ";
       const insert = `\n${indent}${next}`;
-      setContent(content.slice(0, start) + insert + content.slice(el.selectionEnd));
+      setContent(
+        content.slice(0, start) + insert + content.slice(el.selectionEnd),
+      );
       const pos = start + insert.length;
       requestAnimationFrame(() => el.setSelectionRange(pos, pos));
     }
@@ -985,7 +1024,11 @@ export function NoteEditor() {
   const placement: Placement = useMemo(() => {
     if (note?.notebookId) {
       const nb = notebooks.find((n) => n.id === note.notebookId);
-      return { kind: "notebook", id: note.notebookId, name: nb?.name ?? "Notebook" };
+      return {
+        kind: "notebook",
+        id: note.notebookId,
+        name: nb?.name ?? "Notebook",
+      };
     }
     if (note?.folderId) {
       const f = folders.find((x) => x.id === note.folderId);
@@ -1015,9 +1058,7 @@ export function NoteEditor() {
 
   /* ---------- Early states ---------- */
   if (isLoading) {
-    return (
-      <EditorSkeleton />
-    );
+    return <EditorSkeleton />;
   }
 
   if (isError || !note) {
@@ -1045,493 +1086,679 @@ export function NoteEditor() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1080px]">
-      <Button type="button" onClick={() => router.push("/notes")} variant="outline" className="mb-4"><ArrowLeft className="h-4 w-4" /> All notes</Button>
-      <div className={cn("grid grid-cols-1 items-start gap-[18px] min-[1025px]:grid-cols-[minmax(0,1fr)_300px]", viewMode === "split" && "min-[1025px]:grid-cols-1")}>
-      {/* Existing editor and autosave logic are retained. */}
-      <div className="min-w-0 overflow-visible rounded-[14px] border border-border bg-card px-[22px] pb-[22px] pt-4">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/notes")}
-            className="hidden"
-            aria-label="Back to notes"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-
-          <div className="flex items-center gap-2.5">
-            <div className="hidden min-w-[100px] justify-start sm:flex">
-              <SaveIndicator status={saveStatus} onRetry={() => doSave(title, content)} />
-            </div>
-            <div
-              className="flex items-center rounded-full border border-border bg-card p-0.5"
-              role="group"
-              aria-label="Editor view mode"
-            >
-              {(
-                [
-                  { id: "edit", label: "Write", icon: PencilLine },
-                  ...(isDesktop
-                    ? [{ id: "split", label: "Split", icon: Columns2 }]
-                    : []),
-                  { id: "view", label: "Read", icon: Eye },
-                ] as { id: "edit" | "split" | "view"; label: string; icon: React.ComponentType<{ className?: string }> }[]
-              ).map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setViewMode(m.id)}
-                  className={cn(
-                    "flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors",
-                    viewMode === m.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  aria-pressed={viewMode === m.id}
-                  aria-label={m.label}
-                >
-                  <m.icon className="h-3.5 w-3.5" />
-                  <span className="hidden md:inline">{m.label}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex sm:hidden">
-              <SaveIndicator status={saveStatus} onRetry={() => doSave(title, content)} />
-            </div>
-            <button
-              ref={overflowBtnRef}
-              type="button"
-              onClick={() => setOverflowOpen((v) => !v)}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                overflowOpen && "bg-accent text-foreground"
-              )}
-              aria-label="More options"
-              aria-haspopup="menu"
-              aria-expanded={overflowOpen}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Formatting toolbar (edit mode only) */}
-        {viewMode !== "view" && (
-          <div className="sticky top-0 z-20 -mx-1.5 mb-5 bg-card/95 px-1.5 pt-2 backdrop-blur">
-          <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2">
-            <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
-              <Bold className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Italic (⌘I)" onClick={() => wrapSelection("*", "*")}>
-              <Italic className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Strikethrough" onClick={() => wrapSelection("~~", "~~")}>
-              <Strikethrough className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Code" onClick={() => wrapSelection("`", "`")}>
-              <Code className="h-3.5 w-3.5" />
-            </button>
-            <div className="mx-1 h-4 w-px shrink-0 bg-border" />
-            <button type="button" className={toolBtn} title="Heading" onClick={() => applyLinePrefix("## ", /^##\s/)}>
-              <Heading2 className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Bullet list" onClick={() => applyLinePrefix("- ", /^[-*]\s(?!\[)/)}>
-              <List className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Numbered list" onClick={() => applyLinePrefix((i) => `${i + 1}. `, /^\d+\.\s/)}>
-              <ListOrdered className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Checklist" onClick={() => applyLinePrefix("- [ ] ", /^[-*]\s\[[ xX]\]\s/)}>
-              <CheckSquare className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Quote" onClick={() => applyLinePrefix("> ", /^>\s/)}>
-              <Quote className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" className={toolBtn} title="Horizontal rule" onClick={() => insertAtCursor("\n\n---\n\n")}>
-              <Minus className="h-3.5 w-3.5" />
-            </button>
-            <div className="mx-1 h-4 w-px shrink-0 bg-border" />
-            <button
-              ref={linkBtnRef}
-              type="button"
-              className={cn(toolBtn, linkOpen && "bg-accent text-foreground")}
-              title="Link"
-              onClick={() => {
-                setLinkOpen((v) => !v);
-                setColorPanel("none");
-                setNotePickerOpen(false);
-              }}
-            >
-              <Link2 className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              className={toolBtn}
-              title="Add image (or drag & drop)"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <ImagePlus className="h-3.5 w-3.5" />
-              )}
-            </button>
-            <button
-              ref={noteBtnRef}
-              type="button"
-              className={cn(toolBtn, notePickerOpen && "bg-accent text-foreground")}
-              title="Insert note"
-              onClick={() => {
-                setNotePickerOpen((v) => !v);
-                setColorPanel("none");
-                setLinkOpen(false);
-              }}
-            >
-              <FileText className="h-3.5 w-3.5" />
-            </button>
-            <button
-              ref={hlBtnRef}
-              type="button"
-              className={cn(toolBtn, colorPanel === "highlight" && "bg-accent text-foreground")}
-              title="Highlight"
-              onClick={() => {
-                setColorPanel((v) => (v === "highlight" ? "none" : "highlight"));
-                setNotePickerOpen(false);
-                setLinkOpen(false);
-              }}
-            >
-              <Highlighter className="h-3.5 w-3.5" />
-            </button>
-            <button
-              ref={paletteBtnRef}
-              type="button"
-              className={cn(toolBtn, colorPanel === "text" && "bg-accent text-foreground")}
-              title="Text color"
-              onClick={() => {
-                setColorPanel((v) => (v === "text" ? "none" : "text"));
-                setNotePickerOpen(false);
-                setLinkOpen(false);
-              }}
-            >
-              <Palette className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          </div>
-        )}
-
-        {/* Hidden image file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void uploadImage(f);
-            e.target.value = "";
-          }}
-        />
-
-      {/* Overflow popover */}
-      <AnchoredPopover
-        anchorRef={overflowBtnRef}
-        open={overflowOpen}
-        onClose={() => {
-          setOverflowOpen(false);
-          setConfirmingDelete(false);
-          setShowFolderPicker(false);
-          setSharePanel(false);
-          setCopied(false);
-        }}
+      <Button
+        type="button"
+        onClick={() => router.push("/notes")}
+        variant="outline"
+        className="mb-4"
       >
-        {!confirmingDelete && !showFolderPicker && !sharePanel && (
-          <>
-            <PopoverItem
-              icon={FolderIcon}
-              label="Move to…"
-              onClick={() => setShowFolderPicker(true)}
-            />
-            <PopoverItem
-              icon={Globe}
-              label={note.isPublic ? "Sharing: ON" : "Share publicly"}
-              onClick={() => setSharePanel(true)}
-            />
-            <PopoverItem
-              icon={Trash2}
-              label="Delete note"
-              danger
-              onClick={() => setConfirmingDelete(true)}
-            />
-          </>
+        <ArrowLeft className="h-4 w-4" /> All notes
+      </Button>
+      <div
+        className={cn(
+          "grid grid-cols-1 items-start gap-[18px] min-[1025px]:grid-cols-[minmax(0,1fr)_300px]",
+          viewMode === "split" && "min-[1025px]:grid-cols-1",
         )}
+      >
+        {/* Existing editor and autosave logic are retained. */}
+        <div className="min-w-0 overflow-visible rounded-[14px] border border-border bg-card px-[22px] pb-[22px] pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/notes")}
+              className="hidden"
+              aria-label="Back to notes"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
 
-        {showFolderPicker && (
-          <>
-            <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Move to
+            <div className="flex items-center gap-2.5">
+              <div className="hidden min-w-[100px] justify-start sm:flex">
+                <SaveIndicator
+                  status={saveStatus}
+                  onRetry={() => doSave(title, content)}
+                />
+              </div>
+              <div
+                className="flex items-center rounded-full border border-border bg-card p-0.5"
+                role="group"
+                aria-label="Editor view mode"
+              >
+                {(
+                  [
+                    { id: "edit", label: "Write", icon: PencilLine },
+                    ...(isDesktop
+                      ? [{ id: "split", label: "Split", icon: Columns2 }]
+                      : []),
+                    { id: "view", label: "Read", icon: Eye },
+                  ] as {
+                    id: "edit" | "split" | "view";
+                    label: string;
+                    icon: React.ComponentType<{ className?: string }>;
+                  }[]
+                ).map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setViewMode(m.id)}
+                    className={cn(
+                      "flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors",
+                      viewMode === m.id
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-pressed={viewMode === m.id}
+                    aria-label={m.label}
+                  >
+                    <m.icon className="h-3.5 w-3.5" />
+                    <span className="hidden md:inline">{m.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex sm:hidden">
+                <SaveIndicator
+                  status={saveStatus}
+                  onRetry={() => doSave(title, content)}
+                />
+              </div>
+              <button
+                ref={overflowBtnRef}
+                type="button"
+                onClick={() => setOverflowOpen((v) => !v)}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  overflowOpen && "bg-accent text-foreground",
+                )}
+                aria-label="More options"
+                aria-haspopup="menu"
+                aria-expanded={overflowOpen}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
             </div>
-            <PopoverItem
-              icon={FileText}
-              label="Loose note"
-              active={placement.kind === "loose"}
-              onClick={() => handleMove({ kind: "loose" })}
-            />
-            {folders.filter((f) => !f.isTrashed).length > 0 && (
-              <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Folders
-              </div>
-            )}
-            {folders
-              .filter((f) => !f.isTrashed)
-              .map((f) => (
-                <PopoverItem
-                  key={f.id}
-                  icon={Folder}
-                  label={f.name}
-                  active={placement.kind === "folder" && placement.id === f.id}
-                  onClick={() => handleMove({ kind: "folder", id: f.id, name: f.name })}
-                />
-              ))}
-            {notebooks.filter((n) => !n.isTrashed).length > 0 && (
-              <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Notebooks
-              </div>
-            )}
-            {notebooks
-              .filter((n) => !n.isTrashed)
-              .map((n) => (
-                <PopoverItem
-                  key={n.id}
-                  icon={BookOpen}
-                  label={n.name}
-                  active={placement.kind === "notebook" && placement.id === n.id}
-                  onClick={() => handleMove({ kind: "notebook", id: n.id, name: n.name })}
-                />
-              ))}
-          </>
-        )}
+          </div>
 
-        {sharePanel && (
-          <div className="w-72 p-2.5">
-            <p className="mb-2 text-xs font-medium text-foreground">
-              {note.isPublic ? "Public link" : "Share this note"}
-            </p>
-            {note.isPublic ? (
+          {/* Formatting toolbar (edit mode only) */}
+          {viewMode !== "view" && (
+            <div className="sticky top-0 z-20 -mx-1.5 mb-5 bg-card/95 px-1.5 pt-2 backdrop-blur">
+              <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2">
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Bold (⌘B)"
+                  onClick={() => {
+                    wrapSelection("**", "**");
+                  }}
+                >
+                  <Bold className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Italic (⌘I)"
+                  onClick={() => wrapSelection("*", "*")}
+                >
+                  <Italic className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Strikethrough"
+                  onClick={() => wrapSelection("~~", "~~")}
+                >
+                  <Strikethrough className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Code"
+                  onClick={() => wrapSelection("`", "`")}
+                >
+                  <Code className="h-3.5 w-3.5" />
+                </button>
+                <div className="mx-1 h-4 w-px shrink-0 bg-border" />
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Heading"
+                  onClick={() => applyLinePrefix("## ", /^##\s/)}
+                >
+                  <Heading2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Bullet list"
+                  onClick={() => applyLinePrefix("- ", /^[-*]\s(?!\[)/)}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Numbered list"
+                  onClick={() =>
+                    applyLinePrefix((i) => `${i + 1}. `, /^\d+\.\s/)
+                  }
+                >
+                  <ListOrdered className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Checklist"
+                  onClick={() =>
+                    applyLinePrefix("- [ ] ", /^[-*]\s\[[ xX]\]\s/)
+                  }
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Quote"
+                  onClick={() => applyLinePrefix("> ", /^>\s/)}
+                >
+                  <Quote className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Horizontal rule"
+                  onClick={() => insertAtCursor("\n\n---\n\n")}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <div className="mx-1 h-4 w-px shrink-0 bg-border" />
+                <button
+                  ref={linkBtnRef}
+                  type="button"
+                  className={cn(
+                    toolBtn,
+                    linkOpen && "bg-accent text-foreground",
+                  )}
+                  title="Link"
+                  onClick={() => {
+                    setLinkOpen((v) => !v);
+                    setColorPanel("none");
+                    setNotePickerOpen(false);
+                  }}
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  title="Add image (or drag & drop)"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <ImagePlus className="h-3.5 w-3.5" />
+                  )}
+                </button>
+                <button
+                  ref={noteBtnRef}
+                  type="button"
+                  className={cn(
+                    toolBtn,
+                    notePickerOpen && "bg-accent text-foreground",
+                  )}
+                  title="Insert note"
+                  onClick={() => {
+                    setNotePickerOpen((v) => !v);
+                    setColorPanel("none");
+                    setLinkOpen(false);
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  ref={hlBtnRef}
+                  type="button"
+                  className={cn(
+                    toolBtn,
+                    colorPanel === "highlight" && "bg-accent text-foreground",
+                  )}
+                  title="Highlight"
+                  onClick={() => {
+                    setColorPanel((v) =>
+                      v === "highlight" ? "none" : "highlight",
+                    );
+                    setNotePickerOpen(false);
+                    setLinkOpen(false);
+                  }}
+                >
+                  <Highlighter className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  ref={paletteBtnRef}
+                  type="button"
+                  className={cn(
+                    toolBtn,
+                    colorPanel === "text" && "bg-accent text-foreground",
+                  )}
+                  title="Text color"
+                  onClick={() => {
+                    setColorPanel((v) => (v === "text" ? "none" : "text"));
+                    setNotePickerOpen(false);
+                    setLinkOpen(false);
+                  }}
+                >
+                  <Palette className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Hidden image file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadImage(f);
+              e.target.value = "";
+            }}
+          />
+
+          {/* Overflow popover */}
+          <AnchoredPopover
+            anchorRef={overflowBtnRef}
+            open={overflowOpen}
+            onClose={() => {
+              setOverflowOpen(false);
+              setConfirmingDelete(false);
+              setShowFolderPicker(false);
+              setSharePanel(false);
+              setCopied(false);
+            }}
+          >
+            {!confirmingDelete && !showFolderPicker && !sharePanel && (
               <>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    readOnly
-                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/n/${note.publicSlug}`}
-                    onFocus={(e) => e.target.select()}
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-accent/50 px-2 py-1.5 text-[11px] text-muted-foreground outline-none"
-                  />
+                <PopoverItem
+                  icon={FolderIcon}
+                  label="Move to…"
+                  onClick={() => setShowFolderPicker(true)}
+                />
+                <PopoverItem
+                  icon={Globe}
+                  label={note.isPublic ? "Sharing: ON" : "Share publicly"}
+                  onClick={() => setSharePanel(true)}
+                />
+                <PopoverItem
+                  icon={Trash2}
+                  label="Delete note"
+                  danger
+                  onClick={() => setConfirmingDelete(true)}
+                />
+              </>
+            )}
+
+            {showFolderPicker && (
+              <>
+                <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Move to
+                </div>
+                <PopoverItem
+                  icon={FileText}
+                  label="Loose note"
+                  active={placement.kind === "loose"}
+                  onClick={() => handleMove({ kind: "loose" })}
+                />
+                {folders.filter((f) => !f.isTrashed).length > 0 && (
+                  <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Folders
+                  </div>
+                )}
+                {folders
+                  .filter((f) => !f.isTrashed)
+                  .map((f) => (
+                    <PopoverItem
+                      key={f.id}
+                      icon={Folder}
+                      label={f.name}
+                      active={
+                        placement.kind === "folder" && placement.id === f.id
+                      }
+                      onClick={() =>
+                        handleMove({ kind: "folder", id: f.id, name: f.name })
+                      }
+                    />
+                  ))}
+                {notebooks.filter((n) => !n.isTrashed).length > 0 && (
+                  <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Notebooks
+                  </div>
+                )}
+                {notebooks
+                  .filter((n) => !n.isTrashed)
+                  .map((n) => (
+                    <PopoverItem
+                      key={n.id}
+                      icon={BookOpen}
+                      label={n.name}
+                      active={
+                        placement.kind === "notebook" && placement.id === n.id
+                      }
+                      onClick={() =>
+                        handleMove({ kind: "notebook", id: n.id, name: n.name })
+                      }
+                    />
+                  ))}
+              </>
+            )}
+
+            {sharePanel && (
+              <div className="w-72 p-2.5">
+                <p className="mb-2 text-xs font-medium text-foreground">
+                  {note.isPublic ? "Public link" : "Share this note"}
+                </p>
+                {note.isPublic ? (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        readOnly
+                        value={`${typeof window !== "undefined" ? window.location.origin : ""}/n/${note.publicSlug}`}
+                        onFocus={(e) => e.target.select()}
+                        className="min-w-0 flex-1 rounded-lg border border-border bg-accent/50 px-2 py-1.5 text-[11px] text-muted-foreground outline-none"
+                      />
+                      <button
+                        type="button"
+                        aria-label="Copy link"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(
+                            `${window.location.origin}/n/${note.publicSlug}`,
+                          );
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1500);
+                        }}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        {copied ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                      Anyone with this link can read — login ki zaroorat nahi.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={updateNoteMutation.isPending}
+                      onClick={() =>
+                        updateNoteMutation.mutate({
+                          id: noteId!,
+                          isPublic: false,
+                        })
+                      }
+                      className="mt-2 w-full rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                    >
+                      Stop sharing
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
+                      Note sabke liye readable ho jayega (blog jaisa public
+                      link). Edit sirf tum kar sakti ho.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={updateNoteMutation.isPending}
+                      onClick={() =>
+                        updateNoteMutation.mutate(
+                          { id: noteId!, isPublic: true },
+                          { onSuccess: () => setCopied(false) },
+                        )
+                      }
+                      className="w-full rounded-lg bg-primary px-2 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {updateNoteMutation.isPending
+                        ? "Working…"
+                        : "Make public"}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {confirmingDelete && (
+              <div className="p-2">
+                <p className="mb-2 px-1 text-xs text-muted-foreground">
+                  Delete this note? This can&apos;t be undone.
+                </p>
+                <div className="flex gap-1.5">
                   <button
                     type="button"
-                    aria-label="Copy link"
-                    onClick={() => {
-                      void navigator.clipboard?.writeText(
-                        `${window.location.origin}/n/${note.publicSlug}`
-                      );
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 1500);
-                    }}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    onClick={() => setConfirmingDelete(false)}
+                    className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
                   >
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleteNoteMutation.isPending}
+                    className="flex-1 rounded-lg bg-destructive px-2 py-1.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+                  >
+                    {deleteNoteMutation.isPending ? "Deleting…" : "Delete"}
                   </button>
                 </div>
-                <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-                  Anyone with this link can read — login ki zaroorat nahi.
-                </p>
-                <button
-                  type="button"
-                  disabled={updateNoteMutation.isPending}
-                  onClick={() => updateNoteMutation.mutate({ id: noteId!, isPublic: false })}
-                  className="mt-2 w-full rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
-                >
-                  Stop sharing
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
-                  Note sabke liye readable ho jayega (blog jaisa public link). Edit sirf tum kar sakti ho.
-                </p>
-                <button
-                  type="button"
-                  disabled={updateNoteMutation.isPending}
-                  onClick={() =>
-                    updateNoteMutation.mutate(
-                      { id: noteId!, isPublic: true },
-                      { onSuccess: () => setCopied(false) }
-                    )
-                  }
-                  className="w-full rounded-lg bg-primary px-2 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {updateNoteMutation.isPending ? "Working…" : "Make public"}
-                </button>
-              </>
+              </div>
             )}
-          </div>
-        )}
+          </AnchoredPopover>
 
-        {confirmingDelete && (
-          <div className="p-2">
-            <p className="mb-2 px-1 text-xs text-muted-foreground">
-              Delete this note? This can&apos;t be undone.
-            </p>
-            <div className="flex gap-1.5">
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(false)}
-                className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleteNoteMutation.isPending}
-                className="flex-1 rounded-lg bg-destructive px-2 py-1.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
-              >
-                {deleteNoteMutation.isPending ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </div>
-        )}
-      </AnchoredPopover>
-
-      {/* Link popover */}
-      <AnchoredPopover
-        anchorRef={linkBtnRef}
-        open={linkOpen}
-        onClose={() => setLinkOpen(false)}
-      >
-        <div className="w-64 p-2">
-          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Insert link
-          </p>
-          <div className="flex items-center gap-1.5">
-            <input
-              autoFocus
-              placeholder="https://…"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && linkUrl.trim()) {
-                  applyLink(linkUrl.trim());
-                  setLinkUrl("");
-                  setLinkOpen(false);
-                }
-              }}
-              className="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-muted-foreground"
-            />
-            <button
-              type="button"
-              disabled={!linkUrl.trim()}
-              onClick={() => {
-                applyLink(linkUrl.trim());
-                setLinkUrl("");
-                setLinkOpen(false);
-              }}
-              className="h-8 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-            >
-              Add
-            </button>
-          </div>
-          <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
-            Selected text becomes the link label.
-          </p>
-        </div>
-      </AnchoredPopover>
-
-      {/* Color swatches popover */}
-      <AnchoredPopover
-        anchorRef={colorPanel === "highlight" ? hlBtnRef : paletteBtnRef}
-        open={colorPanel !== "none"}
-        onClose={() => setColorPanel("none")}
-      >
-        <div className="flex items-center gap-2 p-2.5">
-          {(colorPanel === "highlight" ? HIGHLIGHT_COLORS : TEXT_COLORS).map((c) => (
-            <button
-              key={c}
-              type="button"
-              aria-label={colorPanel === "highlight" ? `Highlight ${c}` : `Text color ${c}`}
-              onClick={() => {
-                if (colorPanel === "none") return;
-                wrapColor(colorPanel, c);
-              }}
-              className="h-6 w-6 rounded-full border border-border transition-transform hover:scale-110"
-              style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-      </AnchoredPopover>
-
-      {/* Insert-note picker popover */}
-      <AnchoredPopover
-        anchorRef={noteBtnRef}
-        open={notePickerOpen}
-        onClose={() => setNotePickerOpen(false)}
-      >
-        <div className="w-72 p-2">
-          <input
-            autoFocus
-            value={notePickerSearch}
-            onChange={(e) => setNotePickerSearch(e.target.value)}
-            placeholder="Search notes…"
-            className="mb-2 h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none"
-          />
-          <div className="max-h-48 overflow-y-auto">
-            {pickerNotes.map((n) => (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => {
-                  insertAtCursor(`[[${n.title || "Untitled"}]]`);
-                  setNotePickerOpen(false);
-                  setNotePickerSearch("");
-                }}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-accent"
-              >
-                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="truncate">{n.title || "Untitled"}</span>
-              </button>
-            ))}
-            {pickerNotes.length === 0 && (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">
-                No matching notes
+          {/* Link popover */}
+          <AnchoredPopover
+            anchorRef={linkBtnRef}
+            open={linkOpen}
+            onClose={() => setLinkOpen(false)}
+          >
+            <div className="w-64 p-2">
+              <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Insert link
               </p>
-            )}
-          </div>
-          <p className="mt-1.5 border-t border-border/60 px-1 pt-1.5 text-[11px] text-muted-foreground">
-            Link: [[Title]] · Full embed (own line): ![[Title]]
-          </p>
-        </div>
-      </AnchoredPopover>
-
-      {/* Writing surface / preview (same container so the sticky toolbar can pin) */}
-        {viewMode === "view" ? (
-          <div className="min-w-0">
-            <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              {title || "Untitled"}
-            </h1>
-            <div className="mt-4">
-              <MarkdownPreview text={previewContent} onLineClick={jumpToLine} />
+              <div className="flex items-center gap-1.5">
+                <input
+                  autoFocus
+                  placeholder="https://…"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && linkUrl.trim()) {
+                      applyLink(linkUrl.trim());
+                      setLinkUrl("");
+                      setLinkOpen(false);
+                    }
+                  }}
+                  className="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-muted-foreground"
+                />
+                <button
+                  type="button"
+                  disabled={!linkUrl.trim()}
+                  onClick={() => {
+                    applyLink(linkUrl.trim());
+                    setLinkUrl("");
+                    setLinkOpen(false);
+                  }}
+                  className="h-8 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+              <p className="mt-1.5 px-1 text-[11px] text-muted-foreground">
+                Selected text becomes the link label.
+              </p>
             </div>
-          </div>
-        ) : viewMode === "split" ? (
-          <div className="gap-12 md:grid md:grid-cols-2">
-            {/* live editor — desktop only, own scroller for sync */}
-            <div
-              ref={leftScrollRef}
-              onScroll={() => syncScroll("l")}
-              onWheel={() => (userIntent.current.l = Date.now())}
-              onTouchStart={() => (userIntent.current.l = Date.now())}
-              className="relative hidden md:block md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-4"
-            >
+          </AnchoredPopover>
+
+          {/* Color swatches popover */}
+          <AnchoredPopover
+            anchorRef={colorPanel === "highlight" ? hlBtnRef : paletteBtnRef}
+            open={colorPanel !== "none"}
+            onClose={() => setColorPanel("none")}
+          >
+            <div className="flex items-center gap-2 p-2.5">
+              {(colorPanel === "highlight"
+                ? HIGHLIGHT_COLORS
+                : TEXT_COLORS
+              ).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={
+                    colorPanel === "highlight"
+                      ? `Highlight ${c}`
+                      : `Text color ${c}`
+                  }
+                  onClick={() => {
+                    if (colorPanel === "none") return;
+                    wrapColor(colorPanel, c);
+                  }}
+                  className="h-6 w-6 rounded-full border border-border transition-transform hover:scale-110"
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </AnchoredPopover>
+
+          {/* Insert-note picker popover */}
+          <AnchoredPopover
+            anchorRef={noteBtnRef}
+            open={notePickerOpen}
+            onClose={() => setNotePickerOpen(false)}
+          >
+            <div className="w-72 p-2">
               <input
+                autoFocus
+                value={notePickerSearch}
+                onChange={(e) => setNotePickerSearch(e.target.value)}
+                placeholder="Search notes…"
+                className="mb-2 h-8 w-full rounded-md border border-input bg-background px-2 text-sm outline-none"
+              />
+              <div className="max-h-48 overflow-y-auto">
+                {pickerNotes.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => {
+                      insertAtCursor(`[[${n.title || "Untitled"}]]`);
+                      setNotePickerOpen(false);
+                      setNotePickerSearch("");
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-accent"
+                  >
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{n.title || "Untitled"}</span>
+                  </button>
+                ))}
+                {pickerNotes.length === 0 && (
+                  <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                    No matching notes
+                  </p>
+                )}
+              </div>
+              <p className="mt-1.5 border-t border-border/60 px-1 pt-1.5 text-[11px] text-muted-foreground">
+                Link: [[Title]] · Full embed (own line): ![[Title]]
+              </p>
+            </div>
+          </AnchoredPopover>
+
+          {/* Writing surface / preview (same container so the sticky toolbar can pin) */}
+          {viewMode === "view" ? (
+            <div className="min-w-0">
+              <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                {title || "Untitled"}
+              </h1>
+              <div className="mt-4">
+                <MarkdownPreview
+                  text={previewContent}
+                  onLineClick={jumpToLine}
+                />
+              </div>
+            </div>
+          ) : viewMode === "split" ? (
+            <div className="gap-12 md:grid md:grid-cols-2">
+              {/* live editor — desktop only, own scroller for sync */}
+              <div
+                ref={leftScrollRef}
+                onScroll={() => syncScroll("l")}
+                onWheel={() => (userIntent.current.l = Date.now())}
+                onTouchStart={() => (userIntent.current.l = Date.now())}
+                className="relative hidden md:block md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-4"
+              >
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Title"
+                  className="py-3 !text-[21px] w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
+                  spellCheck={false}
+                />
+                <textarea
+                  ref={bodyRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onKeyDown={handleBodyKeyDown}
+                  onPaste={handlePaste}
+                  onSelect={updateSelRect}
+                  onBlur={(e) => {
+                    const rt = e.relatedTarget as HTMLElement | null;
+                    if (rt?.closest("[data-sel-toolbar]")) return;
+                    setSelRect(null);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragging(true);
+                  }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragging(false);
+                    const f = Array.from(e.dataTransfer.files).find((x) =>
+                      x.type.startsWith("image/"),
+                    );
+                    if (f) void uploadImage(f);
+                  }}
+                  placeholder="Start writing…"
+                  className={cn(
+                    "min-h-[360px] px-1 pb-6 pt-2 !text-[15.5px] mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                    dragging && "rounded-xl ring-2 ring-primary/40",
+                  )}
+                  spellCheck={false}
+                  rows={1}
+                />
+              </div>
+              {/* preview column — own scroller, synced with editor */}
+              <div
+                ref={rightScrollRef}
+                onScroll={() => syncScroll("r")}
+                onWheel={() => (userIntent.current.r = Date.now())}
+                onTouchStart={() => (userIntent.current.r = Date.now())}
+                className="relative min-w-0 md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-2"
+              >
+                <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  {title || "Untitled"}
+                </h1>
+                <div className="mt-4">
+                  <MarkdownPreview
+                    text={previewContent}
+                    onLineClick={jumpToLine}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <input
+                ref={titleRef}
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -1560,108 +1787,160 @@ export function NoteEditor() {
                   e.preventDefault();
                   setDragging(false);
                   const f = Array.from(e.dataTransfer.files).find((x) =>
-                    x.type.startsWith("image/")
+                    x.type.startsWith("image/"),
                   );
                   if (f) void uploadImage(f);
                 }}
-                placeholder="Start writing…"
+                placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
                 className={cn(
                   "min-h-[360px] px-1 pb-6 pt-2 !text-[15.5px] mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
-                  dragging && "rounded-xl ring-2 ring-primary/40"
+                  dragging && "rounded-xl ring-2 ring-primary/40",
                 )}
                 spellCheck={false}
                 rows={1}
               />
-            </div>
-            {/* preview column — own scroller, synced with editor */}
-            <div
-              ref={rightScrollRef}
-              onScroll={() => syncScroll("r")}
-              onWheel={() => (userIntent.current.r = Date.now())}
-              onTouchStart={() => (userIntent.current.r = Date.now())}
-              className="relative min-w-0 md:max-h-[calc(100dvh-230px)] md:overflow-y-auto md:pr-2"
-            >
-              <h1 className="w-full text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                {title || "Untitled"}
-              </h1>
-              <div className="mt-4">
-                <MarkdownPreview text={previewContent} onLineClick={jumpToLine} />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <input
-              ref={titleRef}
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title"
-              className="py-3 !text-[21px] w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
-              spellCheck={false}
-            />
-            <textarea
-              ref={bodyRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onKeyDown={handleBodyKeyDown}
-              onPaste={handlePaste}
-              onSelect={updateSelRect}
-              onBlur={(e) => {
-                  const rt = e.relatedTarget as HTMLElement | null;
-                  if (rt?.closest("[data-sel-toolbar]")) return;
-                  setSelRect(null);
-                }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragging(false);
-                const f = Array.from(e.dataTransfer.files).find((x) =>
-                  x.type.startsWith("image/")
-                );
-                if (f) void uploadImage(f);
-              }}
-              placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
-              className={cn(
-                "min-h-[360px] px-1 pb-6 pt-2 !text-[15.5px] mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
-                dragging && "rounded-xl ring-2 ring-primary/40"
-              )}
-              spellCheck={false}
-              rows={1}
-            />
-          </>
-        )}
+            </>
+          )}
 
-        {/* Bottom meta */}
-        {(wordCount > 0 || charCount > 0) && (
-          <div className="mt-8 text-right text-[11px] text-muted-foreground/50">
-            {wordCount} {wordCount === 1 ? "word" : "words"}
-            {charCount > 0 && <> · {charCount} chars</>}
-            {wordCount > 0 && <> · ~{readMins} min read</>}
-          </div>
-        )}
-      </div>
-      <aside className="flex min-w-0 flex-col gap-4" aria-label="Note options">
-        <EditorOptionPanel>
-          <h2>Organise</h2>
-          <label htmlFor="note-placement">Collection</label>
-          <select id="note-placement" value={placement.kind === "folder" ? placement.id : ""} onChange={(e) => { const folder = folders.find(f => f.id === e.target.value); handleMove(folder ? { kind: "folder", id: folder.id, name: folder.name } : { kind: "loose" }); }}>
-            <option value="">None</option>{folders.filter(f => !f.isTrashed).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-          </select>
-          <label htmlFor="note-notebook">Notebook</label>
-          <select id="note-notebook" value={placement.kind === "notebook" ? placement.id : ""} onChange={(e) => { const notebook = notebooks.find(n => n.id === e.target.value); handleMove(notebook ? { kind: "notebook", id: notebook.id, name: notebook.name } : { kind: "loose" }); }}>
-            <option value="">None</option>{notebooks.filter(n => !n.isTrashed).map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
-          </select>
-          <p className="mb-[5px] mt-3 block text-xs font-bold text-muted-foreground">Tags</p><div className="flex min-h-[38px] flex-wrap gap-1.5 rounded-[9px] border border-border p-[7px] [&_span]:rounded-full [&_span]:bg-primary/10 [&_span]:px-[9px] [&_span]:py-[3px] [&_span]:text-xs [&_span]:font-semibold [&_span]:text-primary">{note.tags?.length ? note.tags.map(tag => <span key={tag}>#{tag}</span>) : <span className="!bg-transparent !font-normal !text-muted-foreground">No tags</span>}</div>
-          {updateNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Update failed. Please try again.</p>}
-        </EditorOptionPanel>
-        <EditorOptionPanel><h2>Share</h2><p className="mb-3 text-[13px] leading-[1.55] text-muted-foreground">{note.isPublic ? "This note is public. Manage your sharing settings." : "This note is private until you choose to share it."}</p><Button type="button" variant="outline" className="w-full" onClick={() => { setSharePanel(true); setShowFolderPicker(false); setConfirmingDelete(false); setOverflowOpen(true); }}> <Globe className="h-4 w-4" /> Manage sharing</Button></EditorOptionPanel>
-        <EditorOptionPanel><h2>Danger zone</h2><Button type="button" variant="outline" className="w-full text-destructive" disabled={deleteNoteMutation.isPending} onClick={() => { if (window.confirm("Move this note to trash?")) handleDelete(); }}><Trash2 className="h-4 w-4" /> {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}</Button>{deleteNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Could not move note to trash.</p>}</EditorOptionPanel>
-      </aside>
+          {/* Bottom meta */}
+          {(wordCount > 0 || charCount > 0) && (
+            <div className="mt-8 text-right text-[11px] text-muted-foreground/50">
+              {wordCount} {wordCount === 1 ? "word" : "words"}
+              {charCount > 0 && <> · {charCount} chars</>}
+              {wordCount > 0 && <> · ~{readMins} min read</>}
+            </div>
+          )}
+        </div>
+        <aside
+          className="flex min-w-0 flex-col gap-4"
+          aria-label="Note options"
+        >
+          <EditorOptionPanel>
+            <h2 className="mb-2.5 text-[13px] font-extrabold">Organise</h2>
+            <label
+              className="mb-[5px] mt-3 block text-xs font-bold text-muted-foreground"
+              htmlFor="note-placement"
+            >
+              Collection
+            </label>
+            <select
+              className="min-h-[var(--control-height)] w-full rounded-[var(--radius-control)] border border-input bg-card p-2 text-[13px] text-foreground"
+              id="note-placement"
+              value={placement.kind === "folder" ? placement.id : ""}
+              onChange={(e) => {
+                const folder = folders.find((f) => f.id === e.target.value);
+                handleMove(
+                  folder
+                    ? { kind: "folder", id: folder.id, name: folder.name }
+                    : { kind: "loose" },
+                );
+              }}
+            >
+              <option value="">None</option>
+              {folders
+                .filter((f) => !f.isTrashed)
+                .map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+            </select>
+            <label
+              className="mb-[5px] mt-3 block text-xs font-bold text-muted-foreground"
+              htmlFor="note-notebook"
+            >
+              Notebook
+            </label>
+            <select
+              className="min-h-[var(--control-height)] w-full rounded-[var(--radius-control)] border border-input bg-card p-2 text-[13px] text-foreground"
+              id="note-notebook"
+              value={placement.kind === "notebook" ? placement.id : ""}
+              onChange={(e) => {
+                const notebook = notebooks.find((n) => n.id === e.target.value);
+                handleMove(
+                  notebook
+                    ? { kind: "notebook", id: notebook.id, name: notebook.name }
+                    : { kind: "loose" },
+                );
+              }}
+            >
+              <option value="">None</option>
+              {notebooks
+                .filter((n) => !n.isTrashed)
+                .map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.name}
+                  </option>
+                ))}
+            </select>
+            <p className="mb-[5px] mt-3 block text-xs font-bold text-muted-foreground">
+              Tags
+            </p>
+            <div className="flex min-h-[38px] flex-wrap gap-1.5 rounded-[9px] border border-border p-[7px]">
+              {note.tags?.length ? (
+                note.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-primary/10 px-[9px] py-[3px] text-xs font-semibold text-primary"
+                  >
+                    #{tag}
+                  </span>
+                ))
+              ) : (
+                <span className="!bg-transparent !font-normal !text-muted-foreground">
+                  No tags
+                </span>
+              )}
+            </div>
+            {updateNoteMutation.isError && (
+              <p role="alert" className="mt-2 text-xs text-destructive">
+                Update failed. Please try again.
+              </p>
+            )}
+          </EditorOptionPanel>
+          <EditorOptionPanel>
+            <h2 className="mb-2.5 text-[13px] font-extrabold">Share</h2>
+            <p className="mb-3 text-[13px] leading-[1.55] text-muted-foreground">
+              {note.isPublic
+                ? "This note is public. Manage your sharing settings."
+                : "This note is private until you choose to share it."}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setSharePanel(true);
+                setShowFolderPicker(false);
+                setConfirmingDelete(false);
+                setOverflowOpen(true);
+              }}
+            >
+              {" "}
+              <Globe className="h-4 w-4" /> Manage sharing
+            </Button>
+          </EditorOptionPanel>
+          <EditorOptionPanel>
+            <h2 className="mb-2.5 text-[13px] font-extrabold">Danger zone</h2>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-destructive"
+              disabled={deleteNoteMutation.isPending}
+              onClick={() => {
+                if (window.confirm("Move this note to trash?")) handleDelete();
+              }}
+            >
+              <Trash2 className="h-4 w-4" />{" "}
+              {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}
+            </Button>
+            {deleteNoteMutation.isError && (
+              <p role="alert" className="mt-2 text-xs text-destructive">
+                Could not move note to trash.
+              </p>
+            )}
+          </EditorOptionPanel>
+        </aside>
       </div>
 
       {/* Floating selection toolbar */}

@@ -1,4 +1,5 @@
 "use client";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 
@@ -31,17 +32,23 @@ export default function SettingsPage() {
 
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
   const [pwBusy, setPwBusy] = useState(false);
-  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
 
   const [aiCfg, setAiCfg] = useState(() => getAIConfig());
-  const [aiOrg, setAiOrg] = useState(
-    () => typeof window === "undefined" ? true : (localStorage.getItem("stash_ai_organize") ?? "1") === "1"
+  const [aiOrg, setAiOrg] = useState(() =>
+    typeof window === "undefined"
+      ? true
+      : (localStorage.getItem("stash_ai_organize") ?? "1") === "1",
   );
   const [aiProvider, setAiProvider] = useState<AIProvider>(
-    aiCfg?.provider ?? "groq"
+    aiCfg?.provider ?? "groq",
   );
   const [aiKey, setAiKey] = useState(aiCfg?.key ?? "");
-  const [aiMsg, setAiMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [aiMsg, setAiMsg] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
   const [aiBusy, setAiBusy] = useState<"" | "test">("");
 
   const [plan, setPlan] = useState<"free" | "pro">("free");
@@ -75,8 +82,13 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("upgraded=1")) {
-      const hdrs = { authorization: `Bearer ${localStorage.getItem("access_token")}` };
+    if (
+      typeof window !== "undefined" &&
+      window.location.search.includes("upgraded=1")
+    ) {
+      const hdrs = {
+        authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      };
       fetch("/api/auth/me", { headers: hdrs })
         .then((r) => r.json())
         .then((j) => {
@@ -84,7 +96,9 @@ export default function SettingsPage() {
             setPlan("pro");
             return;
           }
-          setExpMsg("Payment received! Pro activates within a minute — refreshing…");
+          setExpMsg(
+            "Payment received! Pro activates within a minute — refreshing…",
+          );
           const t = setInterval(() => {
             fetch("/api/auth/me", { headers: hdrs })
               .then((r) => r.json())
@@ -164,7 +178,7 @@ export default function SettingsPage() {
     setAiMsg(
       r.ok
         ? { ok: true, text: "Key works!" }
-        : { ok: false, text: r.error || "Key failed." }
+        : { ok: false, text: r.error || "Key failed." },
     );
   }
 
@@ -216,7 +230,9 @@ export default function SettingsPage() {
       setPw({ current: "", next: "", confirm: "" });
       setPwMsg({ ok: true, text: "Password changed successfully." });
     } catch (err: unknown) {
-      const e2 = err as { response?: { data?: { error?: { message?: string } } } };
+      const e2 = err as {
+        response?: { data?: { error?: { message?: string } } };
+      };
       setPwMsg({
         ok: false,
         text:
@@ -234,263 +250,264 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-[1080px] [&>div:first-child]:mb-4 [&_h1]:text-lg [&_h1]:font-extrabold [&_h2]:text-[15.5px] [&_h2]:font-extrabold [&_input]:bg-card">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+    <div className="mx-auto max-w-[1080px]">
+      <div className="mb-4">
+        <h1 className="text-lg font-extrabold text-foreground">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Account and data controls.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2"><div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
-      {/* AI auto-organize */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Sparkles className="h-4 w-4 text-primary" /> AI auto-organize
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          When you save a note, AI quietly tags it using your existing
-          vocabulary. New tags arrive with an Undo toast.
-        </p>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={aiOrg}
-          onClick={() => {
-            const next = !aiOrg;
-            setAiOrg(next);
-            localStorage.setItem("stash_ai_organize", next ? "1" : "0");
-          }}
-          className={cn(
-            "mt-4 flex h-6 w-11 items-center rounded-full p-0.5 transition-colors",
-            aiOrg ? "bg-primary" : "bg-muted-foreground/40"
-          )}
-        >
-          <span
-            className={cn(
-              "h-5 w-5 rounded-full bg-white transition-transform",
-              aiOrg && "translate-x-5"
-            )}
-          />
-        </button>
-      </div>
-
-      {/* Appearance */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-medium text-foreground">Appearance</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choose a light, dark or system theme.
-        </p>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {themeOptions.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTheme(id)}
-              className="flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors"
-              style={
-                theme === id
-                  ? {
-                      borderColor: "var(--primary)",
-                      color: "var(--primary)",
-                      backgroundColor: "color-mix(in srgb, var(--primary) 8%, transparent)",
-                    }
-                  : {
-                      borderColor: "var(--border)",
-                      color: "var(--muted-foreground)",
-                    }
-              }
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Change password */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <KeyRound className="h-4 w-4" /> Change password
-        </h2>
-        <form onSubmit={changePassword} className="mt-4 space-y-3">
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            placeholder="Current password"
-            value={pw.current}
-            onChange={(e) => setPw({ ...pw, current: e.target.value })}
-            className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
-          />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              placeholder="New password"
-              value={pw.next}
-              onChange={(e) => setPw({ ...pw, next: e.target.value })}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
-            />
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              placeholder="Confirm new password"
-              value={pw.confirm}
-              onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={pwBusy}
-            
-          >
-            {pwBusy ? "Saving..." : "Change password"}
-          </Button>
-          {pwMsg && (
-            <p
-              className="text-xs"
-              style={{ color: pwMsg.ok ? "var(--success)" : "var(--destructive)" }}
-            >
-              {pwMsg.text}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
+          {/* AI auto-organize */}
+          <Card className="p-[22px]">
+            <h2 className="flex items-center gap-2 text-[15.5px] font-extrabold text-foreground">
+              <Sparkles className="h-4 w-4 text-primary" /> AI auto-organize
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              When you save a note, AI quietly tags it using your existing
+              vocabulary. New tags arrive with an Undo toast.
             </p>
-          )}
-        </form>
-      </div>
-
-      {/* Data backup */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-medium text-foreground">Data backup</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Download all your links, notes, notebooks, folders and pads as a
-          JSON file.
-        </p>
-        <Button
-          onClick={downloadBackup}
-          disabled={busy}
-          className="mt-4"
-        >
-          <Download className="h-4 w-4" />
-          {busy ? "Exporting..." : "Export JSON"}
-        </Button>
-        {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
-      </div>
-      </div><div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
-      {/* Plan & export */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Crown className="h-4 w-4 text-primary" /> Plan & Export
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Current plan:{" "}
-          <span className="font-semibold capitalize text-foreground">{plan}</span>{" "}
-          — Free includes 10 AI chats/day and 50 items total. Pro (₹399 / $9
-          one-time) unlocks unlimited items, 200 AI chats/day and full export.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            onClick={() => doExport("json")}
-            disabled={plan !== "pro" || expBusy}
-            variant="outline" 
-          >
-            Export JSON
-          </Button>
-          <Button
-            onClick={() => doExport("markdown")}
-            disabled={plan !== "pro" || expBusy}
-            variant="outline" 
-          >
-            Export Markdown
-          </Button>
-          {plan !== "pro" && (
-            <Button
-              onClick={upgrade}
-              disabled={upBusy}
-              
+            <button
+              type="button"
+              role="switch"
+              aria-checked={aiOrg}
+              onClick={() => {
+                const next = !aiOrg;
+                setAiOrg(next);
+                localStorage.setItem("stash_ai_organize", next ? "1" : "0");
+              }}
+              className={cn(
+                "mt-4 flex h-6 w-11 items-center rounded-full p-0.5 transition-colors",
+                aiOrg ? "bg-primary" : "bg-muted-foreground/40",
+              )}
             >
-              {upBusy ? "Opening checkout…" : "Upgrade to Pro — ₹399 / $9 once"}
+              <span
+                className={cn(
+                  "h-5 w-5 rounded-full bg-white transition-transform",
+                  aiOrg && "translate-x-5",
+                )}
+              />
+            </button>
+          </Card>
+
+          {/* Appearance */}
+          <Card className="p-[22px]">
+            <h2 className="text-[15.5px] font-extrabold text-foreground">
+              Appearance
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Choose a light, dark or system theme.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {themeOptions.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setTheme(id)}
+                  className="flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors"
+                  style={
+                    theme === id
+                      ? {
+                          borderColor: "var(--primary)",
+                          color: "var(--primary)",
+                          backgroundColor:
+                            "color-mix(in srgb, var(--primary) 8%, transparent)",
+                        }
+                      : {
+                          borderColor: "var(--border)",
+                          color: "var(--muted-foreground)",
+                        }
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          {/* Change password */}
+          <Card className="p-[22px]">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <KeyRound className="h-4 w-4" /> Change password
+            </h2>
+            <form onSubmit={changePassword} className="mt-4 space-y-3">
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder="Current password"
+                value={pw.current}
+                onChange={(e) => setPw({ ...pw, current: e.target.value })}
+                className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  placeholder="New password"
+                  value={pw.next}
+                  onChange={(e) => setPw({ ...pw, next: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
+                />
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  placeholder="Confirm new password"
+                  value={pw.confirm}
+                  onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
+                />
+              </div>
+              <Button type="submit" disabled={pwBusy}>
+                {pwBusy ? "Saving..." : "Change password"}
+              </Button>
+              {pwMsg && (
+                <p
+                  className="text-xs"
+                  style={{
+                    color: pwMsg.ok ? "var(--success)" : "var(--destructive)",
+                  }}
+                >
+                  {pwMsg.text}
+                </p>
+              )}
+            </form>
+          </Card>
+
+          {/* Data backup */}
+          <Card className="p-[22px]">
+            <h2 className="text-[15.5px] font-extrabold text-foreground">
+              Data backup
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Download all your links, notes, notebooks, folders and pads as a
+              JSON file.
+            </p>
+            <Button onClick={downloadBackup} disabled={busy} className="mt-4">
+              <Download className="h-4 w-4" />
+              {busy ? "Exporting..." : "Export JSON"}
             </Button>
-          )}
-          {plan === "pro" && (
-            <span className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
-              Pro active <Check className="mx-1 inline-block h-4 w-4" aria-hidden="true" /> — unlimited everything
-            </span>
-          )}
+            {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
+          </Card>
         </div>
-        {expMsg && (
-          <p className="mt-2 text-xs text-muted-foreground">{expMsg}</p>
-        )}
+        <div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
+          {/* Plan & export */}
+          <Card className="p-[22px]">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Crown className="h-4 w-4 text-primary" /> Plan & Export
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Current plan:{" "}
+              <span className="font-semibold capitalize text-foreground">
+                {plan}
+              </span>{" "}
+              — Free includes 10 AI chats/day and 50 items total. Pro (₹399 / $9
+              one-time) unlocks unlimited items, 200 AI chats/day and full
+              export.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                onClick={() => doExport("json")}
+                disabled={plan !== "pro" || expBusy}
+                variant="outline"
+              >
+                Export JSON
+              </Button>
+              <Button
+                onClick={() => doExport("markdown")}
+                disabled={plan !== "pro" || expBusy}
+                variant="outline"
+              >
+                Export Markdown
+              </Button>
+              {plan !== "pro" && (
+                <Button onClick={upgrade} disabled={upBusy}>
+                  {upBusy
+                    ? "Opening checkout…"
+                    : "Upgrade to Pro — ₹399 / $9 once"}
+                </Button>
+              )}
+              {plan === "pro" && (
+                <span className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                  Pro active{" "}
+                  <Check
+                    className="mx-1 inline-block h-4 w-4"
+                    aria-hidden="true"
+                  />{" "}
+                  — unlimited everything
+                </span>
+              )}
+            </div>
+            {expMsg && (
+              <p className="mt-2 text-xs text-muted-foreground">{expMsg}</p>
+            )}
+          </Card>
+
+          {/* AI assistant */}
+          <Card className="p-[22px]">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Sparkles className="h-4 w-4 text-primary" /> AI Assistant
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add your own free Groq or Gemini API key to enable AI Chat. The
+              key is stored only in this browser — never sent to our server.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <select
+                value={aiProvider}
+                onChange={(e) => setAiProvider(e.target.value as AIProvider)}
+                className="h-10 rounded-xl border border-border bg-background px-3 text-sm outline-none"
+              >
+                <option value="groq">Groq (fast)</option>
+                <option value="gemini">Gemini (generous free)</option>
+              </select>
+              <input
+                type="password"
+                value={aiKey}
+                onChange={(e) => setAiKey(e.target.value)}
+                placeholder={aiProvider === "groq" ? "gsk_…" : "AIza…"}
+                className="h-10 flex-1 rounded-xl border border-border bg-background px-3 text-sm outline-none"
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button onClick={aiSave} disabled={!aiKey.trim()}>
+                Save key
+              </Button>
+              <Button
+                onClick={aiTest}
+                disabled={!aiKey.trim() || aiBusy === "test"}
+                variant="outline"
+              >
+                {aiBusy === "test" ? "Testing…" : "Test key"}
+              </Button>
+              {aiCfg && (
+                <Button onClick={aiRemove} variant="outline">
+                  Remove
+                </Button>
+              )}
+            </div>
+            {aiCfg && !aiMsg && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Active: {aiCfg.provider} key saved on this device.
+              </p>
+            )}
+            {aiMsg && (
+              <p
+                className="mt-2 text-xs"
+                style={{
+                  color: aiMsg.ok ? "var(--success)" : "var(--destructive)",
+                }}
+              >
+                {aiMsg.text}
+              </p>
+            )}
+          </Card>
+        </div>
       </div>
-
-      {/* AI assistant */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Sparkles className="h-4 w-4 text-primary" /> AI Assistant
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add your own free Groq or Gemini API key to enable AI Chat. The key
-          is stored only in this browser — never sent to our server.
-        </p>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <select
-            value={aiProvider}
-            onChange={(e) => setAiProvider(e.target.value as AIProvider)}
-            className="h-10 rounded-xl border border-border bg-background px-3 text-sm outline-none"
-          >
-            <option value="groq">Groq (fast)</option>
-            <option value="gemini">Gemini (generous free)</option>
-          </select>
-          <input
-            type="password"
-            value={aiKey}
-            onChange={(e) => setAiKey(e.target.value)}
-            placeholder={aiProvider === "groq" ? "gsk_…" : "AIza…"}
-            className="h-10 flex-1 rounded-xl border border-border bg-background px-3 text-sm outline-none"
-          />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            onClick={aiSave}
-            disabled={!aiKey.trim()}
-            
-          >
-            Save key
-          </Button>
-          <Button
-            onClick={aiTest}
-            disabled={!aiKey.trim() || aiBusy === "test"}
-            variant="outline" 
-          >
-            {aiBusy === "test" ? "Testing…" : "Test key"}
-          </Button>
-          {aiCfg && (
-            <Button
-              onClick={aiRemove}
-              variant="outline" 
-            >
-              Remove
-            </Button>
-          )}
-        </div>
-        {aiCfg && !aiMsg && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Active: {aiCfg.provider} key saved on this device.
-          </p>
-        )}
-        {aiMsg && (
-          <p
-            className="mt-2 text-xs"
-            style={{ color: aiMsg.ok ? "var(--success)" : "var(--destructive)" }}
-          >
-            {aiMsg.text}
-          </p>
-        )}
-      </div>
-
-
-      </div></div>
     </div>
   );
 }
