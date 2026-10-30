@@ -123,7 +123,7 @@ export function LinksTrash({ onBack }: { onBack: () => void }) {
                 <span
                   className={
                     selectedIds.includes(l.id)
-                      ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+                      ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
                       : "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border"
                   }
                 >

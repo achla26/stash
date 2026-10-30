@@ -446,7 +446,7 @@ function PadInfoCard({ pad }: { pad: Pad }) {
       </div>
       {pad.userId && (
         <div className="mt-2 rounded-md bg-primary/5 px-2 py-1 text-xs text-primary">
-          ✓ You are the owner of this pad
+          <Check className="mr-1 inline-block h-3 w-3" aria-hidden="true" /> You are the owner of this pad
         </div>
       )}
     </div>

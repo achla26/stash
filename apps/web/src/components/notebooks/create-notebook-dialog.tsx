@@ -10,6 +10,7 @@ import {
 } from "@repo/contracts/schemas";
 import { useCreateNotebook } from "@/hooks/use-notebooks";
 import { toast } from "sonner";
+import { ItemIcon, NOTEBOOK_ICONS, normalizeItemIcon } from "@/components/shared/item-icon";
 import { cn } from "@/lib/utils";
 
 interface CreateNotebookDialogProps {
@@ -28,18 +29,7 @@ const COLORS = [
   { name: "Yellow", value: "#eab308" },
 ];
 
-const ICONS = [
-  "📓",
-  "📕",
-  "📗",
-  "📘",
-  "📙",
-  "📔",
-  "📒",
-  "📝",
-  "🗂️",
-  "💼",
-];
+const ICONS = NOTEBOOK_ICONS;
 
 export function CreateNotebookDialog({
   isOpen,
@@ -59,7 +49,7 @@ export function CreateNotebookDialog({
     resolver: zodResolver(createNotebookSchema) as never,
     defaultValues: {
       name: "",
-      icon: "📓",
+      icon: "book",
       coverColor: "#3b82f6",
       description: "",
     },
@@ -176,7 +166,7 @@ export function CreateNotebookDialog({
                   border: `2px solid ${coverColor}`,
                 }}
               >
-                <span className="drop-shadow-sm">{icon}</span>
+                <ItemIcon value={icon} fallback="book" size={44} className="text-primary" />
               </div>
               <div
                 className="h-1 w-12 rounded-full transition-colors duration-200"
@@ -231,14 +221,14 @@ export function CreateNotebookDialog({
                       onClick={() => field.onChange(ic)}
                       className={cn(
                         "flex h-11 w-11 items-center justify-center rounded-xl text-xl transition-all",
-                        field.value === ic
+                        normalizeItemIcon(field.value, "book") === ic
                           ? "bg-accent ring-2 ring-primary"
                           : "bg-muted/40 hover:bg-accent",
                       )}
                       aria-label={`Icon ${ic}`}
-                      aria-pressed={field.value === ic}
+                      aria-pressed={normalizeItemIcon(field.value, "book") === ic}
                     >
-                      {ic}
+                      <ItemIcon value={ic} fallback="book" size={20} />
                     </button>
                   ))}
                 </div>

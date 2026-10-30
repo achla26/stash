@@ -300,7 +300,7 @@ export function NotesManagement() {
               }}
               className={
                 activeTag === t
-                  ? "inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-white"
+                  ? "inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                   : "inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               }
             >
@@ -487,7 +487,7 @@ function NoteCard({
         <span
           className={
             isSelected
-              ? "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
+              ? "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
               : "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border border-border bg-card"
           }
         >

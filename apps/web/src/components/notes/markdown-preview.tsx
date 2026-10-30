@@ -386,7 +386,7 @@ export function MarkdownPreview({
             className={cn(
               "mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
               task[1] !== " "
-                ? "border-primary bg-primary text-white"
+                ? "border-primary bg-primary text-primary-foreground"
                 : "border-border"
             )}
           >

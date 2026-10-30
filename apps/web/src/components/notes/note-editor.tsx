@@ -1042,11 +1042,11 @@ export function NoteEditor() {
     "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
   return (
-    <div className="proto-editor-page mx-auto w-full max-w-[1080px] min-w-0">
-      <button type="button" onClick={() => router.push("/notes")} className="proto-link-button mb-4"><ArrowLeft className="h-4 w-4" /> All notes</button>
-      <div className={cn("proto-editor-layout", viewMode === "split" && "proto-editor-split")}>
+    <div className="mx-auto w-full min-w-0 max-w-[1080px]">
+      <button type="button" onClick={() => router.push("/notes")} className="mb-4 inline-flex min-h-[38px] items-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent"><ArrowLeft className="h-4 w-4" /> All notes</button>
+      <div className={cn("grid grid-cols-1 items-start gap-[18px] min-[1025px]:grid-cols-[minmax(0,1fr)_300px]", viewMode === "split" && "min-[1025px]:grid-cols-1")}>
       {/* Existing editor and autosave logic are retained. */}
-      <div className="proto-editor-surface min-w-0">
+      <div className="min-w-0 overflow-visible rounded-[14px] border border-border bg-card px-[22px] pb-[22px] pt-4">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -1086,6 +1086,7 @@ export function NoteEditor() {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                   aria-pressed={viewMode === m.id}
+                  aria-label={m.label}
                 >
                   <m.icon className="h-3.5 w-3.5" />
                   <span className="hidden md:inline">{m.label}</span>
@@ -1114,7 +1115,7 @@ export function NoteEditor() {
 
         {/* Formatting toolbar (edit mode only) */}
         {viewMode !== "view" && (
-          <div className="proto-editor-tools sticky top-0 z-20 bg-card/95 pt-2 backdrop-blur">
+          <div className="sticky top-0 z-20 -mx-1.5 mb-5 bg-card/95 px-1.5 pt-2 backdrop-blur">
           <div className="flex items-center gap-0.5 overflow-x-auto border-b border-border/60 pb-2">
             <button type="button" className={toolBtn} title="Bold (⌘B)" onClick={() => { wrapSelection("**", "**"); }}>
               <Bold className="h-3.5 w-3.5" />
@@ -1533,7 +1534,7 @@ export function NoteEditor() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Title"
-                className="proto-editor-title w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
+                className="py-3 !text-[21px] w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
                 spellCheck={false}
               />
               <textarea
@@ -1563,7 +1564,7 @@ export function NoteEditor() {
                 }}
                 placeholder="Start writing…"
                 className={cn(
-                  "proto-editor-body mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                  "min-h-[360px] px-1 pb-6 pt-2 !text-[15.5px] mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
                   dragging && "rounded-xl ring-2 ring-primary/40"
                 )}
                 spellCheck={false}
@@ -1594,7 +1595,7 @@ export function NoteEditor() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Title"
-              className="proto-editor-title w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
+              className="py-3 !text-[21px] w-full resize-none border-none bg-transparent text-2xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/25 sm:text-3xl"
               spellCheck={false}
             />
             <textarea
@@ -1624,7 +1625,7 @@ export function NoteEditor() {
               }}
               placeholder="Start writing…  ( - list, - [ ] checklist, # heading )"
               className={cn(
-                "proto-editor-body mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
+                "min-h-[360px] px-1 pb-6 pt-2 !text-[15.5px] mt-4 w-full resize-none overflow-hidden border-none bg-transparent text-[17px] leading-[1.75] text-foreground outline-none placeholder:text-muted-foreground/25",
                 dragging && "rounded-xl ring-2 ring-primary/40"
               )}
               spellCheck={false}
@@ -1642,8 +1643,8 @@ export function NoteEditor() {
           </div>
         )}
       </div>
-      <aside className="proto-editor-sidebar" aria-label="Note options">
-        <section className="proto-editor-panel">
+      <aside className="flex min-w-0 flex-col gap-4" aria-label="Note options">
+        <section className="rounded-[10px] border border-border bg-card p-[18px] [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_label]:mb-[5px] [&_label]:mt-3 [&_label]:block [&_label]:text-xs [&_label]:font-bold [&_label]:text-muted-foreground [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:p-2 [&_select]:text-[13px] [&_select]:text-foreground">
           <h2>Organise</h2>
           <label htmlFor="note-placement">Collection</label>
           <select id="note-placement" value={placement.kind === "folder" ? placement.id : ""} onChange={(e) => { const folder = folders.find(f => f.id === e.target.value); handleMove(folder ? { kind: "folder", id: folder.id, name: folder.name } : { kind: "loose" }); }}>
@@ -1653,11 +1654,11 @@ export function NoteEditor() {
           <select id="note-notebook" value={placement.kind === "notebook" ? placement.id : ""} onChange={(e) => { const notebook = notebooks.find(n => n.id === e.target.value); handleMove(notebook ? { kind: "notebook", id: notebook.id, name: notebook.name } : { kind: "loose" }); }}>
             <option value="">None</option>{notebooks.filter(n => !n.isTrashed).map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
           </select>
-          <p className="proto-editor-label">Tags</p><div className="proto-editor-tags">{note.tags?.length ? note.tags.map(tag => <span key={tag}>#{tag}</span>) : <span className="proto-editor-no-tags">No tags</span>}</div>
-          {updateNoteMutation.isError && <p role="alert" className="proto-editor-error">Update failed. Please try again.</p>}
+          <p className="mb-[5px] mt-3 block text-xs font-bold text-muted-foreground">Tags</p><div className="flex min-h-[38px] flex-wrap gap-1.5 rounded-[9px] border border-border p-[7px] [&_span]:rounded-full [&_span]:bg-primary/10 [&_span]:px-[9px] [&_span]:py-[3px] [&_span]:text-xs [&_span]:font-semibold [&_span]:text-primary">{note.tags?.length ? note.tags.map(tag => <span key={tag}>#{tag}</span>) : <span className="!bg-transparent !font-normal !text-muted-foreground">No tags</span>}</div>
+          {updateNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Update failed. Please try again.</p>}
         </section>
-        <section className="proto-editor-panel"><h2>Share</h2><p className="proto-editor-help">{note.isPublic ? "This note is public. Manage your sharing settings." : "This note is private until you choose to share it."}</p><button type="button" className="proto-link-button w-full" onClick={() => { setSharePanel(true); setShowFolderPicker(false); setConfirmingDelete(false); setOverflowOpen(true); }}> <Globe className="h-4 w-4" /> Manage sharing</button></section>
-        <section className="proto-editor-panel"><h2>Danger zone</h2><button type="button" className="proto-link-button w-full text-destructive" disabled={deleteNoteMutation.isPending} onClick={() => { if (window.confirm("Move this note to trash?")) handleDelete(); }}><Trash2 className="h-4 w-4" /> {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}</button>{deleteNoteMutation.isError && <p role="alert" className="proto-editor-error">Could not move note to trash.</p>}</section>
+        <section className="rounded-[10px] border border-border bg-card p-[18px] [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_label]:mb-[5px] [&_label]:mt-3 [&_label]:block [&_label]:text-xs [&_label]:font-bold [&_label]:text-muted-foreground [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:p-2 [&_select]:text-[13px] [&_select]:text-foreground"><h2>Share</h2><p className="mb-3 text-[13px] leading-[1.55] text-muted-foreground">{note.isPublic ? "This note is public. Manage your sharing settings." : "This note is private until you choose to share it."}</p><button type="button" className="inline-flex min-h-[38px] w-full items-center justify-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent" onClick={() => { setSharePanel(true); setShowFolderPicker(false); setConfirmingDelete(false); setOverflowOpen(true); }}> <Globe className="h-4 w-4" /> Manage sharing</button></section>
+        <section className="rounded-[10px] border border-border bg-card p-[18px] [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_label]:mb-[5px] [&_label]:mt-3 [&_label]:block [&_label]:text-xs [&_label]:font-bold [&_label]:text-muted-foreground [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:p-2 [&_select]:text-[13px] [&_select]:text-foreground"><h2>Danger zone</h2><button type="button" className="inline-flex min-h-[38px] w-full items-center justify-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold text-destructive hover:bg-accent" disabled={deleteNoteMutation.isPending} onClick={() => { if (window.confirm("Move this note to trash?")) handleDelete(); }}><Trash2 className="h-4 w-4" /> {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}</button>{deleteNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Could not move note to trash.</p>}</section>
       </aside>
       </div>
 

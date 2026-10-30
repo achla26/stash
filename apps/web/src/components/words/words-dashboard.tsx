@@ -610,7 +610,7 @@ export function WordsDashboard() {
                     <span
                       className={
                         selectedIds.includes(w.id)
-                          ? "mt-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+                          ? "mt-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
                           : "mt-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border"
                       }
                     >

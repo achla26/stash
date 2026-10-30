@@ -1,4 +1,5 @@
 "use client";
+import { ItemIcon } from "@/components/shared/item-icon";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -177,7 +178,7 @@ export function LinksDashboard() {
     const name = newCollName.trim();
     if (!name) return;
     createFolderM.mutate(
-      { name, icon: "📁", type: "link" },
+      { name, icon: "folder", type: "link" },
       {
         onSuccess: () => {
           setShowNewColl(false);
@@ -234,7 +235,7 @@ export function LinksDashboard() {
   const topCollections = useMemo(() => {
     const rows = folders.map((f) => ({
       id: f.id,
-      name: `${f.icon} ${f.name}`,
+      name: f.name,
       count: links.filter((l) => l.folderId === f.id).length,
     }));
     const ungrouped = links.filter((l) => !l.folderId).length;
@@ -390,7 +391,7 @@ export function LinksDashboard() {
                       : "bg-accent text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {"icon" in f ? `${(f as any).icon} ` : ""}
+                  {"icon" in f && <ItemIcon value={f.icon} size={12} className="mr-1 inline-block" />}
                   {f.name}
                 </button>
               )
@@ -512,7 +513,7 @@ export function LinksDashboard() {
                       <span
                         className={
                           selectedIds.includes(link.id)
-                            ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+                            ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
                             : "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border"
                         }
                       >
@@ -532,7 +533,7 @@ export function LinksDashboard() {
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         {folder && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
-                            {folder.icon} {folder.name}
+                            <ItemIcon value={folder.icon} size={12} className="mr-1 inline-block" /> {folder.name}
                           </span>
                         )}
                         {link.tags.slice(0, 2).map((t) => (
@@ -616,7 +617,7 @@ export function LinksDashboard() {
                                 }}
                                 className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground"
                               >
-                                <Folder className="h-3 w-3" /> {f.icon} {f.name}
+                                <ItemIcon value={f.icon} size={12} /> {f.name}
                               </button>
                             ))}
                           </div>

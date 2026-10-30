@@ -46,7 +46,7 @@ export function FolderDetail() {
   const handleCreateSub = () => {
     if (!subName.trim()) return;
     createFolder.mutate(
-      { name: subName.trim(), type: "note", parentId: folderId, icon: "📁" },
+      { name: subName.trim(), type: "note", parentId: folderId, icon: "folder" },
       {
         onSuccess: () => {
           setSubDialogOpen(false);

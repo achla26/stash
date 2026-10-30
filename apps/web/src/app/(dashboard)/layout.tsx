@@ -57,7 +57,7 @@ export default function DashboardLayout({
       {/* Main Content */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden pt-14 md:pt-0">
         <TopBar onToggleSidebar={toggleSidebar} />
-        <div className="app-wash min-h-0 min-w-0 w-full flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 md:p-6 md:pb-6 app-scrollbar">
+        <div className="bg-background-secondary min-h-0 min-w-0 w-full flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 md:p-6 md:pb-6 app-scrollbar">
           {children}
         </div>
       </main>

@@ -1,4 +1,5 @@
 "use client";
+import { ItemIcon } from "@/components/shared/item-icon";
 
 import Link from "next/link";
 import {
@@ -63,7 +64,7 @@ export function NotebookCard({
             backgroundColor: `color-mix(in srgb, ${coverColor} 15%, transparent)`,
           }}
         >
-          <span className="text-xl">{notebook.icon}</span>
+          <span className="text-xl"><ItemIcon value={notebook.icon} fallback="book" size={22} /></span>
         </div>
 
         {/* Actions */}

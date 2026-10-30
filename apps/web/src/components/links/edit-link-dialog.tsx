@@ -1,4 +1,5 @@
 "use client";
+import { ItemIcon } from "@/components/shared/item-icon";
 
 import { Link2, FileText, Folder, Tag, Check, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
@@ -81,7 +82,7 @@ function FolderPopoverItem({
       )}
     >
       <span className="flex h-5 w-5 items-center justify-center text-base">
-        {emoji ?? <Folder className="h-3.5 w-3.5 opacity-70" />}
+        <ItemIcon value={emoji} size={14} />
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {isActive && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
@@ -257,7 +258,7 @@ export function EditLinkDialog({
                     <span className="flex min-w-0 items-center gap-2">
                       {selectedFolder ? (
                         <>
-                          <span className="text-base">{selectedFolder.icon}</span>
+                          <span className="text-base"><ItemIcon value={selectedFolder.icon} size={16} /></span>
                           <span className="truncate">{selectedFolder.name}</span>
                         </>
                       ) : (

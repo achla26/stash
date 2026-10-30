@@ -1,4 +1,5 @@
 "use client";
+import { Check } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -232,7 +233,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="proto-settings mx-auto max-w-[1080px]">
+    <div className="mx-auto max-w-[1080px] [&>div:first-child]:mb-4 [&_h1]:text-lg [&_h1]:font-extrabold [&_h2]:text-[15.5px] [&_h2]:font-extrabold [&_input]:bg-card">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -240,7 +241,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="proto-settings-columns"><div className="proto-settings-column">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2"><div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
       {/* AI auto-organize */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -375,7 +376,7 @@ export default function SettingsPage() {
         </button>
         {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
       </div>
-      </div><div className="proto-settings-column">
+      </div><div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
       {/* Plan & export */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -413,7 +414,7 @@ export default function SettingsPage() {
           )}
           {plan === "pro" && (
             <span className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
-              Pro active ✓ — unlimited everything
+              Pro active <Check className="mx-1 inline-block h-4 w-4" aria-hidden="true" /> — unlimited everything
             </span>
           )}
         </div>

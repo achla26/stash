@@ -6,6 +6,7 @@ import { useForm, Controller, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
+import { ItemIcon, COLLECTION_ICONS, normalizeItemIcon } from "@/components/shared/item-icon";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +22,7 @@ interface CollectionBarProps {
   onSelect: (collectionId: string | undefined) => void;
 }
 
-const ICONS = [
-  "📁", "🎨", "💼", "📚", "🎮",
-  "🔬", "🎵", "🏠", "💰", "🌍",
-];
+const ICONS = COLLECTION_ICONS;
 
 export function CollectionBar({ activeCollection, onSelect }: CollectionBarProps) {
   const [showCreate, setShowCreate] = useState(false);
@@ -43,7 +41,7 @@ export function CollectionBar({ activeCollection, onSelect }: CollectionBarProps
     resolver: zodResolver(createFolderSchema) as Resolver<CreateFolderInput>,
     defaultValues: {
       name: "",
-      icon: "📁",
+      icon: "folder",
       type: "link",
     },
   });
@@ -137,7 +135,7 @@ export function CollectionBar({ activeCollection, onSelect }: CollectionBarProps
                     : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-foreground"
                 )}
               >
-                <span>{folder.icon}</span>
+                <ItemIcon value={folder.icon} size={16} />
                 <span>{folder.name}</span>
                 {/* {folder.linkCount !== undefined && (
                   <span className="text-xs opacity-60">{folder.linkCount}</span>
@@ -194,15 +192,17 @@ export function CollectionBar({ activeCollection, onSelect }: CollectionBarProps
                   <button
                     key={icon}
                     type="button"
+                    aria-label={`Icon ${icon}`}
+                    aria-pressed={normalizeItemIcon(field.value) === icon}
                     onClick={() => field.onChange(icon)}
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-lg border text-sm transition-all",
-                      field.value === icon
+                      normalizeItemIcon(field.value) === icon
                         ? "border-primary bg-primary/10"
                         : "border-border bg-accent hover:bg-accent/80"
                     )}
                   >
-                    {icon}
+                    <ItemIcon value={icon} size={16} />
                   </button>
                 ))}
               </div>

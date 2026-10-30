@@ -1,4 +1,5 @@
 "use client";
+import { ItemIcon } from "@/components/shared/item-icon";
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Folder, Check } from "lucide-react";
@@ -49,7 +50,7 @@ export function CollectionSelect({
 
     if (folderId) {
       const folder = folders.find((f) => f.id === folderId);
-      toast.success(`Moved to ${folder?.icon} ${folder?.name}`);
+      toast.success(`Moved to ${folder?.name}`);
     } else {
       toast.success("Removed from collection");
     }
@@ -78,7 +79,7 @@ export function CollectionSelect({
           {currentFolder ? (
             <>
               <span className="shrink-0 text-sm leading-none">
-                {currentFolder.icon}
+                <ItemIcon value={currentFolder.icon} size={16} />
               </span>
               <span className="truncate font-medium">
                 {currentFolder.name}
@@ -129,7 +130,7 @@ export function CollectionSelect({
             <SelectOption
               key={folder.id}
               label={folder.name}
-              icon={<span className="text-base leading-none">{folder.icon}</span>}
+              icon={<span className="text-base leading-none"><ItemIcon value={folder.icon} size={16} /></span>}
               isSelected={currentFolderId === folder.id}
               onClick={() => handleSelect(folder.id)}
             />

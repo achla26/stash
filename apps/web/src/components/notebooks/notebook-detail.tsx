@@ -1,4 +1,5 @@
 "use client";
+import { ItemIcon } from "@/components/shared/item-icon";
 
 
 import { useState } from "react";
@@ -106,7 +107,7 @@ export function NotebookDetail() {
   const handleCreateFolder = () => {
     if (!folderName.trim()) return;
     createFolder.mutate(
-      { name: folderName.trim(), type: "note", notebookId, parentId: currentFolderId, icon: "📁" },
+      { name: folderName.trim(), type: "note", notebookId, parentId: currentFolderId, icon: "folder" },
       {
         onSuccess: () => {
           setFolderDialogOpen(false);
@@ -195,7 +196,7 @@ export function NotebookDetail() {
               backgroundColor: `color-mix(in srgb, ${coverColor} 15%, transparent)`,
             }}
           >
-            {notebook.icon}
+            <ItemIcon value={notebook.icon} fallback="book" size={22} />
           </span>
 
           <div className="min-w-0">
