@@ -1,4 +1,6 @@
 "use client";
+import { EditorOptionPanel } from "./editor-option-panel";
+import { Button } from "@/components/ui/button";
 
 import {
   useEffect,
@@ -1043,7 +1045,7 @@ export function NoteEditor() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1080px]">
-      <button type="button" onClick={() => router.push("/notes")} className="mb-4 inline-flex min-h-[38px] items-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent"><ArrowLeft className="h-4 w-4" /> All notes</button>
+      <Button type="button" onClick={() => router.push("/notes")} variant="outline" className="mb-4"><ArrowLeft className="h-4 w-4" /> All notes</Button>
       <div className={cn("grid grid-cols-1 items-start gap-[18px] min-[1025px]:grid-cols-[minmax(0,1fr)_300px]", viewMode === "split" && "min-[1025px]:grid-cols-1")}>
       {/* Existing editor and autosave logic are retained. */}
       <div className="min-w-0 overflow-visible rounded-[14px] border border-border bg-card px-[22px] pb-[22px] pt-4">
@@ -1644,7 +1646,7 @@ export function NoteEditor() {
         )}
       </div>
       <aside className="flex min-w-0 flex-col gap-4" aria-label="Note options">
-        <section className="rounded-[10px] border border-border bg-card p-[18px] [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_label]:mb-[5px] [&_label]:mt-3 [&_label]:block [&_label]:text-xs [&_label]:font-bold [&_label]:text-muted-foreground [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:p-2 [&_select]:text-[13px] [&_select]:text-foreground">
+        <EditorOptionPanel>
           <h2>Organise</h2>
           <label htmlFor="note-placement">Collection</label>
           <select id="note-placement" value={placement.kind === "folder" ? placement.id : ""} onChange={(e) => { const folder = folders.find(f => f.id === e.target.value); handleMove(folder ? { kind: "folder", id: folder.id, name: folder.name } : { kind: "loose" }); }}>
@@ -1656,9 +1658,9 @@ export function NoteEditor() {
           </select>
           <p className="mb-[5px] mt-3 block text-xs font-bold text-muted-foreground">Tags</p><div className="flex min-h-[38px] flex-wrap gap-1.5 rounded-[9px] border border-border p-[7px] [&_span]:rounded-full [&_span]:bg-primary/10 [&_span]:px-[9px] [&_span]:py-[3px] [&_span]:text-xs [&_span]:font-semibold [&_span]:text-primary">{note.tags?.length ? note.tags.map(tag => <span key={tag}>#{tag}</span>) : <span className="!bg-transparent !font-normal !text-muted-foreground">No tags</span>}</div>
           {updateNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Update failed. Please try again.</p>}
-        </section>
-        <section className="rounded-[10px] border border-border bg-card p-[18px] [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_label]:mb-[5px] [&_label]:mt-3 [&_label]:block [&_label]:text-xs [&_label]:font-bold [&_label]:text-muted-foreground [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:p-2 [&_select]:text-[13px] [&_select]:text-foreground"><h2>Share</h2><p className="mb-3 text-[13px] leading-[1.55] text-muted-foreground">{note.isPublic ? "This note is public. Manage your sharing settings." : "This note is private until you choose to share it."}</p><button type="button" className="inline-flex min-h-[38px] w-full items-center justify-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent" onClick={() => { setSharePanel(true); setShowFolderPicker(false); setConfirmingDelete(false); setOverflowOpen(true); }}> <Globe className="h-4 w-4" /> Manage sharing</button></section>
-        <section className="rounded-[10px] border border-border bg-card p-[18px] [&_h2]:mb-2.5 [&_h2]:text-[13px] [&_h2]:font-extrabold [&_label]:mb-[5px] [&_label]:mt-3 [&_label]:block [&_label]:text-xs [&_label]:font-bold [&_label]:text-muted-foreground [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-input [&_select]:bg-card [&_select]:p-2 [&_select]:text-[13px] [&_select]:text-foreground"><h2>Danger zone</h2><button type="button" className="inline-flex min-h-[38px] w-full items-center justify-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold text-destructive hover:bg-accent" disabled={deleteNoteMutation.isPending} onClick={() => { if (window.confirm("Move this note to trash?")) handleDelete(); }}><Trash2 className="h-4 w-4" /> {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}</button>{deleteNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Could not move note to trash.</p>}</section>
+        </EditorOptionPanel>
+        <EditorOptionPanel><h2>Share</h2><p className="mb-3 text-[13px] leading-[1.55] text-muted-foreground">{note.isPublic ? "This note is public. Manage your sharing settings." : "This note is private until you choose to share it."}</p><Button type="button" variant="outline" className="w-full" onClick={() => { setSharePanel(true); setShowFolderPicker(false); setConfirmingDelete(false); setOverflowOpen(true); }}> <Globe className="h-4 w-4" /> Manage sharing</Button></EditorOptionPanel>
+        <EditorOptionPanel><h2>Danger zone</h2><Button type="button" variant="outline" className="w-full text-destructive" disabled={deleteNoteMutation.isPending} onClick={() => { if (window.confirm("Move this note to trash?")) handleDelete(); }}><Trash2 className="h-4 w-4" /> {deleteNoteMutation.isPending ? "Moving…" : "Move to trash"}</Button>{deleteNoteMutation.isError && <p role="alert" className="mt-2 text-xs text-destructive">Could not move note to trash.</p>}</EditorOptionPanel>
       </aside>
       </div>
 

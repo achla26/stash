@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -341,13 +342,13 @@ export default function SettingsPage() {
               className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-input-foreground outline-none focus:border-muted-foreground"
             />
           </div>
-          <button
+          <Button
             type="submit"
             disabled={pwBusy}
-            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+            
           >
             {pwBusy ? "Saving..." : "Change password"}
-          </button>
+          </Button>
           {pwMsg && (
             <p
               className="text-xs"
@@ -366,14 +367,14 @@ export default function SettingsPage() {
           Download all your links, notes, notebooks, folders and pads as a
           JSON file.
         </p>
-        <button
+        <Button
           onClick={downloadBackup}
           disabled={busy}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+          className="mt-4"
         >
           <Download className="h-4 w-4" />
           {busy ? "Exporting..." : "Export JSON"}
-        </button>
+        </Button>
         {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
       </div>
       </div><div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
@@ -389,28 +390,28 @@ export default function SettingsPage() {
           one-time) unlocks unlimited items, 200 AI chats/day and full export.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
+          <Button
             onClick={() => doExport("json")}
             disabled={plan !== "pro" || expBusy}
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            variant="outline" 
           >
             Export JSON
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => doExport("markdown")}
             disabled={plan !== "pro" || expBusy}
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            variant="outline" 
           >
             Export Markdown
-          </button>
+          </Button>
           {plan !== "pro" && (
-            <button
+            <Button
               onClick={upgrade}
               disabled={upBusy}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+              
             >
               {upBusy ? "Opening checkout…" : "Upgrade to Pro — ₹399 / $9 once"}
-            </button>
+            </Button>
           )}
           {plan === "pro" && (
             <span className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
@@ -450,27 +451,27 @@ export default function SettingsPage() {
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
+          <Button
             onClick={aiSave}
             disabled={!aiKey.trim()}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+            
           >
             Save key
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={aiTest}
             disabled={!aiKey.trim() || aiBusy === "test"}
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            variant="outline" 
           >
             {aiBusy === "test" ? "Testing…" : "Test key"}
-          </button>
+          </Button>
           {aiCfg && (
-            <button
+            <Button
               onClick={aiRemove}
-              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+              variant="outline" 
             >
               Remove
-            </button>
+            </Button>
           )}
         </div>
         {aiCfg && !aiMsg && (

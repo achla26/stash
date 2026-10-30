@@ -1,4 +1,5 @@
 "use client";
+import { Card } from "@/components/ui/card";
 import { ItemIcon } from "@/components/shared/item-icon";
 
 
@@ -177,9 +178,9 @@ export function NotebookDetail() {
 
   return (
     <div className="mx-auto min-w-0 max-w-[1080px]">
-      <Button variant="outline" className="mb-4 h-[38px] rounded-lg font-bold" onClick={() => router.push("/notebooks")}><ArrowLeft size={16}/> All notebooks</Button>
+      <Button variant="outline" className="mb-4" onClick={() => router.push("/notebooks")}><ArrowLeft size={16}/> All notebooks</Button>
       {/* ---------- Header ---------- */}
-      <div className="mb-5 flex items-start justify-between gap-4 rounded-[10px] border border-border bg-card p-[18px]">
+      <Card className="mb-5 flex items-start justify-between gap-4 p-[18px]">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
@@ -282,7 +283,7 @@ export function NotebookDetail() {
             )}
           </Popover>
         </div>
-      </div>
+      </Card>
 
       <div className="flex min-h-[560px] flex-col overflow-hidden rounded-xl border border-border bg-card md:flex-row">
         <aside className={cn("min-w-0 border-b border-border bg-background-secondary md:w-[250px] md:flex-[0_0_250px] md:border-b-0 md:border-r", !treeOpen && "hidden")} aria-label="Notebook explorer">
@@ -292,8 +293,8 @@ export function NotebookDetail() {
           {notesError && <p role="alert" className="px-[15px] py-2.5 text-xs leading-relaxed text-destructive">Some folder notes could not be loaded. Refresh to retry.</p>}
         </aside>
         <main className="flex min-w-0 flex-1 flex-col">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-border px-3.5 py-2.5 md:flex-nowrap"><button className="grid h-[30px] w-[30px] place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setTreeOpen(v => !v)} aria-label={treeOpen ? "Hide explorer" : "Show explorer"} aria-expanded={treeOpen}><PanelLeft size={17}/></button><span className="min-w-[80px] flex-1 truncate text-xs text-muted-foreground">{notebook.name}{selectedNote ? ` / ${selectedNote.title || "Untitled"}` : selectedFolder ? ` / ${selectedFolder.name}` : ""}</span><Button variant="outline" className="h-[38px] rounded-lg font-bold" onClick={() => setFolderDialogOpen(true)}><Folder size={15}/> New folder</Button><Button className="h-[38px] rounded-lg font-bold" onClick={handleCreateNote} disabled={createNote.isPending}><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</Button></div>
-          {selectedNote ? <article className="min-w-0 p-5 md:p-7"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5 [&>div]:min-w-0 [&_h2]:break-words [&_h2]:text-[21px] [&_h2]:font-extrabold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><div><span className="text-[10px] font-extrabold tracking-[.1em] text-primary">NOTE PREVIEW</span><h2>{selectedNote.title || "Untitled"}</h2><p>Updated {timeAgo(selectedNote.updatedAt)}</p></div><Button asChild className="h-[38px] rounded-lg font-bold"><Link href={`/notes/${selectedNote.id}`}><Pencil size={15}/> Open editor</Link></Button></div><div className="min-w-0 break-words pt-[22px]">{selectedNote.content ? <MarkdownPreview text={selectedNote.content}/> : <p className="text-[13px] text-muted-foreground">This note is empty. Open the editor to start writing.</p>}</div></article> : <div className="flex min-h-[390px] flex-1 flex-col items-center justify-center p-8 text-center [&_h2]:break-words [&_h2]:text-[21px] [&_h2]:font-extrabold [&_p]:mb-4 [&_p]:mt-2 [&_p]:max-w-[420px] [&_p]:text-[13px] [&_p]:leading-relaxed [&_p]:text-muted-foreground [&>div]:mb-5 [&>div]:flex [&>div]:gap-2 [&>div]:text-xs [&>div]:text-muted-foreground [&>div>span]:rounded-full [&>div>span]:bg-accent [&>div>span]:px-2.5 [&>div>span]:py-1"><span className="mb-[15px] grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-primary/10 text-primary">{selectedFolder ? <FolderOpen size={25}/> : <BookOpen size={25}/>}</span><h2>{selectedFolder ? selectedFolder.name : notebook.name}</h2><p>{selectedFolder ? "Select a note in the explorer, or create a new note inside this folder." : notebook.description || "Your ideas, organised in one place. Select a note from the explorer to preview it."}</p><div><span>{folders.length} folders</span><span>{notes.length} notes</span></div><Button onClick={handleCreateNote} disabled={createNote.isPending} className="h-[38px] rounded-lg font-bold"><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</Button></div>}
+          <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-border px-3.5 py-2.5 md:flex-nowrap"><button className="grid h-[30px] w-[30px] place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => setTreeOpen(v => !v)} aria-label={treeOpen ? "Hide explorer" : "Show explorer"} aria-expanded={treeOpen}><PanelLeft size={17}/></button><span className="min-w-[80px] flex-1 truncate text-xs text-muted-foreground">{notebook.name}{selectedNote ? ` / ${selectedNote.title || "Untitled"}` : selectedFolder ? ` / ${selectedFolder.name}` : ""}</span><Button variant="outline"  onClick={() => setFolderDialogOpen(true)}><Folder size={15}/> New folder</Button><Button  onClick={handleCreateNote} disabled={createNote.isPending}><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</Button></div>
+          {selectedNote ? <article className="min-w-0 p-5 md:p-7"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5 [&>div]:min-w-0 [&_h2]:break-words [&_h2]:text-[21px] [&_h2]:font-extrabold [&_p]:mt-1 [&_p]:text-xs [&_p]:text-muted-foreground"><div><span className="text-[10px] font-extrabold tracking-[.1em] text-primary">NOTE PREVIEW</span><h2>{selectedNote.title || "Untitled"}</h2><p>Updated {timeAgo(selectedNote.updatedAt)}</p></div><Button asChild ><Link href={`/notes/${selectedNote.id}`}><Pencil size={15}/> Open editor</Link></Button></div><div className="min-w-0 break-words pt-[22px]">{selectedNote.content ? <MarkdownPreview text={selectedNote.content}/> : <p className="text-[13px] text-muted-foreground">This note is empty. Open the editor to start writing.</p>}</div></article> : <div className="flex min-h-[390px] flex-1 flex-col items-center justify-center p-8 text-center [&_h2]:break-words [&_h2]:text-[21px] [&_h2]:font-extrabold [&_p]:mb-4 [&_p]:mt-2 [&_p]:max-w-[420px] [&_p]:text-[13px] [&_p]:leading-relaxed [&_p]:text-muted-foreground [&>div]:mb-5 [&>div]:flex [&>div]:gap-2 [&>div]:text-xs [&>div]:text-muted-foreground [&>div>span]:rounded-full [&>div>span]:bg-accent [&>div>span]:px-2.5 [&>div>span]:py-1"><span className="mb-[15px] grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-primary/10 text-primary">{selectedFolder ? <FolderOpen size={25}/> : <BookOpen size={25}/>}</span><h2>{selectedFolder ? selectedFolder.name : notebook.name}</h2><p>{selectedFolder ? "Select a note in the explorer, or create a new note inside this folder." : notebook.description || "Your ideas, organised in one place. Select a note from the explorer to preview it."}</p><div><span>{folders.length} folders</span><span>{notes.length} notes</span></div><Button onClick={handleCreateNote} disabled={createNote.isPending} ><Plus size={15}/> {createNote.isPending ? "Creating…" : "New note"}</Button></div>}
         </main>
       </div>
 

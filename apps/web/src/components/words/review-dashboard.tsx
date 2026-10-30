@@ -1,30 +1,187 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { BookOpen, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useWords, useToggleMastered } from "@/hooks/use-words";
 import { WordsPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
 import { ErrorState } from "@/components/shared/error-state";
+import { StatStrip } from "@/components/shared/stat-strip";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Page, SectionHeader } from "@/components/ui/layout";
 import { WordManualDialog } from "./word-manual-dialog";
 import { WordsDashboard } from "./words-dashboard";
+import { ReviewProgress } from "./review-progress";
+import { ReviewCard } from "./review-card";
 
 export function ReviewDashboard() {
   const { data: words = [], isLoading, isError, error, refetch } = useWords();
   const update = useToggleMastered();
   const params = useSearchParams();
-  const [manage, setManage] = useState(false), [add, setAdd] = useState(false);
-  useEffect(() => { if (localStorage.getItem("stash_pending_word")) setManage(true); }, []);
-  const [queue, setQueue] = useState<string[] | null>(null), [index, setIndex] = useState(0), [revealed, setRevealed] = useState(false), [known, setKnown] = useState(0), [gradeError, setGradeError] = useState("");
-  if (isLoading) return <WordsPageSkeleton/>;
-  if (isError) return <ErrorState message={(error as Error)?.message ?? "Failed to load words"} onRetry={() => refetch()}/>;
-  if (manage || params.has("shared")) return <div className="mx-auto max-w-[1080px]"><button className="mb-4 inline-flex min-h-[38px] items-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent" onClick={() => {setManage(false); if (params.has("shared")) window.history.replaceState(null,"",window.location.pathname);}}>← Review session</button><WordsDashboard/></div>;
-  const learning = words.filter(w => !w.mastered), mastered = words.filter(w => w.mastered).length;
-  const ids = queue ?? learning.map(w => w.id), current = words.find(w => w.id === ids[index]);
+  const [manage, setManage] = useState(false);
+  const [add, setAdd] = useState(false);
+  const [queue, setQueue] = useState<string[] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [known, setKnown] = useState(0);
+  const [gradeError, setGradeError] = useState("");
+
+  useEffect(() => {
+    if (localStorage.getItem("stash_pending_word")) setManage(true);
+  }, []);
+
+  if (isLoading) return <WordsPageSkeleton />;
+  if (isError)
+    return (
+      <ErrorState
+        message={(error as Error)?.message ?? "Failed to load words"}
+        onRetry={() => refetch()}
+      />
+    );
+  if (manage || params.has("shared")) {
+    return (
+      <Page>
+        <Button
+          variant="outline"
+          className="mb-4"
+          onClick={() => {
+            setManage(false);
+            if (params.has("shared"))
+              window.history.replaceState(null, "", window.location.pathname);
+          }}
+        >
+          ← Review session
+        </Button>
+        <WordsDashboard />
+      </Page>
+    );
+  }
+
+  const learning = words.filter((word) => !word.mastered);
+  const mastered = words.filter((word) => word.mastered).length;
+  const ids = queue ?? learning.map((word) => word.id);
+  const current = words.find((word) => word.id === ids[index]);
+
   async function grade(isKnown: boolean) {
     setGradeError("");
-    if (isKnown && current && !current.mastered) { try { await update.mutateAsync(current.id); setKnown(n => n + 1); } catch { setGradeError("Could not save your progress. Please try again."); return; } }
-    setQueue(ids); setIndex(i => i + 1); setRevealed(false);
+    if (isKnown && current && !current.mastered) {
+      try {
+        await update.mutateAsync(current.id);
+        setKnown((value) => value + 1);
+      } catch {
+        setGradeError("Could not save your progress. Please try again.");
+        return;
+      }
+    }
+    setQueue(ids);
+    setIndex((value) => value + 1);
+    setRevealed(false);
   }
-  const reset = () => { setQueue(null); setIndex(0); setKnown(0); setRevealed(false); };
-  return <section className="mx-auto w-full min-w-0 max-w-[1080px]"><div className="mb-3.5 flex flex-wrap items-center justify-between gap-3 [&_h1]:text-[15px] [&_h1]:font-extrabold"><h1>Review session</h1><div className="flex gap-2"><button className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent disabled:opacity-50" onClick={() => setManage(true)}>Manage words</button><button className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg bg-primary px-[13px] py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-50" onClick={() => setAdd(true)}><Plus size={16}/> Add word</button></div></div><div className="mb-5 flex overflow-hidden rounded-[10px] border border-border bg-card [&>div]:flex [&>div]:min-w-0 [&>div]:flex-1 [&>div]:flex-col [&>div]:gap-[3px] [&>div]:border-r [&>div]:border-border [&>div]:px-[18px] [&>div]:pb-3.5 [&>div]:pt-[15px] [&>div:last-child]:border-r-0 [&_strong]:text-[23px] [&_strong]:font-extrabold [&_strong]:leading-[1.1] [&_span]:text-[10.5px] [&_span]:font-extrabold [&_span]:uppercase [&_span]:tracking-[.1em] [&_span]:text-muted-foreground"><div><strong>{words.length}</strong><span>Total words</span></div><div><strong>{mastered}</strong><span>Known well</span></div><div><strong>{learning.length}</strong><span>Still learning</span></div></div><div className="flex flex-col items-center gap-[18px] rounded-[10px] border border-border bg-card px-5 py-[26px] text-center">{current ? <><div className="grid w-full max-w-[540px] grid-cols-2 text-left text-xs text-muted-foreground [&_span:nth-child(2)]:text-right [&_div]:col-span-2 [&_div]:mt-1.5 [&_div]:h-1.5 [&_div]:overflow-hidden [&_div]:rounded-md [&_div]:bg-accent [&_i]:block [&_i]:h-full [&_i]:bg-primary"><span>Card {index + 1} of {ids.length}</span><span>{known} known</span><div><i style={{width:`${ids.length ? index / ids.length * 100 : 0}%`}}/></div></div><div className="flex min-h-[250px] w-full max-w-[540px] flex-col justify-center rounded-[14px] border border-border bg-background px-5 py-10 sm:px-9 [&_h2]:font-serif [&_h2]:text-[clamp(30px,5vw,38px)] [&_h2]:font-bold [&_h2]:[overflow-wrap:anywhere] [&_p]:mt-3 [&_p]:text-[13.5px] [&_p]:text-muted-foreground"><h2>{current.word}</h2>{revealed ? <><p className="!text-base !font-semibold !text-foreground">{current.meaning || "No meaning saved yet."}</p>{current.example && <p>{current.example}</p>}</> : <p>Say the meaning out loud — then check yourself.</p>}</div>{revealed ? <div className="flex flex-wrap justify-center gap-2"><button className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg border border-input bg-card px-[13px] py-2 text-[13px] font-bold hover:bg-accent disabled:opacity-50" disabled={update.isPending} onClick={() => grade(false)}>Still learning</button><button className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg bg-primary px-[13px] py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-50" disabled={update.isPending} onClick={() => grade(true)}>{update.isPending ? "Saving…" : "I knew it"}</button></div> : <button className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg bg-primary px-[13px] py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-50" onClick={() => setRevealed(true)}>Show meaning</button>}{gradeError && <p role="alert" className="text-sm text-destructive">{gradeError}</p>}</> : <><div className="flex min-h-[250px] w-full max-w-[540px] flex-col justify-center rounded-[14px] border border-border bg-background px-5 py-10 sm:px-9 [&_h2]:font-serif [&_h2]:text-[clamp(30px,5vw,38px)] [&_h2]:font-bold [&_h2]:[overflow-wrap:anywhere] [&_p]:mt-3 [&_p]:text-[13.5px] [&_p]:text-muted-foreground"><BookOpen className="mx-auto mb-4 text-primary" size={28}/><h2>{ids.length ? "Session complete" : "Ready to learn?"}</h2><p>{ids.length ? `${known} marked as known in this session.` : "Add a word to start your review."}</p></div><button className="inline-flex min-h-[38px] items-center justify-center gap-[7px] rounded-lg bg-primary px-[13px] py-2 text-[13px] font-bold text-primary-foreground disabled:opacity-50" onClick={ids.length ? reset : () => setAdd(true)}>{ids.length ? "Review again" : "Add a word"}</button></>}</div><p className="mt-4 text-center text-sm text-muted-foreground">Review words at your own pace. Words you mark as known are saved to your account.</p><WordManualDialog open={add} onClose={() => setAdd(false)} words={words}/></section>;
+
+  function reset() {
+    setQueue(null);
+    setIndex(0);
+    setKnown(0);
+    setRevealed(false);
+  }
+
+  return (
+    <Page>
+      <SectionHeader
+        heading="h1"
+        title="Review session"
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setManage(true)}>
+              Manage words
+            </Button>
+            <Button onClick={() => setAdd(true)}>
+              <Plus size={16} /> Add word
+            </Button>
+          </>
+        }
+      />
+      <StatStrip
+        items={[
+          { label: "Total words", value: words.length },
+          { label: "Known well", value: mastered },
+          { label: "Still learning", value: learning.length },
+        ]}
+      />
+      <Card className="flex flex-col items-center gap-[18px] px-5 py-[26px] text-center">
+        {current ? (
+          <>
+            <ReviewProgress index={index} total={ids.length} known={known} />
+            <ReviewCard title={current.word}>
+              {revealed ? (
+                <>
+                  <p className="mt-3 text-base font-semibold text-foreground">
+                    {current.meaning || "No meaning saved yet."}
+                  </p>
+                  {current.example && (
+                    <p className="mt-3 text-[13.5px] text-muted-foreground">
+                      {current.example}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="mt-3 text-[13.5px] text-muted-foreground">
+                  Say the meaning out loud — then check yourself.
+                </p>
+              )}
+            </ReviewCard>
+            {revealed ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  variant="outline"
+                  disabled={update.isPending}
+                  onClick={() => grade(false)}
+                >
+                  Still learning
+                </Button>
+                <Button disabled={update.isPending} onClick={() => grade(true)}>
+                  {update.isPending ? "Saving…" : "I knew it"}
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={() => setRevealed(true)}>Show meaning</Button>
+            )}
+            {gradeError && (
+              <p role="alert" className="text-sm text-destructive">
+                {gradeError}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <ReviewCard
+              title={ids.length ? "Session complete" : "Ready to learn?"}
+              icon={
+                <BookOpen className="mx-auto mb-4 text-primary" size={28} />
+              }
+            >
+              <p className="mt-3 text-[13.5px] text-muted-foreground">
+                {ids.length
+                  ? `${known} marked as known in this session.`
+                  : "Add a word to start your review."}
+              </p>
+            </ReviewCard>
+            <Button onClick={ids.length ? reset : () => setAdd(true)}>
+              {ids.length ? "Review again" : "Add a word"}
+            </Button>
+          </>
+        )}
+      </Card>
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Review words at your own pace. Words you mark as known are saved to your
+        account.
+      </p>
+      <WordManualDialog
+        open={add}
+        onClose={() => setAdd(false)}
+        words={words}
+      />
+    </Page>
+  );
 }

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
@@ -35,15 +36,15 @@ export function PageHeader({
       </div>
 
       {actionLabel && onAction && (
-        <button
+        <Button
           type="button"
           onClick={onAction}
           disabled={isActionPending}
-          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:self-auto"
+          className="shrink-0 self-start sm:self-auto"
         >
           <Plus className="h-4 w-4" />
           {isActionPending ? "Creating…" : actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

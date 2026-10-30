@@ -90,7 +90,15 @@
   --chart-5: #FF3B30;
 
   /* Radius */
+  /* Shared component geometry. Change these to update every consumer. */
   --radius: 0.75rem;
+  --radius-control: 0.5rem;
+  --radius-card: 0.625rem;
+  --radius-dialog: 0.875rem;
+  --control-height: 2.375rem;
+  --page-width: 67.5rem;
+  --space-stack: 1rem;
+  --space-grid: 1.125rem;
 }
 
 .dark {
