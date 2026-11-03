@@ -379,13 +379,13 @@ export function NotebookDetail() {
                   Delete this notebook? This can't be undone.
                 </p>
                 <div className="flex gap-1.5">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setConfirmingDelete(false)}
-                    className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                    variant="outline" size="sm" className="flex-1"
                   >
                     Cancel
-                  </button>
+                  </Button>
                   <button
                     type="button"
                     onClick={handleDelete}
@@ -616,11 +616,11 @@ export function NotebookDetail() {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="button"
                 onClick={handleCreateFolder}
                 disabled={createFolder.isPending || !folderName.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+                
               >
                 {createFolder.isPending ? (
                   <>
@@ -633,7 +633,7 @@ export function NotebookDetail() {
                     Create
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

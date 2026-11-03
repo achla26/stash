@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { ItemIcon } from "@/components/shared/item-icon";
 
 import { Link2, FileText, Folder, Tag, Check, ChevronDown } from "lucide-react";
@@ -169,21 +170,21 @@ export function CreateLinkDialog({ isOpen, onClose }: CreateLinkDialogProps) {
       title="Save New Link"
       footer={
         <div className="flex w-full gap-3">
-          <button
+          <Button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-lg border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            variant="outline" className="flex-1 py-3"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             form="create-link-form"
             disabled={createLinkMutation.isPending}
-            className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            className="flex-1 py-3"
           >
             {createLinkMutation.isPending ? "Saving..." : "Save Link"}
-          </button>
+          </Button>
         </div>
       }
     >

@@ -329,7 +329,7 @@ export default function SettingsPage() {
 
           {/* Change password */}
           <Card className="p-[22px]">
-            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <h2 className="flex items-center gap-2 text-[15.5px] font-extrabold text-foreground">
               <KeyRound className="h-4 w-4" /> Change password
             </h2>
             <form onSubmit={changePassword} className="mt-4 space-y-3">
@@ -394,10 +394,10 @@ export default function SettingsPage() {
             {msg && <p className="mt-2 text-xs text-muted-foreground">{msg}</p>}
           </Card>
         </div>
-        <div className="flex min-w-0 flex-col gap-4 [&>div]:rounded-[10px] [&>div]:p-[22px]">
+        <div className="flex min-w-0 flex-col gap-4">
           {/* Plan & export */}
           <Card className="p-[22px]">
-            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <h2 className="flex items-center gap-2 text-[15.5px] font-extrabold text-foreground">
               <Crown className="h-4 w-4 text-primary" /> Plan & Export
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -449,7 +449,7 @@ export default function SettingsPage() {
 
           {/* AI assistant */}
           <Card className="p-[22px]">
-            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <h2 className="flex items-center gap-2 text-[15.5px] font-extrabold text-foreground">
               <Sparkles className="h-4 w-4 text-primary" /> AI Assistant
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

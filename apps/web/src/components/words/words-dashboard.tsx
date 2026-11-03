@@ -1,4 +1,5 @@
 "use client";
+import { cardStyles } from "@/components/ui/card";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -304,7 +305,7 @@ export function WordsDashboard() {
     );
   }
 
-  const card = "rounded-2xl border border-border bg-card";
+  const card = cardStyles;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -568,13 +569,13 @@ export function WordsDashboard() {
           <>
           {filtered.length > 0 && !selectMode && (
             <div className="flex justify-end">
-              <button
+              <Button
                 type="button"
                 onClick={() => setSelectMode(true)}
-                className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                variant="pill-outline" size="pill"
               >
                 Select
-              </button>
+              </Button>
             </div>
           )}
           {selectMode && (
@@ -743,13 +744,13 @@ export function WordsDashboard() {
 
       {filtered.length > visible && (
         <div className="flex justify-center pt-3">
-          <button
+          <Button
             type="button"
             onClick={() => setVisible((v) => v + 12)}
-            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            variant="pill-outline" size="pill-lg"
           >
             Show more ({visible} of {filtered.length})
-          </button>
+          </Button>
         </div>
       )}
       </div>

@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useEffect, useState } from "react";
 import { Trash2, X } from "lucide-react";
@@ -55,14 +56,14 @@ export function BulkBar({
             ? `Confirm — ${selected} will be ${deleteLabel}`
             : `Delete ${selected > 0 ? `(${selected})` : ""}`}
         </button>
-        <button
+        <Button
           type="button"
           onClick={onCancel}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          variant="pill-outline" size="pill"
         >
           <X className="h-3 w-3" />
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

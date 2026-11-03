@@ -5,6 +5,8 @@ type CardProps = React.HTMLAttributes<HTMLElement> & {
   as?: "div" | "section" | "article";
 };
 /** A common bordered surface; retain semantic section/article markup when needed. */
+export const cardStyles = "min-w-0 rounded-[var(--radius-card)] border border-border bg-card";
+
 export function Card({
   as: Component = "div",
   className,
@@ -14,7 +16,7 @@ export function Card({
     <Component
       data-slot="card"
       className={cn(
-        "min-w-0 rounded-[var(--radius-card)] border border-border bg-card",
+        cardStyles,
         className,
       )}
       {...props}

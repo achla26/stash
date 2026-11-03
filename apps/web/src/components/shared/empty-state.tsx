@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,13 +39,13 @@ export function EmptyState({
       </p>
 
       {actionLabel && onAction && (
-        <button
+        <Button
           onClick={onAction}
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-6"
         >
           <Plus className="h-4 w-4" />
           {actionLabel}
-        </button>
+        </Button>
       )}
 
       {hint && (

@@ -1,4 +1,5 @@
 "use client";
+import { cardStyles } from "@/components/ui/card";
 import { ItemIcon } from "@/components/shared/item-icon";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -311,7 +312,7 @@ export function LinksDashboard() {
     );
   }
 
-  const card = "rounded-2xl border border-border bg-card";
+  const card = cardStyles;
 
   if (showTrash) {
     return (
@@ -345,7 +346,7 @@ export function LinksDashboard() {
       </div>
 
       {/* ---------- list + top tags ---------- */}
-      <div className="grid gap-3 lg:grid-cols-[1.7fr_1fr] [&>div]:min-w-0">
+      <div className="grid gap-3 lg:grid-cols-[1.7fr_1fr]">
         <div className={cn(card, "p-5")}>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[13px] font-extrabold tracking-wider">
@@ -465,21 +466,21 @@ export function LinksDashboard() {
             <>
             {!selectMode && (
               <div className="flex justify-end gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowTrash(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                  variant="pill-outline" size="pill"
                 >
                   <Trash2 className="h-3 w-3" />
                   Trash
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setSelectMode(true)}
-                  className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                  variant="pill-outline" size="pill"
                 >
                   Select
-                </button>
+                </Button>
               </div>
             )}
             {selectMode && (
@@ -655,13 +656,13 @@ export function LinksDashboard() {
 
       {filtered.length > visible && (
         <div className="flex justify-center pt-3">
-          <button
+          <Button
             type="button"
             onClick={() => setVisible((v) => v + 12)}
-            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            variant="pill-outline" size="pill-lg"
           >
             Show more ({visible} of {filtered.length})
-          </button>
+          </Button>
         </div>
       )}
         </div>
@@ -675,14 +676,14 @@ export function LinksDashboard() {
           ) : (
             <div className="flex flex-wrap gap-2">
               {topTags.map(([t, n]) => (
-                <button
+                <Button
                   key={t}
                   type="button"
                   onClick={() => setSearch(t)}
-                  className="rounded-full border border-border bg-accent px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  variant="pill-outline" size="pill"
                 >
                   <span className="font-semibold text-foreground">{t}</span> · {n}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -690,7 +691,7 @@ export function LinksDashboard() {
       </div>
 
       {/* ---------- top collections + chart ---------- */}
-      <div className="grid gap-3 lg:grid-cols-[1fr_1.7fr] [&>div]:min-w-0">
+      <div className="grid gap-3 lg:grid-cols-[1fr_1.7fr]">
         <div className={cn(card, "p-5")}>
           <h2 className="mb-4 text-[13px] font-extrabold tracking-wider">
             TOP COLLECTIONS

@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { Mail, User } from "lucide-react";
 import FormField from "../ui/form-field";
@@ -91,13 +92,13 @@ export default function RegisterForm() {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={signupMutation.isPending}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="w-full py-3"
       >
         {signupMutation.isPending ? "Creating account…" : "Create Account"}
-      </button>
+      </Button>
     </form>
   );
 }

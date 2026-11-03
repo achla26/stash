@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useMemo, useState } from "react";
 import { NotesPageSkeleton } from "@/components/shared/skeletons/page-skeleton";
@@ -235,17 +236,17 @@ export function NotesManagement() {
 
       {/* AI organize */}
       {uncategorizedCount > 0 && (
-        <button
+        <Button
           type="button"
           onClick={handleOrganize}
           disabled={organizing}
-          className="inline-flex items-center gap-2 self-start rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-50"
+          variant="pill-soft" size="pill-lg" className="self-start"
         >
           <Sparkles className="h-3.5 w-3.5" />
           {organizing
             ? "Organizing…"
             : `Organize my stash (${uncategorizedCount} untagged)`}
-        </button>
+        </Button>
       )}
 
       {/* Search */}
@@ -258,21 +259,21 @@ export function NotesManagement() {
       {/* Bulk select */}
       {!selectMode && (
         <div className="flex justify-end gap-2">
-          <button
+          <Button
             type="button"
             onClick={() => setShowTrash(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            variant="pill-outline" size="pill"
           >
             <Trash2 className="h-3 w-3" />
             Trash
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => setSelectMode(true)}
-            className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            variant="pill-outline" size="pill"
           >
             Select
-          </button>
+          </Button>
         </div>
       )}
       {selectMode && (
@@ -328,15 +329,15 @@ export function NotesManagement() {
 
       {activeTag && (
         <div className="flex items-center gap-2">
-          <button
+          <Button
             type="button"
             onClick={() => setActiveTag(null)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"
+            variant="pill-soft" size="pill"
           >
             <TagIcon className="h-3 w-3" />
             {activeTag}
             <X className="h-3 w-3" />
-          </button>
+          </Button>
           <span className="text-xs text-muted-foreground">
             filter by tag — tap to clear
           </span>
@@ -402,13 +403,13 @@ export function NotesManagement() {
 
       {filteredNotes.length > visible && (
         <div className="flex justify-center">
-          <button
+          <Button
             type="button"
             onClick={() => setVisible((v) => v + 12)}
-            className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            variant="pill-outline" size="pill-lg"
           >
             Show more ({visible} of {filteredNotes.length})
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import { DetailSkeleton } from "@/components/shared/skeletons/page-skeleton";
@@ -126,11 +127,11 @@ export function FolderDetail() {
 
       {/* ---------- Actions ---------- */}
       <div className="mb-8 flex gap-2">
-        <button
+        <Button
           type="button"
           onClick={handleCreateNote}
           disabled={createNote.isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          
         >
           {createNote.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -138,16 +139,16 @@ export function FolderDetail() {
             <Plus className="h-4 w-4" />
           )}
           New Note
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
           onClick={() => setSubDialogOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          variant="outline" 
         >
           <Folder className="h-4 w-4" />
           New Subfolder
-        </button>
+        </Button>
       </div>
 
       {/* ---------- Subfolders ---------- */}
@@ -315,11 +316,11 @@ export function FolderDetail() {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="button"
                 onClick={handleCreateSub}
                 disabled={createFolder.isPending || !subName.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+                
               >
                 {createFolder.isPending ? (
                   <>
@@ -332,7 +333,7 @@ export function FolderDetail() {
                     Create
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

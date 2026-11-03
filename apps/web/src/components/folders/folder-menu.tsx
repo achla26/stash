@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -162,17 +163,17 @@ export function FolderMenu({
                 Delete "{folderName}"? This can't be undone.
               </p>
               <div className="flex gap-1.5">
-                <button
+                <Button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     setConfirmingDelete(false);
                   }}
-                  className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                  variant="outline" size="sm" className="flex-1"
                 >
                   Cancel
-                </button>
+                </Button>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -251,11 +252,11 @@ export function FolderMenu({
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="button"
                 onClick={handleRename}
                 disabled={updateFolder.isPending || !name.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+                
               >
                 {updateFolder.isPending ? (
                   <>
@@ -268,7 +269,7 @@ export function FolderMenu({
                     Save
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

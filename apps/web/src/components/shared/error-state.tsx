@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,13 +31,13 @@ export function ErrorState({
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">{message}</p>
 
       {onRetry && (
-        <button
+        <Button
           onClick={onRetry}
-          className="mt-6 flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          variant="outline" className="mt-6"
         >
           <RefreshCcw className="h-4 w-4" />
           Try again
-        </button>
+        </Button>
       )}
     </div>
   );

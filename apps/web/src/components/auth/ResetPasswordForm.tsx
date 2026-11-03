@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
@@ -81,14 +82,14 @@ function ResetInner() {
             : "Reset failed — the link may have expired"}
         </p>
       )}
-      <button
+      <Button
         type="submit"
         disabled={mutation.isPending || password.length < 6 || mismatch}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className="w-full py-3"
       >
         <Lock className="h-4 w-4" />
         {mutation.isPending ? "Updating…" : "Set new password"}
-      </button>
+      </Button>
     </form>
   );
 }

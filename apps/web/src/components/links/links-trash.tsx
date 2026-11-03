@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -63,23 +64,23 @@ export function LinksTrash({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <button
+        <Button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          variant="pill-outline" size="pill"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to links
-        </button>
+        </Button>
         <div className="ml-auto">
           {!selectMode ? (
-            <button
+            <Button
               type="button"
               onClick={() => setSelectMode(true)}
-              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              variant="pill-outline" size="pill"
             >
               Select
-            </button>
+            </Button>
           ) : null}
         </div>
         <h2 className="text-sm font-bold">Trash ({links.length})</h2>
@@ -138,15 +139,15 @@ export function LinksTrash({ onBack }: { onBack: () => void }) {
               </div>
               {!selectMode && (
                 <>
-              <button
+              <Button
                 type="button"
                 disabled={restoreMutation.isPending}
                 onClick={() => restoreMutation.mutate(l.id)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+                variant="pill-soft" size="pill"
               >
                 <RotateCcw className="h-3 w-3" />
                 Restore
-              </button>
+              </Button>
               <button
                 type="button"
                 disabled={permanentMutation.isPending}

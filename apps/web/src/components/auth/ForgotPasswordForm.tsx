@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -67,13 +68,13 @@ export default function ForgotPasswordForm() {
                 : "Something went wrong"}
             </p>
           )}
-          <button
+          <Button
             type="submit"
             disabled={mutation.isPending || !email.trim()}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            className="w-full py-3"
           >
             {mutation.isPending ? "Sending link…" : "Send reset link"}
-          </button>
+          </Button>
           <Link
             href="/login"
             className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
